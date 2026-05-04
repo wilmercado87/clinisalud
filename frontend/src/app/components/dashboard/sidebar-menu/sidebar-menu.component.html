@@ -1,0 +1,69 @@
+<mat-nav-list class="sidebar-menu">
+  
+  <div class="sidebar-menu__group">
+    <a
+      mat-list-item
+      routerLink="/dashboard"
+      routerLinkActive="sidebar-menu__item--active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="sidebar-menu__item sidebar-menu__item--home"
+    >
+      <div class="sidebar-menu__layout">
+        <mat-icon class="sidebar-menu__icon">home</mat-icon>
+        <span class="sidebar-menu__title">INICIO</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="sidebar-menu__divider"></div>
+
+  @for (group of menuItems; track group.id) {
+    <div class="sidebar-menu__group">
+
+      @if (group.children && group.children.length > 0) {
+        <button
+          mat-list-item
+          (click)="toggleGroup(group)"
+          class="sidebar-menu__item sidebar-menu__item--parent"
+        >
+          <div class="sidebar-menu__layout">
+            <mat-icon class="sidebar-menu__icon">{{ group.icon }}</mat-icon>
+            <span class="sidebar-menu__title">{{ group.label | uppercase }}</span>
+            <mat-icon class="sidebar-menu__arrow">
+              {{ group.isOpen ? "expand_less" : "expand_more" }}
+            </mat-icon>
+          </div>
+        </button>
+
+        <div class="sidebar-menu__sub-list" [class.sidebar-menu__sub-list--expanded]="group.isOpen">
+          @for (child of group.children; track child.id) {
+            <a
+              mat-list-item
+              [routerLink]="child.path"
+              routerLinkActive="sidebar-menu__sub-item--active"
+              class="sidebar-menu__sub-item"
+            >
+              <div class="sidebar-menu__sub-layout">
+                <mat-icon class="sidebar-menu__sub-icon">{{ child.icon }}</mat-icon>
+                <span class="sidebar-menu__sub-text">{{ child.label }}</span>
+              </div>
+            </a>
+          }
+        </div>
+
+      } @else {
+        <a
+          mat-list-item
+          [routerLink]="group.path"
+          routerLinkActive="sidebar-menu__item--active"
+          class="sidebar-menu__item"
+        >
+          <div class="sidebar-menu__layout">
+            <mat-icon class="sidebar-menu__icon">{{ group.icon }}</mat-icon>
+            <span class="sidebar-menu__title">{{ group.label | uppercase }}</span>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</mat-nav-list>

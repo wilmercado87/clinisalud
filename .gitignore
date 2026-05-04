@@ -1,0 +1,30 @@
+# Dependencias
+node_modules/
+**/node_modules/
+
+# Base de Datos (SQLite)
+*.sqlite
+*.sqlite-journal
+*_backup
+
+# Variables de entorno (Seguridad)
+.env
+**/.env
+
+# Compilación
+dist/
+**/dist/
+.angular/
+.nvmrc
+.gitkeep
+
+# Logs y Cache
+npm-debug.log*
+yarn-error.log*
+.eslintcache
+
+# VS Code / IDEs
+.vscode/
+.idea/
+.DS_Store
+.editorconfig
