@@ -1,6 +1,6 @@
 import e, { Request, Response } from "express";
 import { AuthService } from "../services/AuthService";
-import { getHttpCode } from "../utils/statusCodes";
+import { getHttpCode } from "../utils/StatusCodes";
 const authService = new AuthService();
 
 export const login = async (req: Request, res: Response) => {

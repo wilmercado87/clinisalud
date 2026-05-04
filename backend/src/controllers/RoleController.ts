@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { RoleService } from "../services/RoleService";
-import { getHttpCode } from "../utils/statusCodes";
+import { getHttpCode } from "../utils/StatusCodes";
 
 const roleService = new RoleService();
 
