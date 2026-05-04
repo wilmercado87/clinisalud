@@ -1,0 +1,108 @@
+<div class="user-form">
+  <header class="user-form__header">
+    <h2 class="user-form__title" mat-dialog-title>Registrar Nuevo Empleado</h2>
+    <button class="user-form__close-btn" mat-icon-button (click)="close()" *ngIf="!generatedPassword">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content class="user-form__content">
+    @if (!generatedPassword) {
+      <form [formGroup]="userForm" class="user-form__body">
+        <div class="user-form__section-label">IDENTIDAD Y CONTACTO</div>
+        <div class="user-form__grid">
+
+          <mat-form-field appearance="outline" class="user-form__field">
+            <mat-label>Nombres</mat-label>
+            <input matInput formControlName="firstName">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="user-form__field">
+            <mat-label>Apellidos</mat-label>
+            <input matInput formControlName="lastName">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="user-form__field">
+            <mat-label>DNI / Cédula</mat-label>
+            <input matInput formControlName="dni">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="user-form__field">
+            <mat-label>Correo Electrónico</mat-label>
+            <input matInput formControlName="email" type="email">
+            <mat-icon matSuffix>mail</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="user-form__field user-form__field--phone">
+            <mat-label>Teléfono (10 dígitos)</mat-label>
+            <input matInput formControlName="phone" maxlength="10">
+            <mat-icon matSuffix>phone</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="user-form__field">
+            <mat-label>Dirección</mat-label>
+            <input matInput formControlName="address">
+            <mat-icon matSuffix>place</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="user-form__field user-form__field--full-width">
+            <mat-label>Asignar Rol</mat-label>
+            <mat-select formControlName="roleId">
+              @for (role of (roles$ | async); track role.id) {
+                <mat-option [value]="role.id">{{ role.name }}</mat-option>
+              }
+            </mat-select>
+            <mat-icon matSuffix>admin_panel_settings</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="user-form__section-label">ACCESOS DEL PANEL</div>
+        <div class="user-form__permissions">
+          @for (group of filteredMenuOptions; track group.id) {
+            <div class="user-form__permission-item">
+              <div class="user-form__permission-parent">
+                <mat-checkbox [checked]="isChecked(group.id)" (change)="toggleParent(group, $event.checked)" color="primary">
+                  <mat-icon class="user-form__group-icon">grid_view</mat-icon>
+                  <strong class="user-form__group-label">{{ group.label | uppercase }}</strong>
+                </mat-checkbox>
+              </div>
+
+              <div class="user-form__permission-children">
+                @for (child of group.children; track child.id) {
+                  <mat-checkbox [checked]="isChecked(child.id)" (change)="toggleChild(child.id, group)" class="user-form__child-checkbox">
+                    {{ child.label }}
+                  </mat-checkbox>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </form>
+    } @else {
+      <div class="user-form__success">
+        <mat-icon class="user-form__success-icon">check_circle</mat-icon>
+        <h3 class="user-form__success-title">Usuario Creado</h3>
+        <div class="user-form__success-card">
+          <small class="user-form__success-label">CLAVE TEMPORAL:</small>
+          <div class="user-form__success-clave">{{ generatedPassword }}</div>
+        </div>
+      </div>
+      <mat-dialog-actions class="user-form__actions" align="center">
+        <button mat-raised-button color="primary" (click)="endDialog()">
+          ACCEPTAR
+        </button>
+      </mat-dialog-actions>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="user-form__actions" align="end" *ngIf="!generatedPassword">
+    <button mat-button (click)="close()">CANCELAR</button>
+    <button mat-raised-button color="primary" [disabled]="userForm.invalid || selectedMenuIds.length === 0 || isLoading" (click)="onSubmit()">
+       @if (isLoading) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        REGISTRAR
+      }
+    </button>
+  </mat-dialog-actions>
+</div>

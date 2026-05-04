@@ -1,0 +1,139 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 32px;
+  background-color: white !important;
+  border-radius: 30px;
+  border: 1px solid rgba(0, 64, 113, 0.05);
+  box-shadow: 0 20px 60px rgba(0, 64, 113, 0.12) !important;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.custom-logo {
+  width: 75px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.clinisalud-title {
+  color: #004071;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.clinisalud-subtitle {
+  color: #666;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 15px;
+  margin-top: 5px;
+  margin-bottom: 20px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// Banner de error más compacto
+.error-banner {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 8px; // Reducido
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border: 1px solid rgba(211, 47, 47, 0.2);
+  animation: fadeIn 0.3s ease-in;
+}
+
+.btn-navy {
+  background-color: #004071 !important;
+  color: white !important;
+  height: 52px; // Reducido de 55px a 52px
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif !important;
+  margin-top: 10px;
+  box-shadow: 0 8px 16px rgba(0, 64, 113, 0.2) !important;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    background-color: #00325a !important;
+  }
+}
+
+::ng-deep {
+  .mat-mdc-form-field-subscript-wrapper {
+    height: 0 !important;
+    display: none !important; 
+  }
+
+  .mat-mdc-form-field-error {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 11px !important;
+    margin-top: 2px !important;
+  }
+
+  .mat-mdc-form-field mat-icon {
+    color: #004071 !important;
+    opacity: 0.8;
+  }
+}
+
+.btn-navy {
+  &:disabled {
+    background-color: #b3c5d5 !important;
+    color: white !important;
+    cursor: not-allowed;
+    box-shadow: none !important;
+    opacity: 0.7;
+  }
+}
+
+.logo-box {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .custom-logo {
+    width: 100%;
+    height: 100%;
+  }
+
+  .custom-logo-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Evita que el logo del cliente se deforme */
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+  }
+}
+
+.clinisalud-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #004071;
+  margin: 0;
+  text-transform: uppercase;
+}

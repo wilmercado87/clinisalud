@@ -1,0 +1,172 @@
+@use "variables" as v;
+
+.user-manager {
+  padding: 24px;
+  animation: fadeIn 0.4s ease-out;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: v.$navy-900;
+    letter-spacing: -0.5px;
+  }
+
+  &__subtitle {
+    margin: 4px 0 0;
+    color: v.$color-blue-light-50;
+    font-size: 14px;
+  }
+
+  &__add-btn {
+    background-color: v.$navy-500 !important;
+    color: v.$navy-bg-color-white !important;
+    padding: 0 24px !important;
+    height: 48px !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(v.$navy-500, 0.2) !important;
+
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+
+  &__filters {
+    margin-bottom: 24px;
+  }
+
+  &__search {
+    width: 100%;
+    max-width: 450px;
+
+    ::ng-deep .mat-mdc-text-field-wrapper {
+      background-color: v.$navy-bg-color-white !important;
+      border-radius: 12px !important;
+    }
+
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+
+    mat-icon {
+      color: v.$navy-500;
+    }
+  }
+
+  &__table-container {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: v.$navy-bg-color-white;
+    border: 1px solid v.$color-gray-light-200;
+  }
+
+  &__loader {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__table {
+    width: 100%;
+
+    .mat-mdc-header-cell {
+      background-color: v.$color-gray-light-100;
+      color: v.$navy-900;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      padding: 16px;
+    }
+
+    .mat-mdc-cell {
+      padding: 16px;
+    }
+  }
+
+  // ESTILOS PARA ICONOS EN CELDAS
+  &__icon-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: v.$color-blue-light-50;
+    font-size: 13px;
+  }
+
+  &__cell-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    opacity: 0.8;
+  }
+
+  &__user-name {
+    font-weight: 600;
+    color: v.$navy-900;
+  }
+
+  &__badge {
+    background: v.$navy-50;
+    color: v.$navy-500;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    &-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  &__status {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    display: inline-block;
+    text-align: center;
+    min-width: 75px;
+
+    &--active {
+      background-color: v.$color-green-light-100;
+      color: v.$color-green-light-600;
+    }
+
+    &--inactive {
+      background-color: v.$color-red-light-100;
+      color: v.$color-red-light-600;
+    }
+  }
+
+  &__paginator {
+    border-top: 1px solid v.$color-gray-light-200;
+    background: v.$color-gray-light-100;
+  }
+
+  &__empty-state {
+    padding: 40px 0;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
