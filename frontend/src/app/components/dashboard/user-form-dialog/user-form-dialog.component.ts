@@ -1,23 +1,23 @@
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   FormGroup,
   Validators,
   ReactiveFormsModule,
-  FormArray,
 } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { UserService } from '../../../services/user.service';
-import { AuthService } from '../../../services/auth.service';
-import { MaterialModule } from '../../../material/material.module';
-import { Role } from '../../../models/user-manager.model';
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
-import { MenuOption } from '../../../models/auth.model';
-import { RoleService } from '../../../services/roles.services';
 import { Observable } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ERROR_MAPPING } from '../../../utils/status.codes';
+
+import { MaterialModule } from '../../../material/material.module';
+import { UserService } from '../../../services/user.service';
+import { RoleService } from '../../../services/roles.services';
 import { MatSnackBar } from '@angular/material/snack-bar';
+
+import { Role } from '../../../models/user-manager.model';
+import { MenuOption } from '../../../models/auth.model';
+import { ERROR_MAPPING } from '../../../utils/status.codes';
 
 @Component({
   selector: 'app-user-form-dialog',
@@ -27,21 +27,27 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   styleUrls: ['./user-form-dialog.component.scss'],
 })
 export class UserFormDialogComponent implements OnInit {
+  // Inyecciones
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
   private roleService = inject(RoleService);
-  private authService = inject(AuthService);
   private dialogRef = inject(MatDialogRef<UserFormDialogComponent>);
   private destroyRef = inject(DestroyRef);
   private snackBar = inject(MatSnackBar);
 
+  // Propiedades de Datos
   public userForm: FormGroup;
   public roles$!: Observable<Role[]>;
   private rolesList: Role[] = [];
   public filteredMenuOptions: MenuOption[] = [];
   public selectedMenuIds: number[] = [];
+
+  // Propiedades de Estado (Reactividad para el Template)
   public isLoading = false;
+  public isFullAccessDenied = false;
+  public canSubmit = false;
   public generatedPassword = '';
+  private totalOptionsCount = 0;
 
   constructor() {
     this.userForm = this.fb.group({
@@ -57,58 +63,83 @@ export class UserFormDialogComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadRoles();
-    this.loadMenuFromSession();
-    this.listenRoleChanges();
+    this.loadMasterMenu();
+    this.listenFormChanges();
   }
 
   private loadRoles(): void {
     this.roles$ = this.roleService.getRoles();
-    this.roles$.subscribe((roles) => (this.rolesList = roles));
+    this.roles$.subscribe((roles) => {
+      this.rolesList = roles;
+      this.validateFormState();
+    });
   }
 
-  private loadMenuFromSession(): void {
-    this.authService.userMenu$
+  private loadMasterMenu(): void {
+    this.roleService
+      .getMenuOptions()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((menu) => {
         this.filteredMenuOptions = menu.filter(
-          (item) => item.label.toUpperCase() === 'PANEL PRINCIPAL'
+          (item) => item.label.toUpperCase() === 'PANEL PRINCIPAL',
         );
-
-        this.checkAdminPrivileges();
+        this.calculateTotalOptions();
+        this.validateFormState();
       });
   }
 
-  private listenRoleChanges(): void {
-    this.userForm.get('roleId')?.valueChanges
+  private listenFormChanges(): void {
+    this.userForm
+      .get('roleId')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((roleId) => this.handleRoleChange(roleId));
+
+    this.userForm.statusChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(roleId => {
-        this.checkAdminPrivileges(roleId);
-      });
+      .subscribe(() => this.validateFormState());
   }
 
-  private checkAdminPrivileges(selectedRoleId?: number): void {
-    const id = selectedRoleId || this.userForm.get('roleId')?.value;
-    const selectedRole = this.rolesList.find(r => r.id === id);
+  private handleRoleChange(roleId: number): void {
+    const selectedRole = this.rolesList.find((r) => r.id === roleId);
+
     if (selectedRole?.code === 'ADMIN') {
       this.selectAllPermissions();
-      return;
-    }
+    } else {
       this.selectedMenuIds = [];
+    }
+    this.validateFormState();
   }
 
-  private selectAllPermissions(): void {
-    const allIds: number[] = [];
-    this.filteredMenuOptions.forEach(group => {
-      allIds.push(group.id);
-      if (group.children) {
-        group.children.forEach((child: any) => allIds.push(child.id));
-      }
+  private validateFormState(): void {
+    const selectedRoleId = this.userForm.get('roleId')?.value;
+    const selectedRole = this.rolesList.find((r) => r.id === selectedRoleId);
+    const isAdmin = selectedRole?.code === 'ADMIN';
+
+    // Regla: ¿Es acceso total siendo No-Admin?
+    const hasAllSelected =
+      this.selectedMenuIds.length >= this.totalOptionsCount &&
+      this.totalOptionsCount > 0;
+    this.isFullAccessDenied = !isAdmin && hasAllSelected;
+
+    this.canSubmit =
+      this.userForm.valid &&
+      this.selectedMenuIds.length > 0 &&
+      !this.isFullAccessDenied &&
+      !this.isLoading;
+  }
+
+  private calculateTotalOptions(): void {
+    let count = 0;
+    this.filteredMenuOptions.forEach((group) => {
+      count++;
+      if (group.children) count += group.children.length;
     });
-    this.selectedMenuIds = [...new Set(allIds)];
+    this.totalOptionsCount = count;
   }
 
   public toggleParent(group: any, isChecked: boolean): void {
-    const childIds = group.children.map((c: any) => c.id);
+    const childIds = group.children?.map((c: any) => c.id) || [];
+
     if (isChecked) {
       this.selectedMenuIds = Array.from(
         new Set([...this.selectedMenuIds, group.id, ...childIds]),
@@ -118,18 +149,29 @@ export class UserFormDialogComponent implements OnInit {
         (id) => id !== group.id && !childIds.includes(id),
       );
     }
+    this.validateFormState();
   }
 
   public toggleChild(childId: number, parent: any): void {
     const index = this.selectedMenuIds.indexOf(childId);
+
     if (index > -1) {
       this.selectedMenuIds.splice(index, 1);
-      this.selectedMenuIds = this.selectedMenuIds.filter(
-        (id) => id !== parent.id,
-      );
     } else {
       this.selectedMenuIds.push(childId);
+      if (!this.selectedMenuIds.includes(parent.id))
+        this.selectedMenuIds.push(parent.id);
     }
+    this.validateFormState();
+  }
+
+  private selectAllPermissions(): void {
+    const allIds: number[] = [];
+    this.filteredMenuOptions.forEach((group) => {
+      allIds.push(group.id);
+      group.children?.forEach((child: any) => allIds.push(child.id));
+    });
+    this.selectedMenuIds = [...new Set(allIds)];
   }
 
   public isChecked(id: number): boolean {
@@ -137,37 +179,49 @@ export class UserFormDialogComponent implements OnInit {
   }
 
   public onSubmit(): void {
-  if (this.userForm.invalid || this.selectedMenuIds.length === 0) return;
+    if (!this.canSubmit) return;
 
-  this.isLoading = true;
+    this.isLoading = true;
+    this.validateFormState();
 
-  this.userService
-    .createUser({ ...this.userForm.value, permissions: this.selectedMenuIds })
-    .subscribe({
-      next: (res) => {
-        this.isLoading = false;
-        this.generatedPassword = res.temporaryPassword;
-        this.snackBar.open('¡Usuario registrado con éxito!', 'Cerrar', { duration: 3000 });
-      },
-      error: (err) => {
-        this.isLoading = false;
-        const errorCode = err.error?.message;
-        const message = ERROR_MAPPING[errorCode] || ERROR_MAPPING[500];
-
-        if (errorCode === '405') {
-    this.userForm.get('email')?.setErrors({ alreadyExists: true });
-  }
-  if (errorCode === '406') {
-    this.userForm.get('dni')?.setErrors({ alreadyExists: true });
+    this.userService
+      .createUser({
+        ...this.userForm.value,
+        permissions: this.selectedMenuIds,
+      })
+      .subscribe({
+        next: (res) => this.handleSuccess(res),
+        error: (err) => this.handleError(err),
+      });
   }
 
-        this.snackBar.open(message, 'Entendido', {
-          duration: 5000,
-          panelClass: ['toast-custom', 'toast-custom--error']
-        });
-      },
+  private handleSuccess(res: any): void {
+    this.isLoading = false;
+    this.generatedPassword = res.temporaryPassword;
+    this.showSnackBar('¡Usuario registrado con éxito!');
+  }
+
+  private handleError(err: any): void {
+    this.isLoading = false;
+    const errorCode = err.error?.message || '500';
+    const fieldMapping: Record<string, string> = {
+      '405': 'email',
+      '406': 'dni',
+    };
+    const field = fieldMapping[errorCode];
+    if (field) this.userForm.get(field)?.setErrors({ alreadyExists: true });
+
+    const message = ERROR_MAPPING[errorCode] || ERROR_MAPPING[500];
+    this.showSnackBar(message, true);
+    this.validateFormState();
+  }
+
+  private showSnackBar(message: string, isError = false): void {
+    this.snackBar.open(message, isError ? 'Entendido' : 'Cerrar', {
+      duration: isError ? 5000 : 3000,
+      panelClass: isError ? ['toast-custom', 'toast-custom--error'] : [],
     });
-}
+  }
 
   public endDialog(): void {
     this.close(true);

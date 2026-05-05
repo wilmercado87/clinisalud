@@ -5,6 +5,7 @@ import Role from "../models/Role";
 import MenuOption from "../models/MenuOption";
 import UserMenuOverride from "../models/UserMenuOverride";
 import RoleMenuPermission from "../models/RoleMenuPermission";
+import { buildMenuTree } from "../utils/MenuTree.util";
 
 export class AuthService {
   public async login(email: string, pass: string) {
@@ -13,23 +14,14 @@ export class AuthService {
       include: [{ model: Role, as: "roleData" }],
     });
 
-    if (!user) {
-      throw new Error("401");
-    }
-
+    if (!user) throw new Error("401");
     const isPasswordValid = await bcrypt.compare(pass, user.password);
-
-    if (!isPasswordValid) {
-      throw new Error("402");
-    }
-
-    if (!user.isActive) {
-      throw new Error("403");
-    }
+    if (!isPasswordValid) throw new Error("402");
+    if (!user.isActive) throw new Error("403");
 
     const menu = await this.getAuthorizedMenu(user.id, user.roleId);
-    const token = this.generateToken(user);
 
+    const token = this.generateToken(user);
     const userJson = user.get({ plain: true });
     delete userJson.password;
 
@@ -44,6 +36,10 @@ export class AuthService {
   }
 
   private async getAuthorizedMenu(userId: number, roleId: number) {
+    // 1. Buscamos el código del rol primero
+    const role = await Role.findByPk(roleId);
+    const roleCode = role?.code || "USER";
+
     const rolePermissions = await RoleMenuPermission.findAll({
       where: { roleId },
     });
@@ -62,6 +58,15 @@ export class AuthService {
       }
     });
 
+    if (roleCode === "ADMIN") {
+      const gestorOption = await MenuOption.findOne({
+        where: { label: "Gestor Usuarios" },
+      });
+      if (gestorOption) {
+        authorizedIds.add(gestorOption.id);
+      }
+    }
+
     if (authorizedIds.size === 0) return [];
 
     const authorizedOptions = await MenuOption.findAll({
@@ -70,47 +75,29 @@ export class AuthService {
     });
 
     const allOptionsMap = new Map<number, any>();
-
     authorizedOptions.forEach((opt) =>
       allOptionsMap.set(opt.id, opt.get({ plain: true })),
     );
 
-    const parentIdsMissing = authorizedOptions
-      .filter((opt) => opt.parentId && !allOptionsMap.has(opt.parentId))
+    await this.ensureParentHierarchy(allOptionsMap);
+
+    return buildMenuTree(Array.from(allOptionsMap.values()));
+  }
+
+  private async ensureParentHierarchy(map: Map<number, any>) {
+    const parentIdsMissing = Array.from(map.values())
+      .filter((opt) => opt.parentId && !map.has(opt.parentId))
       .map((opt) => opt.parentId as number);
 
     if (parentIdsMissing.length > 0) {
       const missingParents = await MenuOption.findAll({
         where: { id: parentIdsMissing },
       });
-      missingParents.forEach((p) =>
-        allOptionsMap.set(p.id, p.get({ plain: true })),
-      );
+
+      missingParents.forEach((p) => map.set(p.id, p.get({ plain: true })));
+
+      await this.ensureParentHierarchy(map);
     }
-
-    return this.buildMenuTree(Array.from(allOptionsMap.values()));
-  }
-
-  private buildMenuTree(options: any[]): any[] {
-    const map = new Map<number, any>();
-    const tree: any[] = [];
-
-    options.sort((a, b) => (a.order || 0) - (b.order || 0));
-
-    options.forEach((opt) => {
-      map.set(opt.id, { ...opt, children: [] });
-    });
-
-    options.forEach((opt) => {
-      const node = map.get(opt.id);
-      if (opt.parentId && map.has(opt.parentId)) {
-        map.get(opt.parentId).children.push(node);
-      } else if (!opt.parentId) {
-        tree.push(node);
-      }
-    });
-
-    return tree;
   }
 
   private generateToken(user: User): string {

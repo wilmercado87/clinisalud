@@ -6,6 +6,7 @@ const router = Router();
 
 // Rutas para Roles
 router.get("/roles", RoleController.getRoles);
+router.get('/roles/menus', RoleController.getMenuOptions);
 
 // Rutas para Usuarios
 router.get("/users", UserController.getManageableUsers);

@@ -1,0 +1,9 @@
+id;Tipo_Usuario;Copago;Cuota_Moderadora;Tope_Evento;Tope_Ano
+1;Cotizante_A;No;2500;0;0
+2;Cotizante_B;No;9900;0;0
+3;Cotizante_C;No;26100;0;0
+4;Beneficiario_A;11.50;2500;184928;369856
+5;Beneficiario_B;17.30;9900;741003;1482006
+6;Beneficiario_C;23;26100;1482005;2964010
+7;Sub_Rango_B_Nivel1;0;0;0;0
+8;Sub_Rango_C_Nivel2;10;0;322175;644350

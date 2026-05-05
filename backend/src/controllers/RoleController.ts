@@ -15,3 +15,13 @@ export const getRoles = async (req: Request, res: Response) => {
     return res.status(statusCode).json({ message: error.message });
   }
 };
+
+export const getMenuOptions = async (req: Request, res: Response) => {
+  try {
+    const menus = await roleService.findAllMenuOptions();
+    res.json(menus);
+  } catch (error) {
+    console.error("Error al obtener catálogo de menús:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+};

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, shareReplay } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Role } from '../models/user-manager.model';
+import { MenuOption } from '../models/auth.model';
 
 @Injectable({
   providedIn: 'root',
@@ -21,6 +22,10 @@ export class RoleService {
     }
 
     return this.rolesCache$;
+  }
+
+  getMenuOptions(): Observable<MenuOption[]> {
+    return this.http.get<MenuOption[]>(`${this.apiUrl}/menus`);
   }
 
   clearCache(): void {

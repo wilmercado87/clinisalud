@@ -1,30 +1,40 @@
-import app from './app';
-import sequelize from './config/database';
-import { runSeeder } from './seed';
+import app from "./app";
+import sequelize from "./config/database";
+import { runSeeder } from "./seed";
 
-// Importamos TODOS los modelos para establecer las relaciones y crear las tablas
-import './models/Role';
-import './models/User';
-import './models/MenuOption';
-import './models/RoleMenuPermission';
-import './models/UserMenuOverride';
+import "./models/Role";
+import "./models/User";
+import "./models/MenuOption";
+import "./models/RoleMenuPermission";
+import "./models/UserMenuOverride";
 
-const PORT = process.env['PORT'] || 3000;
+const PORT = process.env["PORT"] || 3000;
 
 async function main() {
   try {
+    console.log("⏳ Sincronizando base de datos...");
     await sequelize.sync({ force: true });
-    console.log('✅ Base de datos conectada y sincronizada.');
+    console.log("✅ Tablas creadas con éxito.");
 
+    console.log("🌱 Corriendo Seeders...");
     await runSeeder();
+    console.log("✅ Datos base insertados.");
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+    app.listen(3000, () => {
+      console.log("🚀 Servidor corriendo en http://localhost:3000");
     });
 
+    process.on("SIGINT", () => {
+      console.log("👋 Cerrando servidor legalmente...");
+      process.exit(0);
+    });
+
+    process.on("SIGTERM", () => {
+      console.log("🛑 Servidor terminado por el sistema.");
+      process.exit(0);
+    });
   } catch (error) {
-    console.error('❌ Error crítico al iniciar el servidor:', error);
-    process.exit(1); // Cerramos el proceso si hay un error fatal
+    console.error("❌ Error fatal al arrancar:", error);
   }
 }
 

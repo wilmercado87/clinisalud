@@ -1,0 +1,1103 @@
+id;id_dpto;id_municipio;municipio;cod_municipio_rips
+1;Co-Ama91;91001;Leticia;001
+2;Co-Ama91;91540;Puerto NariÒo;540
+3;Co-Ant5;5001;Medellin;001
+4;Co-Ant5;5002;Abejorral;002
+5;Co-Ant5;5004;Abriaqui;004
+6;Co-Ant5;5021;Alejandria;021
+7;Co-Ant5;5030;Amaga;030
+8;Co-Ant5;5031;Amalfi;031
+9;Co-Ant5;5034;Andes;034
+10;Co-Ant5;5036;Angelopolis;036
+11;Co-Ant5;5038;Angostura;038
+12;Co-Ant5;5040;Anori;040
+13;Co-Ant5;5044;Anza;044
+14;Co-Ant5;5045;Apartado;045
+15;Co-Ant5;5051;Arboletes;051
+16;Co-Ant5;5055;Argelia;055
+17;Co-Ant5;5059;Armenia;059
+18;Co-Ant5;5079;Barbosa;079
+19;Co-Ant5;5086;Belmira;086
+20;Co-Ant5;5088;Bello;088
+21;Co-Ant5;5091;Betania;091
+22;Co-Ant5;5093;Betulia;093
+23;Co-Ant5;5101;Bolivar;100
+24;Co-Ant5;5107;BriceÒo;107
+25;Co-Ant5;5113;Buritica;113
+26;Co-Ant5;5120;Caceres;120
+27;Co-Ant5;5125;Caicedo;125
+28;Co-Ant5;5129;Caldas;129
+29;Co-Ant5;5134;Campamento;134
+30;Co-Ant5;5138;CaÒasgordas;138
+31;Co-Ant5;5142;Caracoli;142
+32;Co-Ant5;5145;Caramanta;145
+33;Co-Ant5;5147;Carepa;147
+34;Co-Ant5;5148;Carmen de Viboral;148
+35;Co-Ant5;5150;Carolina;150
+36;Co-Ant5;5154;Caucasia;154
+37;Co-Ant5;5172;Chigorodo;172
+38;Co-Ant5;5190;Cisneros;190
+39;Co-Ant5;5197;Cocorna;197
+40;Co-Ant5;5206;Concepcion;206
+41;Co-Ant5;5209;Concordia;209
+42;Co-Ant5;5212;Copacabana;212
+43;Co-Ant5;5234;Dabeiba;234
+44;Co-Ant5;5237;Don Matias;237
+45;Co-Ant5;5240;Ebejico;240
+46;Co-Ant5;5250;El Bagre;250
+47;Co-Ant5;5264;Entrerrios;264
+48;Co-Ant5;5266;Envigado;266
+49;Co-Ant5;5282;Fredonia;282
+50;Co-Ant5;5284;Frontino;284
+51;Co-Ant5;5306;Giraldo;306
+52;Co-Ant5;5308;Girardota;308
+53;Co-Ant5;5310;Gomez Plata;310
+54;Co-Ant5;5313;Granada;313
+55;Co-Ant5;5315;Guadalupe;315
+56;Co-Ant5;5318;Guarne;318
+57;Co-Ant5;5321;Guatape;321
+58;Co-Ant5;5347;Heliconia;347
+59;Co-Ant5;5353;Hispania;353
+60;Co-Ant5;5360;Itagui;360
+61;Co-Ant5;5361;Ituango;361
+62;Co-Ant5;5364;Jardin;364
+63;Co-Ant5;5368;Jerico;368
+64;Co-Ant5;5376;La Ceja;376
+65;Co-Ant5;5380;La Estrella;380
+66;Co-Ant5;5390;La Pintada;390
+67;Co-Ant5;5400;La Union;400
+68;Co-Ant5;5411;Liborina;411
+69;Co-Ant5;5425;Maceo;425
+70;Co-Ant5;5440;Marinilla;440
+71;Co-Ant5;5467;Montebello;467
+72;Co-Ant5;5475;Murindo;475
+73;Co-Ant5;5480;Mutata;480
+74;Co-Ant5;5483;NariÒo;483
+75;Co-Ant5;5490;Necocli;490
+76;Co-Ant5;5495;Nechi;495
+77;Co-Ant5;5501;Olaya;501
+78;Co-Ant5;5541;EL PeÒon;268
+79;Co-Ant5;5543;Peque;543
+80;Co-Ant5;5576;Pueblorrico;576
+81;Co-Ant5;5579;Puerto Berrio;579
+82;Co-Ant5;5585;Puerto Nare;585
+83;Co-Ant5;5591;Puerto Triunfo;591
+84;Co-Ant5;5604;Remedios;604
+85;Co-Ant5;5607;Retiro;607
+86;Co-Ant5;5615;Rionegro;615
+87;Co-Ant5;5628;Sabanalarga;628
+88;Co-Ant5;5631;Sabaneta;631
+89;Co-Ant5;5642;Salgar;642
+90;Co-Ant5;5647;San Andres de Cuerquia;647
+91;Co-Ant5;5649;San Carlos;649
+92;Co-Ant5;5652;San Francisco;652
+93;Co-Ant5;5656;San Jeronimo;656
+94;Co-Ant5;5658;San Jose de la MontaÒa;658
+95;Co-Ant5;5659;San Juan de Uraba;659
+96;Co-Ant5;5660;San Luis;660
+97;Co-Ant5;5664;San Pedro;664
+98;Co-Ant5;5665;San Pedro de Uraba;665
+99;Co-Ant5;5667;San Rafael;667
+100;Co-Ant5;5670;San Roque;670
+101;Co-Ant5;5674;San Vicente;674
+102;Co-Ant5;5679;Santa Barbara;679
+103;Co-Ant5;5685;SantaFe de Antioquia;042
+104;Co-Ant5;5686;Santa Rosa de Osos;686
+105;Co-Ant5;5690;Santo Domingo;690
+106;Co-Ant5;5697;Santuario;687
+107;Co-Ant5;5736;Segovia;736
+108;Co-Ant5;5756;Sonson;756
+109;Co-Ant5;5761;Sopetran;761
+110;Co-Ant5;5789;Tamesis;789
+111;Co-Ant5;5790;Taraza;790
+112;Co-Ant5;5792;Tarso;792
+113;Co-Ant5;5809;Titiribi;809
+114;Co-Ant5;5819;Toledo;819
+115;Co-Ant5;5837;Turbo;837
+116;Co-Ant5;5842;Uramita;842
+117;Co-Ant5;5847;Urrao;847
+118;Co-Ant5;5854;Valdivia;854
+119;Co-Ant5;5856;Valparaiso;856
+120;Co-Ant5;5858;Vegachi;858
+121;Co-Ant5;5861;Venecia;861
+122;Co-Ant5;5873;Vigia del Fuerte;873
+123;Co-Ant5;5885;Yali;885
+124;Co-Ant5;5887;Yarumal;887
+125;Co-Ant5;5890;Yolombo;890
+126;Co-Ant5;5893;Yondo;893
+127;Co-Ant5;5895;Zaragoza;895
+128;Co-Ara81;81001;Arauca;001
+129;Co-Ara81;81065;Arauquita;065
+130;Co-Ara81;81220;Cravo Norte;220
+131;Co-Ara81;81300;Fortul;300
+132;Co-Ara81;81591;Puerto Rondon;591
+133;Co-Ara81;81736;Saravena;736
+134;Co-Ara81;81794;Tame;794
+135;Co-Atl8;8001;Barranquilla;001
+136;Co-Atl8;8078;Baranoa;078
+137;Co-Atl8;8132;Juan de Acosta;372
+138;Co-Atl8;8137;Campo de la Cruz;137
+139;Co-Atl8;8141;Candelaria;141
+140;Co-Atl8;8296;Galapa;296
+141;Co-Atl8;8421;Luruaco;421
+142;Co-Atl8;8433;Malambo;433
+143;Co-Atl8;8436;Manati;436
+144;Co-Atl8;8520;Palmar de Varela;520
+145;Co-Atl8;8549;Piojo;549
+146;Co-Atl8;8558;Polonuevo;558
+147;Co-Atl8;8560;Ponedera;560
+148;Co-Atl8;8573;Puerto Colombia;573
+149;Co-Atl8;8606;Repelon;606
+150;Co-Atl8;8634;Sabanagrande;634
+151;Co-Atl8;8638;Sabanalarga;628
+152;Co-Atl8;8675;Santa Lucia;675
+153;Co-Atl8;8685;Santo Tomas;685
+154;Co-Atl8;8758;Soledad;758
+155;Co-Atl8;8770;Suan;770
+156;Co-Atl8;8832;Tubara;832
+157;Co-Atl8;8849;Usiacuri;849
+158;Co-Bog01;1001;Bogota D.C.;001
+159;Co-Bol13;13001;Cartagena;001
+160;Co-Bol13;13006;Achi;006
+161;Co-Bol13;13030;Altos del Rosario;030
+162;Co-Bol13;13042;Arenal;042
+163;Co-Bol13;13052;Arjona;052
+164;Co-Bol13;13062;Arroyohondo;062
+165;Co-Bol13;13074;Barranco de Loba;074
+166;Co-Bol13;13140;Calamar;140
+167;Co-Bol13;13160;Cantagallo;160
+168;Co-Bol13;13188;Cicuco;188
+169;Co-Bol13;13212;Cordoba;212
+170;Co-Bol13;13222;Clemencia;222
+171;Co-Bol13;13244;El Carmen de Bolivar;244
+172;Co-Bol13;13248;El Guamo;248
+173;Co-Bol13;13268;El PeÒon;268
+174;Co-Bol13;13300;Hatillo de Loba;300
+175;Co-Bol13;13430;Magangue;430
+176;Co-Bol13;13433;Mahates;433
+177;Co-Bol13;13440;Margarita;440
+178;Co-Bol13;13442;Maria la Baja;442
+179;Co-Bol13;13458;Montecristo;458
+180;Co-Bol13;13468;Mompos;468
+181;Co-Bol13;13473;Morales;473
+182;Co-Bol13;13490;Norosi;490
+183;Co-Bol13;13549;Pinillos;549
+184;Co-Bol13;13580;Regidor;580
+185;Co-Bol13;13600;Rio Viejo;600
+186;Co-Bol13;13620;San Cristobal;620
+187;Co-Bol13;13647;San Estanislao;647
+188;Co-Bol13;13650;San Fernando;650
+189;Co-Bol13;13654;San Jacinto;654
+190;Co-Bol13;13655;San Jacinto del Cauca;655
+191;Co-Bol13;13657;San Juan de Nepomuceno;657
+192;Co-Bol13;13667;San Martin de Loba;667
+193;Co-Bol13;13670;San Pablo;670
+194;Co-Bol13;13673;Santa Catalina;673
+195;Co-Bol13;13683;Santa Rosa;683
+196;Co-Bol13;13688;Santa Rosa del Sur;688
+197;Co-Bol13;13744;Simiti;744
+198;Co-Bol13;13760;Soplaviento;760
+199;Co-Bol13;13780;Talaigua Nuevo;780
+200;Co-Bol13;13810;Tiquisio;810
+201;Co-Bol13;13836;Turbaco;836
+202;Co-Bol13;13838;Turbana;838
+203;Co-Bol13;13873;Villanueva;873
+204;Co-Bol13;13894;Zambrano;894
+205;Co-Boy15;15001;Tunja;001
+206;Co-Boy15;15022;Almeida;022
+207;Co-Boy15;15047;Aquitania;047
+208;Co-Boy15;15051;Arcabuco;051
+209;Co-Boy15;15087;Belen;087
+210;Co-Boy15;15090;Berbeo;090
+211;Co-Boy15;15092;Beteitiva;092
+212;Co-Boy15;15097;Boavita;097
+213;Co-Boy15;15104;Boyaca;104
+214;Co-Boy15;15106;BriceÒo;107
+215;Co-Boy15;15109;Buenavista;109
+216;Co-Boy15;15114;Busbanza;114
+217;Co-Boy15;15131;Caldas;129
+218;Co-Boy15;15135;Campohermoso;135
+219;Co-Boy15;15162;Cerinza;162
+220;Co-Boy15;15172;Chinavita;172
+221;Co-Boy15;15176;Chiquinquira;176
+222;Co-Boy15;15180;Chiscas;180
+223;Co-Boy15;15183;Chita;183
+224;Co-Boy15;15185;Chitaraque;185
+225;Co-Boy15;15187;Chivata;187
+226;Co-Boy15;15189;Cienaga;189
+227;Co-Boy15;15204;Combita;204
+228;Co-Boy15;15212;Coper;212
+229;Co-Boy15;15215;Corrales;215
+230;Co-Boy15;15218;Covarachia;218
+231;Co-Boy15;15223;Cubara;223
+232;Co-Boy15;15224;Cucaita;224
+233;Co-Boy15;15226;Cuitiva;226
+234;Co-Boy15;15232;Chiquiza;232
+235;Co-Boy15;15236;Chivor;236
+236;Co-Boy15;15238;Duitama;238
+237;Co-Boy15;15244;El Cocuy;244
+238;Co-Boy15;15248;El Espino;248
+239;Co-Boy15;15272;Firavitoba;272
+240;Co-Boy15;15276;Floresta;276
+241;Co-Boy15;15293;Gachantiva;293
+242;Co-Boy15;15296;Gameza;296
+243;Co-Boy15;15299;Garagoa;299
+244;Co-Boy15;15317;Guacamayas;317
+245;Co-Boy15;15322;Guateque;322
+246;Co-Boy15;15325;Guayata;325
+247;Co-Boy15;15332;Guican;332
+248;Co-Boy15;15362;Iza;362
+249;Co-Boy15;15367;Jenesano;367
+250;Co-Boy15;15368;Jerico;368
+251;Co-Boy15;15377;Labranzagrande;377
+252;Co-Boy15;15380;La Capilla;380
+253;Co-Boy15;15401;La Victoria;401
+254;Co-Boy15;15403;La Uvita;403
+255;Co-Boy15;15407;Villa de Leiva;407
+256;Co-Boy15;15425;Macanal;425
+257;Co-Boy15;15442;Maripi;442
+258;Co-Boy15;15455;Miraflores;455
+259;Co-Boy15;15464;Mongua;464
+260;Co-Boy15;15466;Mongui;466
+261;Co-Boy15;15469;Moniquira;469
+262;Co-Boy15;15476;Motavita;476
+263;Co-Boy15;15480;Muzo;480
+264;Co-Boy15;15491;Nobsa;491
+265;Co-Boy15;15494;Nuevo Colon;494
+266;Co-Boy15;15500;Oicata;500
+267;Co-Boy15;15507;Otanche;507
+268;Co-Boy15;15511;Pachavita;511
+269;Co-Boy15;15514;Paez;514
+270;Co-Boy15;15516;Paipa;516
+271;Co-Boy15;15518;Pajarito;518
+272;Co-Boy15;15522;Panqueba;522
+273;Co-Boy15;15531;Pauna;531
+274;Co-Boy15;15532;Paya;533
+275;Co-Boy15;15537;Paz de Rio;537
+276;Co-Boy15;15542;Pesca;542
+277;Co-Boy15;15550;Pisva;550
+278;Co-Boy15;15572;Puerto Boyaca;572
+279;Co-Boy15;15580;Quipama;580
+280;Co-Boy15;15599;Ramiriqui;599
+281;Co-Boy15;15600;Raquira;600
+282;Co-Boy15;15621;Rondon;621
+283;Co-Boy15;15632;Saboya;632
+284;Co-Boy15;15638;Sachica;638
+285;Co-Boy15;15646;Samaca;646
+286;Co-Boy15;15660;San Eduardo;660
+287;Co-Boy15;15664;San Jose de Pare;664
+288;Co-Boy15;15667;San Luis de Gaceno;667
+289;Co-Boy15;15673;San Mateo;673
+290;Co-Boy15;15676;San Miguel de Sema;676
+291;Co-Boy15;15681;San Pablo de Borbur;681
+292;Co-Boy15;15686;Santana;686
+293;Co-Boy15;15690;Santa Maria;690
+294;Co-Boy15;15693;Santa Rosa de Viterbo;693
+295;Co-Boy15;15696;Santa Sofia;696
+296;Co-Boy15;15720;Sativanorte;720
+297;Co-Boy15;15723;Sativasur;723
+298;Co-Boy15;15740;Siachoque;740
+299;Co-Boy15;15753;Soata;753
+300;Co-Boy15;15755;Socota;755
+301;Co-Boy15;15757;Socha;757
+302;Co-Boy15;15759;Sogamoso;759
+303;Co-Boy15;15761;Somondoco;761
+304;Co-Boy15;15762;Sora;762
+305;Co-Boy15;15763;Sotaquira;763
+306;Co-Boy15;15764;Soraca;764
+307;Co-Boy15;15774;Susacon;774
+308;Co-Boy15;15776;Sutamarchan;776
+309;Co-Boy15;15778;Sutatenza;778
+310;Co-Boy15;15790;Tasco;790
+311;Co-Boy15;15798;Tenza;798
+312;Co-Boy15;15804;Tibana;804
+313;Co-Boy15;15806;Tibasosa;806
+314;Co-Boy15;15808;Tinjaca;808
+315;Co-Boy15;15810;Tipacoque;810
+316;Co-Boy15;15814;Toca;814
+317;Co-Boy15;15816;Togui;816
+318;Co-Boy15;15820;Topaga;820
+319;Co-Boy15;15822;Tota;822
+320;Co-Boy15;15832;Tunungua;832
+321;Co-Boy15;15835;Turmeque;835
+322;Co-Boy15;15837;Tuta;837
+323;Co-Boy15;15839;Tutasa;839
+324;Co-Boy15;15842;Umbita;842
+325;Co-Boy15;15861;Ventaquemada;861
+326;Co-Boy15;15879;Viracacha;879
+327;Co-Boy15;15897;Zetaquira;897
+328;Co-Cal17;17001;Manizales;001
+329;Co-Cal17;17013;Aguadas;013
+330;Co-Cal17;17042;Anserma;042
+331;Co-Cal17;17050;Aranzazu;050
+332;Co-Cal17;17088;Belalcazar;088
+333;Co-Cal17;17174;Chinchina;174
+334;Co-Cal17;17272;Filadelfia;272
+335;Co-Cal17;17380;La Dorada;380
+336;Co-Cal17;17388;La Merced;388
+337;Co-Cal17;17433;Manzanares;433
+338;Co-Cal17;17442;Marmato;442
+339;Co-Cal17;17444;Marquetalia;444
+340;Co-Cal17;17446;Marulanda;446
+341;Co-Cal17;17486;Neira;486
+342;Co-Cal17;17495;Norcasia;495
+343;Co-Cal17;17513;Pacora;513
+344;Co-Cal17;17524;Palestina;524
+345;Co-Cal17;17541;Pensilvania;541
+346;Co-Cal17;17614;Riosucio;614
+347;Co-Cal17;17616;Risaralda;616
+348;Co-Cal17;17653;Salamina;653
+349;Co-Cal17;17662;Samana;662
+350;Co-Cal17;17665;San Jose;665
+351;Co-Cal17;17777;Supia;777
+352;Co-Cal17;17867;La Victoria;401
+353;Co-Cal17;17873;Villamaria;873
+354;Co-Cal17;17877;Viterbo;877
+355;Co-Caq18;18001;Florencia;001
+356;Co-Caq18;18029;Albania;029
+357;Co-Caq18;18094;Belen de los Andaquies;094
+358;Co-Caq18;18150;Cartagena del Chaira;150
+359;Co-Caq18;18205;Curillo;205
+360;Co-Caq18;18247;El Doncello;247
+361;Co-Caq18;18256;El Paujil;256
+362;Co-Caq18;18410;La MontaÒita;410
+363;Co-Caq18;18460;Milan;460
+364;Co-Caq18;18479;Morelia;479
+365;Co-Caq18;18592;Puerto Rico;592
+366;Co-Caq18;18610;San Jose del Fragua;610
+367;Co-Caq18;18753;San Vicente del Caguan;753
+368;Co-Caq18;18765;Solano;756
+369;Co-Caq18;18785;Solita;785
+370;Co-Caq18;18860;Valparaiso;856
+371;Co-Cas85;85001;Yopal;001
+372;Co-Cas85;85010;Aguazul;010
+373;Co-Cas85;85015;Chameza;015
+374;Co-Cas85;85125;Hato Corozal;125
+375;Co-Cas85;85136;La Salina;136
+376;Co-Cas85;85139;Mani;139
+377;Co-Cas85;85162;Monterrey;162
+378;Co-Cas85;85225;Nunchia;225
+379;Co-Cas85;85230;Orocue;230
+380;Co-Cas85;85250;Paz de Ariporo;250
+381;Co-Cas85;85263;Pore;263
+382;Co-Cas85;85279;Recetor;279
+383;Co-Cas85;85300;Sabanalarga;628
+384;Co-Cas85;85315;Sacama;315
+385;Co-Cas85;85325;San Luis de Palenque;325
+386;Co-Cas85;85400;Tamara;400
+387;Co-Cas85;85410;Tauramena;410
+388;Co-Cas85;85430;Trinidad;430
+389;Co-Cas85;85440;Villanueva;873
+390;Co-Cau19;19001;Popayan;001
+391;Co-Cau19;19022;Almaguer;022
+392;Co-Cau19;19050;Argelia;055
+393;Co-Cau19;19075;Balboa;075
+394;Co-Cau19;19100;Bolivar;100
+395;Co-Cau19;19110;Buenos Aires;110
+396;Co-Cau19;19130;Cajibio;130
+397;Co-Cau19;19137;Caldono;137
+398;Co-Cau19;19142;Caloto;142
+399;Co-Cau19;19212;Corinto;212
+400;Co-Cau19;19256;El Tambo;256
+401;Co-Cau19;19290;Florencia;001
+402;Co-Cau19;19300;Guachene;300
+403;Co-Cau19;19318;Guapi;318
+404;Co-Cau19;19355;Inza;355
+405;Co-Cau19;19364;Jambalo;364
+406;Co-Cau19;19392;La Sierra;392
+407;Co-Cau19;19397;La Vega;397
+408;Co-Cau19;19418;Lopez;418
+409;Co-Cau19;19450;Mercaderes;450
+410;Co-Cau19;19455;Miranda;455
+411;Co-Cau19;19473;Morales;473
+412;Co-Cau19;19513;Padilla;513
+413;Co-Cau19;19517;Paez;514
+414;Co-Cau19;19532;Patia;532
+415;Co-Cau19;19533;Piamonte;533
+416;Co-Cau19;19548;Piendamo;548
+417;Co-Cau19;19573;Puerto Tejada;573
+418;Co-Cau19;19585;Purace;585
+419;Co-Cau19;19622;Rosas;622
+420;Co-Cau19;19693;San Sebastian;693
+421;Co-Cau19;19698;Santander de Quilichao;698
+422;Co-Cau19;19701;Santa Rosa;683
+423;Co-Cau19;19743;Silvia;743
+424;Co-Cau19;19760;Sotara;760
+425;Co-Cau19;19780;Suarez;780
+426;Co-Cau19;19785;Sucre;785
+427;Co-Cau19;19807;Timbio;807
+428;Co-Cau19;19809;Timbiqui;809
+429;Co-Cau19;19821;Toribio;821
+430;Co-Cau19;19824;Totoro;824
+431;Co-Cau19;19845;Villa Rica;845
+432;Co-Ces20;20001;Valledupar;001
+433;Co-Ces20;20011;Aguachica;011
+434;Co-Ces20;20013;Agustin Codazzi;013
+435;Co-Ces20;20032;Astrea;032
+436;Co-Ces20;20045;Becerril;045
+437;Co-Ces20;20060;Bosconia;060
+438;Co-Ces20;20175;Chimichagua;175
+439;Co-Ces20;20178;Chiriguana;178
+440;Co-Ces20;20228;Curumani;228
+441;Co-Ces20;20238;El Copey;238
+442;Co-Ces20;20250;El Paso;250
+443;Co-Ces20;20295;Gamarra;295
+444;Co-Ces20;20310;Gonzalez;310
+445;Co-Ces20;20383;La Gloria;383
+446;Co-Ces20;20400;La Jagua de Ibirico;400
+447;Co-Ces20;20443;Manaure;443
+448;Co-Ces20;20517;Pailitas;517
+449;Co-Ces20;20550;Pelaya;550
+450;Co-Ces20;20570;Pueblo Bello;570
+451;Co-Ces20;20614;Rio de oro;614
+452;Co-Ces20;20621;La Paz;621
+453;Co-Ces20;20710;San Alberto;710
+454;Co-Ces20;20750;San Diego;750
+455;Co-Ces20;20770;San Martin;770
+456;Co-Ces20;20787;Tamalameque;787
+457;Co-Cho27;27001;Quibdo;001
+458;Co-Cho27;27006;Acandi;006
+459;Co-Cho27;27025;Alto Baudo;025
+460;Co-Cho27;27050;Atrato;050
+461;Co-Cho27;27073;Bagado;073
+462;Co-Cho27;27075;Bahia Solano;075
+463;Co-Cho27;27077;Bajo Baudo;077
+464;Co-Cho27;27086;Belen de Bajira;077
+465;Co-Cho27;27099;Bojaya;099
+466;Co-Cho27;27135;El Canton de San Pablo;135
+467;Co-Cho27;27150;Carmen del Darien;150
+468;Co-Cho27;27160;Certegui;160
+469;Co-Cho27;27205;Condoto;205
+470;Co-Cho27;27245;El Carmen de Atrato;245
+471;Co-Cho27;27250;Santa Genoveva de Docorodo;077
+472;Co-Cho27;27361;Istmina;361
+473;Co-Cho27;27372;Jurado;372
+474;Co-Cho27;27413;Lloro;413
+475;Co-Cho27;27425;Medio Atrato;425
+476;Co-Cho27;27430;Medio Baudo;430
+477;Co-Cho27;27450;Medio San Juan;450
+478;Co-Cho27;27491;Novita;491
+479;Co-Cho27;27495;Nuqui;495
+480;Co-Cho27;27580;Rio Iro;580
+481;Co-Cho27;27600;Rio Quito;600
+482;Co-Cho27;27615;Riosucio;614
+483;Co-Cho27;27660;San Jose del Palmar;660
+484;Co-Cho27;27745;Sipi;745
+485;Co-Cho27;27787;Tado;787
+486;Co-Cho27;27800;Unguia;800
+487;Co-Cho27;27810;Union Panamericana;810
+488;Co-Cor23;23001;Monteria;001
+489;Co-Cor23;23068;Ayapel;068
+490;Co-Cor23;23079;Buenavista;109
+491;Co-Cor23;23090;Canalete;090
+492;Co-Cor23;23162;Cerete;162
+493;Co-Cor23;23168;Chima;168
+494;Co-Cor23;23182;Chinu;182
+495;Co-Cor23;23189;Cienaga de Oro;189
+496;Co-Cor23;23300;Cotorra;300
+497;Co-Cor23;23350;La Apartada y La Frontera;350
+498;Co-Cor23;23417;Lorica;417
+499;Co-Cor23;23419;Los Cordobas;419
+500;Co-Cor23;23464;Momil;464
+501;Co-Cor23;23466;Montelibano;466
+502;Co-Cor23;23500;MoÒitos;500
+503;Co-Cor23;23555;Planeta Rica;555
+504;Co-Cor23;23570;Pueblo Nuevo;570
+505;Co-Cor23;23574;Puerto Escondido;574
+506;Co-Cor23;23580;Puerto Libertador;580
+507;Co-Cor23;23586;Purisima;586
+508;Co-Cor23;23660;Sahagun;660
+509;Co-Cor23;23670;San Andres Sotavento;670
+510;Co-Cor23;23672;San Antero;672
+511;Co-Cor23;23675;San Bernardo del Viento;675
+512;Co-Cor23;23678;San Carlos;649
+513;Co-Cor23;23682;San Jose de Ure;350
+514;Co-Cor23;23686;San Pelayo;686
+515;Co-Cor23;23807;Tierralta;807
+516;Co-Cor23;23815;Tuchin;350
+517;Co-Cor23;23855;Valencia;855
+518;Co-Cun25;25001;Agua de Dios;001
+519;Co-Cun25;25019;Alban;019
+520;Co-Cun25;25035;Anapoima;035
+521;Co-Cun25;25040;Anolaima;040
+522;Co-Cun25;25053;Arbelaez;053
+523;Co-Cun25;25086;Beltran;086
+524;Co-Cun25;25095;Bituima;095
+525;Co-Cun25;25099;Bojaca;099
+526;Co-Cun25;25120;Cabrera;120
+527;Co-Cun25;25123;Cachipay;123
+528;Co-Cun25;25126;Cajica;126
+529;Co-Cun25;25148;Caparrapi;148
+530;Co-Cun25;25151;Caqueza;151
+531;Co-Cun25;25154;Carmen de Carupa;154
+532;Co-Cun25;25168;Chaguani;168
+533;Co-Cun25;25175;Chia;175
+534;Co-Cun25;25178;Chipaque;178
+535;Co-Cun25;25181;Choachi;181
+536;Co-Cun25;25183;Choconta;183
+537;Co-Cun25;25200;Cogua;200
+538;Co-Cun25;25214;Cota;214
+539;Co-Cun25;25224;Cucunuba;224
+540;Co-Cun25;25245;El Colegio;245
+541;Co-Cun25;25258;El PeÒon;268
+542;Co-Cun25;25260;El Rosal;260
+543;Co-Cun25;25269;Facatativa;269
+544;Co-Cun25;25279;Fomeque;279
+545;Co-Cun25;25281;Fosca;281
+546;Co-Cun25;25286;Funza;286
+547;Co-Cun25;25288;Fuquene;288
+548;Co-Cun25;25290;Fusagasuga;290
+549;Co-Cun25;25293;Gachala;293
+550;Co-Cun25;25295;Gachancipa;295
+551;Co-Cun25;25297;Gacheta;297
+552;Co-Cun25;25299;Gama;299
+553;Co-Cun25;25307;Girardot;307
+554;Co-Cun25;25312;Granada;313
+555;Co-Cun25;25317;Guacheta;317
+556;Co-Cun25;25320;Guaduas;320
+557;Co-Cun25;25322;Guasca;322
+558;Co-Cun25;25324;Guataqui;324
+559;Co-Cun25;25326;Guatavita;326
+560;Co-Cun25;25328;Guayabal de Siquima;328
+561;Co-Cun25;25335;Guayabetal;335
+562;Co-Cun25;25339;Gutierrez;339
+563;Co-Cun25;25368;Jerusalen;368
+564;Co-Cun25;25372;Junin;372
+565;Co-Cun25;25377;La Calera;377
+566;Co-Cun25;25386;La Mesa;386
+567;Co-Cun25;25394;La Palma;394
+568;Co-Cun25;25398;La PeÒa;398
+569;Co-Cun25;25402;La Vega;397
+570;Co-Cun25;25407;Lenguazaque;407
+571;Co-Cun25;25426;Macheta;426
+572;Co-Cun25;25430;Madrid;430
+573;Co-Cun25;25436;Manta;436
+574;Co-Cun25;25438;Medina;438
+575;Co-Cun25;25473;Mosquera;473
+576;Co-Cun25;25483;NariÒo;483
+577;Co-Cun25;25486;Nemocon;486
+578;Co-Cun25;25488;Nilo;488
+579;Co-Cun25;25489;Nimaima;489
+580;Co-Cun25;25491;Nocaima;491
+581;Co-Cun25;25506;Venecia;861
+582;Co-Cun25;25513;Pacho;513
+583;Co-Cun25;25518;Paime;518
+584;Co-Cun25;25524;Pandi;524
+585;Co-Cun25;25530;Paratebueno;530
+586;Co-Cun25;25535;Pasca;535
+587;Co-Cun25;25572;Puerto Salgar;572
+588;Co-Cun25;25580;Puli;580
+589;Co-Cun25;25592;Quebradanegra;592
+590;Co-Cun25;25594;Quetame;594
+591;Co-Cun25;25596;Quipile;596
+592;Co-Cun25;25599;Apulo;599
+593;Co-Cun25;25612;Ricaurte;612
+594;Co-Cun25;25645;San Antonio del Tequendama;645
+595;Co-Cun25;25649;San Bernardo;649
+596;Co-Cun25;25653;San Cayetano;653
+597;Co-Cun25;25658;San Francisco;652
+598;Co-Cun25;25662;San Juan de Rio Seco;662
+599;Co-Cun25;25718;Sasaima;718
+600;Co-Cun25;25736;Sesquile;736
+601;Co-Cun25;25740;Sibate;740
+602;Co-Cun25;25743;Silvania;743
+603;Co-Cun25;25745;Simijaca;745
+604;Co-Cun25;25754;Soacha;754
+605;Co-Cun25;25758;Sopo;758
+606;Co-Cun25;25769;Subachoque;769
+607;Co-Cun25;25772;Suesca;772
+608;Co-Cun25;25777;Supata;777
+609;Co-Cun25;25779;Susa;779
+610;Co-Cun25;25781;Sutatausa;781
+611;Co-Cun25;25785;Tabio;785
+612;Co-Cun25;25793;Tausa;793
+613;Co-Cun25;25797;Tena;797
+614;Co-Cun25;25799;Tenjo;799
+615;Co-Cun25;25805;Tibacuy;805
+616;Co-Cun25;25807;Tibirita;807
+617;Co-Cun25;25815;Tocaima;815
+618;Co-Cun25;25817;Tocancipa;817
+619;Co-Cun25;25823;Topaipi;823
+620;Co-Cun25;25839;Ubala;839
+621;Co-Cun25;25841;Ubaque;841
+622;Co-Cun25;25843;Ubate;843
+623;Co-Cun25;25845;Une;845
+624;Co-Cun25;25851;Utica;851
+625;Co-Cun25;25862;Vergara;862
+626;Co-Cun25;25867;Viani;867
+627;Co-Cun25;25871;Villagomez;871
+628;Co-Cun25;25873;Villapinzon;873
+629;Co-Cun25;25875;Villeta;875
+630;Co-Cun25;25878;Viota;878
+631;Co-Cun25;25885;Yacopi;885
+632;Co-Cun25;25888;Zipacon;898
+633;Co-Cun25;25899;Zipaquira;899
+634;Co-Gua94;94001;Inirida;001
+635;Co-Gua95;95001;San Jose del Guaviare;001
+636;Co-Gua95;95015;Calamar;140
+637;Co-Gua95;95025;El Retorno;025
+638;Co-Gua95;95200;Miraflores;455
+639;Co-Hui41;41001;Neiva;001
+640;Co-Hui41;41006;Acevedo;006
+641;Co-Hui41;41013;Agrado;013
+642;Co-Hui41;41016;Aipe;016
+643;Co-Hui41;41020;Algeciras;020
+644;Co-Hui41;41026;Altamira;026
+645;Co-Hui41;41078;Baraya;078
+646;Co-Hui41;41132;Campoalegre;132
+647;Co-Hui41;41206;Colombia;206
+648;Co-Hui41;41244;Elias;244
+649;Co-Hui41;41298;Garzon;298
+650;Co-Hui41;41306;Gigante;306
+651;Co-Hui41;41319;Guadalupe;315
+652;Co-Hui41;41349;Hobo;349
+653;Co-Hui41;41357;Içquira;357
+654;Co-Hui41;41359;Isnos;359
+655;Co-Hui41;41378;La Argentina;378
+656;Co-Hui41;41396;La Plata;396
+657;Co-Hui41;41483;Nataga;483
+658;Co-Hui41;41503;Oporapa;503
+659;Co-Hui41;41518;Paicol;518
+660;Co-Hui41;41524;Palermo;524
+661;Co-Hui41;41530;Palestina;524
+662;Co-Hui41;41548;Pital;548
+663;Co-Hui41;41551;Pitalito;551
+664;Co-Hui41;41615;Rivera;615
+665;Co-Hui41;41660;Saladoblanco;660
+666;Co-Hui41;41668;San Agustin;668
+667;Co-Hui41;41676;Santa Maria;690
+668;Co-Hui41;41770;Suaza;770
+669;Co-Hui41;41791;Tarqui;791
+670;Co-Hui41;41797;Tesalia;797
+671;Co-Hui41;41799;Tello;799
+672;Co-Hui41;41801;Teruel;801
+673;Co-Hui41;41807;Timana;807
+674;Co-Hui41;41872;Villavieja;872
+675;Co-Hui41;41885;Yaguara;885
+676;Co-La44;44001;Riohacha;001
+677;Co-La44;44035;Albania;029
+678;Co-La44;44078;Barrancas;078
+679;Co-La44;44090;Dibulla;090
+680;Co-La44;44098;Distraccion;098
+681;Co-La44;44110;El Molino;110
+682;Co-La44;44279;Fonseca;279
+683;Co-La44;44378;Hatonuevo;378
+684;Co-La44;44420;La Jagua del Pilar;420
+685;Co-La44;44430;Maicao;430
+686;Co-La44;44560;Manaure;443
+687;Co-La44;44650;San Juan del Cesar;650
+688;Co-La44;44847;Uribia;847
+689;Co-La44;44855;Urumita;855
+690;Co-La44;44874;Villanueva;873
+691;Co-Mag47;47001;Santa Marta;001
+692;Co-Mag47;47030;Algarrobo;030
+693;Co-Mag47;47053;Aracataca;053
+694;Co-Mag47;47058;Ariguani;058
+695;Co-Mag47;47161;Cerro San Antonio;161
+696;Co-Mag47;47170;Chibolo;170
+697;Co-Mag47;47189;Cienaga;189
+698;Co-Mag47;47205;Concordia;209
+699;Co-Mag47;47245;El Banco;245
+700;Co-Mag47;47258;El PiÒon;258
+701;Co-Mag47;47268;El Reten;268
+702;Co-Mag47;47288;Fundacion;288
+703;Co-Mag47;47318;Guamal;318
+704;Co-Mag47;47441;Pedraza;541
+705;Co-Mag47;47460;Nueva Granada;460
+706;Co-Mag47;47545;PijiÒo;551
+707;Co-Mag47;47551;Pivijay;551
+708;Co-Mag47;47555;Plato;555
+709;Co-Mag47;47570;Puebloviejo;570
+710;Co-Mag47;47605;Remolino;605
+711;Co-Mag47;47660;Sabanas de San Angel;660
+712;Co-Mag47;47675;Salamina;653
+713;Co-Mag47;47692;San Sebastian de Buenavista;692
+714;Co-Mag47;47703;San Zenon;703
+715;Co-Mag47;47707;Santa Ana;707
+716;Co-Mag47;47720;Santa Barbara de Pinto;720
+717;Co-Mag47;47745;Sitionuevo;745
+718;Co-Mag47;47798;Tenerife;798
+719;Co-Mag47;47960;Zapayan;960
+720;Co-Mag47;47980;Zona Bananera;980
+721;Co-Met50;50001;Villavicencio;001
+722;Co-Met50;50006;Acacias;006
+723;Co-Met50;50110;Barranca de Upia;110
+724;Co-Met50;50124;Cabuyaro;124
+725;Co-Met50;50150;Castilla la Nueva;150
+726;Co-Met50;50223;Cubarral;223
+727;Co-Met50;50226;Cumaral;226
+728;Co-Met50;50245;El Calvario;245
+729;Co-Met50;50251;El Castillo;251
+730;Co-Met50;50270;El Dorado;270
+731;Co-Met50;50287;Fuente de Oro;287
+732;Co-Met50;50313;Granada;313
+733;Co-Met50;50318;Guamal;318
+734;Co-Met50;50325;Mapiripan;325
+735;Co-Met50;50330;Mesetas;330
+736;Co-Met50;50350;La Macarena;350
+737;Co-Met50;50370;Uribe;370
+738;Co-Met50;50400;Lejanias;400
+739;Co-Met50;50450;Puerto Concordia;450
+740;Co-Met50;50568;Puerto Gaitan;568
+741;Co-Met50;50573;Puerto Lopez;573
+742;Co-Met50;50577;Puerto Lleras;577
+743;Co-Met50;50590;Puerto Rico;592
+744;Co-Met50;50606;Restrepo;606
+745;Co-Met50;50680;San Carlos de Guaroa;680
+746;Co-Met50;50683;San Juan de Arama;683
+747;Co-Met50;50686;San Juanito;686
+748;Co-Met50;50689;San Martin;770
+749;Co-Met50;50711;Vista Hermosa;711
+750;Co-Nar52;52001;San Juan de Pasto;001
+751;Co-Nar52;52019;Alban;019
+752;Co-Nar52;52022;Aldana;022
+753;Co-Nar52;52036;Ancuya;036
+754;Co-Nar52;52051;Arboleda;051
+755;Co-Nar52;52079;Barbacoas;079
+756;Co-Nar52;52083;Belen;087
+757;Co-Nar52;52110;Buesaco;110
+758;Co-Nar52;52203;Colon;203
+759;Co-Nar52;52207;Consaca;207
+760;Co-Nar52;52210;Contadero;210
+761;Co-Nar52;52215;Cordoba;212
+762;Co-Nar52;52224;Cuaspud;224
+763;Co-Nar52;52227;Cumbal;227
+764;Co-Nar52;52233;Cumbitara;233
+765;Co-Nar52;52240;Chachagui;240
+766;Co-Nar52;52250;El Charco;250
+767;Co-Nar52;52254;El PeÒol;254
+768;Co-Nar52;52256;El Rosario;256
+769;Co-Nar52;52258;El Tablon de Gomez;258
+770;Co-Nar52;52260;El Tambo;256
+771;Co-Nar52;52287;Funes;287
+772;Co-Nar52;52317;Guachucal;317
+773;Co-Nar52;52320;Guaitarilla;320
+774;Co-Nar52;52323;Gualmatan;323
+775;Co-Nar52;52352;Iles;352
+776;Co-Nar52;52354;Imues;354
+777;Co-Nar52;52356;Ipiales;356
+778;Co-Nar52;52378;La Cruz;378
+779;Co-Nar52;52381;La Florida;381
+780;Co-Nar52;52385;La Llanada;385
+781;Co-Nar52;52390;La Tola;390
+782;Co-Nar52;52399;La Union;400
+783;Co-Nar52;52405;Leiva;405
+784;Co-Nar52;52411;Linares;411
+785;Co-Nar52;52418;Sotomayor;241
+786;Co-Nar52;52427;Magui;427
+787;Co-Nar52;52435;Mallama;435
+788;Co-Nar52;52473;Mosquera;473
+789;Co-Nar52;52480;NariÒo;483
+790;Co-Nar52;52490;Olaya Herrera;490
+791;Co-Nar52;52506;Ospina;506
+792;Co-Nar52;52520;Francisco Pizarro;520
+793;Co-Nar52;52540;Policarpa;540
+794;Co-Nar52;52560;Potosi;560
+795;Co-Nar52;52565;Providencia;565
+796;Co-Nar52;52573;Puerres;573
+797;Co-Nar52;52585;Pupiales;585
+798;Co-Nar52;52612;Ricaurte;612
+799;Co-Nar52;52621;Roberto Payan;621
+800;Co-Nar52;52678;Samaniego;678
+801;Co-Nar52;52683;Sandona;683
+802;Co-Nar52;52685;San Bernardo;649
+803;Co-Nar52;52687;San Lorenzo;687
+804;Co-Nar52;52693;San Pablo;670
+805;Co-Nar52;52694;San Pedro de Cartago;694
+806;Co-Nar52;52695;Santa Barbara;679
+807;Co-Nar52;52699;Guachaves;317
+808;Co-Nar52;52720;Sapuyes;720
+809;Co-Nar52;52786;Taminango;786
+810;Co-Nar52;52788;Tangua;788
+811;Co-Nar52;52835;Tumaco;835
+812;Co-Nar52;52838;Tuquerres;838
+813;Co-Nar52;52885;Yacuanquer;885
+814;Co-Nor54;54001;Cucuta;001
+815;Co-Nor54;54003;Abrego;003
+816;Co-Nor54;54051;Arboledas;051
+817;Co-Nor54;54099;Bochalema;099
+818;Co-Nor54;54109;Bucarasica;109
+819;Co-Nor54;54125;Cacota;125
+820;Co-Nor54;54128;Cachira;128
+821;Co-Nor54;54172;Chinacota;172
+822;Co-Nor54;54174;Chitaga;174
+823;Co-Nor54;54206;Convencion;206
+824;Co-Nor54;54223;Cucutilla;223
+825;Co-Nor54;54239;Durania;239
+826;Co-Nor54;54245;El Carmen;245
+827;Co-Nor54;54250;El Tarra;250
+828;Co-Nor54;54261;El Zulia;261
+829;Co-Nor54;54313;Gramalote;313
+830;Co-Nor54;54344;Hacari;344
+831;Co-Nor54;54347;Herran;347
+832;Co-Nor54;54377;Labateca;377
+833;Co-Nor54;54385;La Esperanza;385
+834;Co-Nor54;54398;La Playa;398
+835;Co-Nor54;54405;Los Patios;405
+836;Co-Nor54;54418;Lourdes;418
+837;Co-Nor54;54480;Mutiscua;480
+838;Co-Nor54;54498;OcaÒa;498
+839;Co-Nor54;54518;Pamplona;518
+840;Co-Nor54;54520;Pamplonita;520
+841;Co-Nor54;54553;Puerto Santander;553
+842;Co-Nor54;54599;Ragonvalia;599
+843;Co-Nor54;54660;Salazar;660
+844;Co-Nor54;54670;San Calixto;670
+845;Co-Nor54;54673;San Cayetano;653
+846;Co-Nor54;54680;Santiago;680
+847;Co-Nor54;54720;Sardinata;720
+848;Co-Nor54;54743;Silos;743
+849;Co-Nor54;54800;Teorama;800
+850;Co-Nor54;54810;Tibu;810
+851;Co-Nor54;54820;Toledo;819
+852;Co-Nor54;54871;Villa Caro;871
+853;Co-Nor54;54874;Villa del Rosario;874
+854;Co-Put86;86001;Mocoa;001
+855;Co-Put86;86219;Colon;203
+856;Co-Put86;86320;Orito;320
+857;Co-Put86;86568;Puerto Asis;568
+858;Co-Put86;86569;Puerto Caicedo;569
+859;Co-Put86;86571;Puerto Guzman;571
+860;Co-Put86;86573;Puerto Leguizamo;573
+861;Co-Put86;86749;Sibundoy;749
+862;Co-Put86;86755;San Francisco;652
+863;Co-Put86;86757;San Miguel;686
+864;Co-Put86;86760;Santiago;680
+865;Co-Put86;86865;Valle del Guamuez;865
+866;Co-Put86;86885;Villagarzon;885
+867;Co-Qui63;63001;Armenia;059
+868;Co-Qui63;63111;Buenavista;109
+869;Co-Qui63;63130;Calarca;130
+870;Co-Qui63;63190;Circasia;190
+871;Co-Qui63;63212;Cordoba;212
+872;Co-Qui63;63272;Filandia;272
+873;Co-Qui63;63302;Genova;302
+874;Co-Qui63;63401;La Tebaida;401
+875;Co-Qui63;63470;Montenegro;470
+876;Co-Qui63;63548;Pijao;548
+877;Co-Qui63;63594;Quimbaya;594
+878;Co-Qui63;63690;Salento;690
+879;Co-Ris66;66001;Pereira;001
+880;Co-Ris66;66045;Apia;045
+881;Co-Ris66;66075;Balboa;075
+882;Co-Ris66;66088;Belen de Umbria;088
+883;Co-Ris66;66170;Dos Quebradas;170
+884;Co-Ris66;66318;Guatica;318
+885;Co-Ris66;66383;La Celia;383
+886;Co-Ris66;66400;La Virginia;400
+887;Co-Ris66;66440;Marsella;440
+888;Co-Ris66;66456;Mistrato;456
+889;Co-Ris66;66572;Pueblo Rico;572
+890;Co-Ris66;66594;Quinchia;594
+891;Co-Ris66;66682;Santa Rosa de Cabal;682
+892;Co-Ris66;66687;Santuario;687
+893;Co-San68;68001;Bucaramanga;001
+894;Co-San68;68013;Aguada;013
+895;Co-San68;68020;Albania;029
+896;Co-San68;68051;Aratoca;051
+897;Co-San68;68077;Barbosa;079
+898;Co-San68;68079;Barichara;079
+899;Co-San68;68081;Barrancabermeja;081
+900;Co-San68;68092;Betulia;093
+901;Co-San68;68101;Bolivar;100
+902;Co-San68;68121;Cabrera;120
+903;Co-San68;68132;California;132
+904;Co-San68;68147;Capitanejo;147
+905;Co-San68;68152;Carcasi;152
+906;Co-San68;68160;Cepita;160
+907;Co-San68;68162;Cerrito;162
+908;Co-San68;68167;Charala;167
+909;Co-San68;68169;Charta;169
+910;Co-San68;68176;Chima;168
+911;Co-San68;68179;Chipata;179
+912;Co-San68;68190;Cimitarra;190
+913;Co-San68;68207;Concepcion;206
+914;Co-San68;68209;Confines;209
+915;Co-San68;68211;Contratacion;211
+916;Co-San68;68217;Coromoro;217
+917;Co-San68;68229;Curiti;229
+918;Co-San68;68235;El Carmen;245
+919;Co-San68;68245;El Guacamayo;245
+920;Co-San68;68250;El PeÒon;268
+921;Co-San68;68255;El Playon;255
+922;Co-San68;68264;Encino;264
+923;Co-San68;68266;Enciso;266
+924;Co-San68;68271;Florian;271
+925;Co-San68;68276;Floridablanca;276
+926;Co-San68;68296;Galan;296
+927;Co-San68;68298;Gambita;298
+928;Co-San68;68306;Giron;307
+929;Co-San68;68318;Guaca;318
+930;Co-San68;68320;Guadalupe;315
+931;Co-San68;68322;Guapota;322
+932;Co-San68;68324;Guavata;324
+933;Co-San68;68327;Guepsa;327
+934;Co-San68;68344;Hato;344
+935;Co-San68;68368;Jesus Maria;368
+936;Co-San68;68370;Jordan;370
+937;Co-San68;68377;La Belleza;377
+938;Co-San68;68385;Landazuri;385
+939;Co-San68;68397;La Paz;621
+940;Co-San68;68406;Lebrija;406
+941;Co-San68;68418;Los Santos;418
+942;Co-San68;68425;Macaravita;425
+943;Co-San68;68432;Malaga;432
+944;Co-San68;68444;Matanza;444
+945;Co-San68;68464;Mogotes;464
+946;Co-San68;68468;Molagavita;468
+947;Co-San68;68498;Ocamonte;498
+948;Co-San68;68500;Oiba;500
+949;Co-San68;68502;Onzaga;502
+950;Co-San68;68522;Palmar;522
+951;Co-San68;68524;Palmas del Socorro;524
+952;Co-San68;68533;Paramo;533
+953;Co-San68;68547;Piedecuesta;547
+954;Co-San68;68549;Pinchote;549
+955;Co-San68;68572;Puente Nacional;572
+956;Co-San68;68573;Puerto Parra;573
+957;Co-San68;68575;Puerto Wilches;575
+958;Co-San68;68615;Rionegro;615
+959;Co-San68;68655;Sabana de Torres;655
+960;Co-San68;68669;San Andres;669
+961;Co-San68;68673;San Benito;673
+962;Co-San68;68679;San Gil;679
+963;Co-San68;68682;San Joaquin;682
+964;Co-San68;68684;San Miguel;686
+965;Co-San68;68686;San Jose de Miranda;684
+966;Co-San68;68689;San Vicente de Chucuri;689
+967;Co-San68;68705;Santa Barbara;679
+968;Co-San68;68720;Santa Helena del Opon;720
+969;Co-San68;68745;Simacota;745
+970;Co-San68;68755;Socorro;755
+971;Co-San68;68770;Suaita;770
+972;Co-San68;68773;Sucre;785
+973;Co-San68;68780;Surata;780
+974;Co-San68;68820;Tona;820
+975;Co-San68;68855;Valle de San Jose;855
+976;Co-San68;68861;Velez;861
+977;Co-San68;68867;Vetas;867
+978;Co-San68;68872;Villanueva;873
+979;Co-San68;68895;Zapatoca;895
+980;Co-San88;88564;Providencia;565
+981;Co-Suc70;70001;Sincelejo;001
+982;Co-Suc70;70110;Buenavista;109
+983;Co-Suc70;70124;Caimito;124
+984;Co-Suc70;70204;Coloso;204
+985;Co-Suc70;70215;Corozal;215
+986;Co-Suc70;70221;CoveÒas;221
+987;Co-Suc70;70230;Chalan;230
+988;Co-Suc70;70233;El Roble;233
+989;Co-Suc70;70235;Galeras;235
+990;Co-Suc70;70265;Guaranda;265
+991;Co-Suc70;70400;La Union;400
+992;Co-Suc70;70418;Los Palmitos;418
+993;Co-Suc70;70429;Majagual;429
+994;Co-Suc70;70473;Morroa;473
+995;Co-Suc70;70508;Ovejas;508
+996;Co-Suc70;70523;Palmito;523
+997;Co-Suc70;70670;Sampues;670
+998;Co-Suc70;70678;San Benito Abad;678
+999;Co-Suc70;70702;San Juan de Betulia;702
+1000;Co-Suc70;70708;San Marcos;708
+1001;Co-Suc70;70713;San Onofre;713
+1002;Co-Suc70;70717;San Pedro;664
+1003;Co-Suc70;70742;Since;742
+1004;Co-Suc70;70771;Sucre;785
+1005;Co-Suc70;70820;Tolu;820
+1006;Co-Suc70;70823;Tolu Viejo;823
+1007;Co-Tol73;73001;Ibague;001
+1008;Co-Tol73;73024;Alpujarra;024
+1009;Co-Tol73;73026;Alvarado;026
+1010;Co-Tol73;73030;Ambalema;030
+1011;Co-Tol73;73043;Anzoategui;043
+1012;Co-Tol73;73055;Armero (Guayabal);055
+1013;Co-Tol73;73067;Ataco;067
+1014;Co-Tol73;73124;Cajamarca;124
+1015;Co-Tol73;73148;Carmen de Apicala;148
+1016;Co-Tol73;73152;Casabianca;152
+1017;Co-Tol73;73168;Chaparral;168
+1018;Co-Tol73;73200;Coello;200
+1019;Co-Tol73;73217;Coyaima;217
+1020;Co-Tol73;73226;Cunday;226
+1021;Co-Tol73;73236;Dolores;236
+1022;Co-Tol73;73268;Espinal;268
+1023;Co-Tol73;73270;Falan;270
+1024;Co-Tol73;73275;Flandes;275
+1025;Co-Tol73;73283;Fresno;283
+1026;Co-Tol73;73319;Guamo;319
+1027;Co-Tol73;73347;Herveo;347
+1028;Co-Tol73;73349;Honda;349
+1029;Co-Tol73;73352;Icononzo;352
+1030;Co-Tol73;73408;Lerida;408
+1031;Co-Tol73;73411;Libano;411
+1032;Co-Tol73;73443;Mariquita;443
+1033;Co-Tol73;73449;Melgar;449
+1034;Co-Tol73;73461;Murillo;461
+1035;Co-Tol73;73483;Natagaima;483
+1036;Co-Tol73;73504;Ortega;504
+1037;Co-Tol73;73520;Palocabildo;520
+1038;Co-Tol73;73547;Piedras;547
+1039;Co-Tol73;73555;Planadas;555
+1040;Co-Tol73;73563;Prado;563
+1041;Co-Tol73;73585;Purificacion;585
+1042;Co-Tol73;73616;Rioblanco;616
+1043;Co-Tol73;73622;Roncesvalles;622
+1044;Co-Tol73;73624;Rovira;624
+1045;Co-Tol73;73671;SaldaÒa;671
+1046;Co-Tol73;73675;San Antonio;675
+1047;Co-Tol73;73678;San Luis;660
+1048;Co-Tol73;73686;Santa Isabel;686
+1049;Co-Tol73;73770;Suarez;780
+1050;Co-Tol73;73854;Valle de San Juan;854
+1051;Co-Tol73;73861;Venadillo;861
+1052;Co-Tol73;73870;Villahermosa;870
+1053;Co-Tol73;73873;Villarrica;873
+1054;Co-Val76;76001;Cali;001
+1055;Co-Val76;76020;Alcala;020
+1056;Co-Val76;76036;Andalucia;036
+1057;Co-Val76;76041;Ansermanuevo;041
+1058;Co-Val76;76054;Argelia;055
+1059;Co-Val76;76100;Bolivar;100
+1060;Co-Val76;76109;Buenaventura;109
+1061;Co-Val76;76111;Buga;111
+1062;Co-Val76;76113;Bugalagrande;113
+1063;Co-Val76;76122;Caicedonia;122
+1064;Co-Val76;76126;Calima;126
+1065;Co-Val76;76130;Candelaria;141
+1066;Co-Val76;76147;Cartago;147
+1067;Co-Val76;76233;Dagua;233
+1068;Co-Val76;76243;El Aguila;243
+1069;Co-Val76;76246;El Cairo;246
+1070;Co-Val76;76248;El Cerrito;248
+1071;Co-Val76;76250;El Dovio;250
+1072;Co-Val76;76275;Florida;275
+1073;Co-Val76;76306;Ginebra;306
+1074;Co-Val76;76318;Guacari;318
+1075;Co-Val76;76364;Jamundi;364
+1076;Co-Val76;76400;La Union;400
+1077;Co-Val76;76403;La Victoria;401
+1078;Co-Val76;76497;Obando;497
+1079;Co-Val76;76520;Palmira;520
+1080;Co-Val76;76563;Pradera;563
+1081;Co-Val76;76606;Restrepo;606
+1082;Co-Val76;76616;Riofrio;616
+1083;Co-Val76;76622;Roldanillo;622
+1084;Co-Val76;76670;San Pedro;664
+1085;Co-Val76;76677;La Cumbre;377
+1086;Co-Val76;76736;Sevilla;736
+1087;Co-Val76;76823;Toro;823
+1088;Co-Val76;76828;Trujillo;828
+1089;Co-Val76;76834;Tulua;834
+1090;Co-Val76;76845;Ulloa;845
+1091;Co-Val76;76863;Versalles;863
+1092;Co-Val76;76869;Vijes;869
+1093;Co-Val76;76890;Yotoco;890
+1094;Co-Val76;76892;Yumbo;892
+1095;Co-Val76;76895;Zarzal;895
+1096;Co-Vau97;97001;Mitu;001
+1097;Co-Vau97;97161;Caruru;161
+1098;Co-Vau97;97666;Taraira;666
+1099;Co-Vic99;99001;Puerto CarreÒo;001
+1100;Co-Vic99;99524;La Primavera;524
+1101;Co-Vic99;99624;Santa Rosalia;624
+1102;Co-Vic99;99773;Cumaribo;773
