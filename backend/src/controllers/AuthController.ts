@@ -1,6 +1,8 @@
-import e, { Request, Response } from "express";
+import { Request, Response } from "express";
 import { AuthService } from "../services/AuthService";
 import { getHttpCode } from "../utils/StatusCodes";
+import { HTTP_STATUS } from "../constants";
+
 const authService = new AuthService();
 
 export const login = async (req: Request, res: Response) => {
@@ -8,9 +10,7 @@ export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: "Email and password are required" });
     }
 
     const { user, menu, token } = await authService.login(email, password);

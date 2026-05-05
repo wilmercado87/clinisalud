@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { HTTP_STATUS, ERROR_MESSAGES } from '../constants';
+import { HTTP_STATUS, ERROR_CODES, ERROR_MESSAGES } from '../constants';
 import { getHttpCode } from '../utils/StatusCodes';
 
 export interface AppError extends Error {
@@ -59,5 +59,37 @@ export class ApiError extends Error {
     this.statusCode = statusCode;
     this.isOperational = true;
     Error.captureStackTrace(this, this.constructor);
+  }
+
+  static notFound(message?: string) {
+    const msg = message || ERROR_MESSAGES.RESOURCE_NOT_FOUND;
+    return new ApiError(`${ERROR_CODES.RESOURCE_NOT_FOUND}:${msg}`, HTTP_STATUS.NOT_FOUND);
+  }
+
+  static unauthorized(message?: string) {
+    const msg = message || ERROR_MESSAGES.UNAUTHORIZED;
+    return new ApiError(`${ERROR_CODES.USER_NOT_FOUND}:${msg}`, HTTP_STATUS.UNAUTHORIZED);
+  }
+
+  static forbidden(message?: string) {
+    const msg = message || ERROR_MESSAGES.FORBIDDEN;
+    return new ApiError(`${ERROR_CODES.FORBIDDEN}:${msg}`, HTTP_STATUS.FORBIDDEN);
+  }
+
+  static badRequest(message: string) {
+    return new ApiError(message, HTTP_STATUS.BAD_REQUEST);
+  }
+
+  static conflict(message: string, code: keyof typeof ERROR_CODES = 'DNI_EXISTS') {
+    return new ApiError(`${ERROR_CODES[code]}:${message}`, HTTP_STATUS.CONFLICT);
+  }
+
+  static emailExists(message = ERROR_MESSAGES.EMAIL_EXISTS) {
+    return new ApiError(`${ERROR_CODES.EMAIL_EXISTS}:${message}`, HTTP_STATUS.CONFLICT);
+  }
+
+  static internal(message?: string) {
+    const msg = message || ERROR_MESSAGES.INTERNAL_ERROR;
+    return new ApiError(`${ERROR_CODES.INTERNAL_ERROR}:${msg}`, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 }

@@ -6,6 +6,8 @@ import MenuOption from "../models/MenuOption";
 import UserMenuOverride from "../models/UserMenuOverride";
 import RoleMenuPermission from "../models/RoleMenuPermission";
 import { buildMenuTree } from "../utils/MenuTree.util";
+import { JWT_CONFIG } from "../constants";
+import { ApiError } from "../middlewares/ErrorHandlerMiddleware";
 
 export class AuthService {
   public async login(email: string, pass: string) {
@@ -14,57 +16,43 @@ export class AuthService {
       include: [{ model: Role, as: "roleData" }],
     });
 
-    if (!user) throw new Error("401");
-    const isPasswordValid = await bcrypt.compare(pass, user.password);
-    if (!isPasswordValid) throw new Error("402");
-    if (!user.isActive) throw new Error("403");
+    if (!user) throw ApiError.unauthorized("Usuario no encontrado");
+    if (!await bcrypt.compare(pass, user.password)) throw ApiError.unauthorized("Credenciales inválidas");
+    if (!user.isActive) throw ApiError.forbidden("Usuario inactivo");
 
-    const menu = await this.getAuthorizedMenu(user.id, user.roleId);
+    const [menu, token] = await Promise.all([
+      this.getAuthorizedMenu(user.id, user.roleId),
+      this.generateToken(user),
+    ]);
 
-    const token = this.generateToken(user);
-    const userJson = user.get({ plain: true });
+    const userJson = user.toJSON();
     delete userJson.password;
 
     return {
-      user: {
-        ...userJson,
-        role: user.roleData?.code,
-      },
+      user: { ...userJson, role: user.roleData?.code },
       menu,
       token,
     };
   }
 
   private async getAuthorizedMenu(userId: number, roleId: number) {
-    // 1. Buscamos el código del rol primero
     const role = await Role.findByPk(roleId);
-    const roleCode = role?.code || "USER";
+    const isAdmin = role?.code === "ADMIN";
 
-    const rolePermissions = await RoleMenuPermission.findAll({
-      where: { roleId },
-    });
+    const [rolePermissions, overrides] = await Promise.all([
+      RoleMenuPermission.findAll({ where: { roleId } }),
+      UserMenuOverride.findAll({ where: { userId } }),
+    ]);
 
-    const authorizedIds = new Set<number>(
-      rolePermissions.map((p) => p.menuOptionId),
-    );
+    const authorizedIds = new Set(rolePermissions.map(p => p.menuOptionId));
 
-    const overrides = await UserMenuOverride.findAll({ where: { userId } });
+    for (const ov of overrides) {
+      ov.hasAccess ? authorizedIds.add(ov.menuOptionId) : authorizedIds.delete(ov.menuOptionId);
+    }
 
-    overrides.forEach((ov) => {
-      if (ov.hasAccess) {
-        authorizedIds.add(ov.menuOptionId);
-      } else {
-        authorizedIds.delete(ov.menuOptionId);
-      }
-    });
-
-    if (roleCode === "ADMIN") {
-      const gestorOption = await MenuOption.findOne({
-        where: { label: "Gestor Usuarios" },
-      });
-      if (gestorOption) {
-        authorizedIds.add(gestorOption.id);
-      }
+    if (isAdmin) {
+      const gestorOption = await MenuOption.findOne({ where: { label: "Gestor Usuarios" } });
+      if (gestorOption) authorizedIds.add(gestorOption.id);
     }
 
     if (authorizedIds.size === 0) return [];
@@ -74,41 +62,42 @@ export class AuthService {
       order: [["order", "ASC"]],
     });
 
-    const allOptionsMap = new Map<number, any>();
-    authorizedOptions.forEach((opt) =>
-      allOptionsMap.set(opt.id, opt.get({ plain: true })),
-    );
+    const menuMap = this.buildOptionMap(authorizedOptions);
+    await this.ensureParentHierarchy(menuMap);
 
-    await this.ensureParentHierarchy(allOptionsMap);
+    return buildMenuTree(Array.from(menuMap.values()));
+  }
 
-    return buildMenuTree(Array.from(allOptionsMap.values()));
+  private buildOptionMap(options: MenuOption[]) {
+    const map = new Map<number, ReturnType<MenuOption['get']>>();
+    for (const opt of options) {
+      map.set(opt.id, opt.get({ plain: true }));
+    }
+    return map;
   }
 
   private async ensureParentHierarchy(map: Map<number, any>) {
     const parentIdsMissing = Array.from(map.values())
-      .filter((opt) => opt.parentId && !map.has(opt.parentId))
-      .map((opt) => opt.parentId as number);
+      .filter(opt => opt.parentId && !map.has(opt.parentId))
+      .map(opt => opt.parentId as number);
 
-    if (parentIdsMissing.length > 0) {
-      const missingParents = await MenuOption.findAll({
-        where: { id: parentIdsMissing },
-      });
+    if (parentIdsMissing.length === 0) return;
 
-      missingParents.forEach((p) => map.set(p.id, p.get({ plain: true })));
-
-      await this.ensureParentHierarchy(map);
+    const missingParents = await MenuOption.findAll({ where: { id: parentIdsMissing } });
+    for (const parent of missingParents) {
+      map.set(parent.id, parent.get({ plain: true }));
     }
+
+    await this.ensureParentHierarchy(map);
   }
 
   private generateToken(user: User): string {
     return jwt.sign(
-      {
-        id: user.id,
-        role: user.roleData?.code,
-        email: user.email,
-      },
+      { id: user.id, role: user.roleData?.code, email: user.email },
       process.env["JWT_SECRET"] || "clinisalud_secret",
-      { expiresIn: "24h" },
+      { expiresIn: JWT_CONFIG.EXPIRES_IN }
     );
   }
 }
+
+export default new AuthService();

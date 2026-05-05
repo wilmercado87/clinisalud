@@ -19,7 +19,7 @@ export class TriageService {
   }
 
   public async getTriageByPriority(priorityLevel: number): Promise<Triage | null> {
-    return await Triage.findOne({ where: { id: priorityLevel } });
+    return await Triage.findByPk(priorityLevel);
   }
 
   public async getUrgentTriage(): Promise<Triage | null> {
@@ -28,7 +28,7 @@ export class TriageService {
 
   public async getEmergencyWaitTime(tipoTriage: string): Promise<string | null> {
     const triage = await this.findTriageByType(tipoTriage);
-    return triage ? triage.tiempoEspera : null;
+    return triage?.tiempoEspera || null;
   }
 }
 

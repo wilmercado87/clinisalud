@@ -4,37 +4,32 @@ import User from "../models/User";
 import Role from "../models/Role";
 import UserMenuOverride from "../models/UserMenuOverride";
 import MenuOption from "../models/MenuOption";
+import { ApiError } from "../middlewares/ErrorHandlerMiddleware";
+
+interface CreateUserData {
+  email: string;
+  dni: string;
+  firstName: string;
+  lastName: string;
+  idTipoDocumento: number;
+  roleId: number;
+  permissions: number[];
+}
 
 export class UserService {
   public async findAllManageableUsers() {
     return await User.findAll({
       attributes: { exclude: ["password"] },
-      include: [
-        {
-          model: Role,
-          as: "roleData",
-          attributes: ["id", "name", "code"],
-        },
-      ],
+      include: [{ model: Role, as: "roleData", attributes: ["id", "name", "code"] }],
       order: [["createdAt", "DESC"]],
     });
   }
 
-  public async createUser(userData: any) {
-    const { permissions, ...data } = userData;
+  public async createUser(data: CreateUserData) {
+    const existingUser = await this.findExistingUser(data.email, data.dni);
+    if (existingUser) this.throwDuplicateError(existingUser, data);
 
-    const existingUser = await User.findOne({
-      where: {
-        [Op.or]: [{ email: data.email }, { dni: data.dni }],
-      },
-    });
-
-    if (existingUser) {
-      if (existingUser.email === data.email) throw new Error("405");
-      if (existingUser.dni === data.dni) throw new Error("406");
-    }
-
-    const tempPassword = `Clini-${Math.random().toString(36).slice(-4)}!`;
+    const tempPassword = this.generateTempPassword();
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
     const newUser = await User.create({
@@ -43,42 +38,48 @@ export class UserService {
       isActive: true,
     });
 
-    const allMenuOptions = await MenuOption.findAll();
-
-    const overrides = allMenuOptions.map((option) => ({
-      userId: newUser.id,
-      menuOptionId: option.id,
-      hasAccess: permissions.includes(option.id),
-    }));
-
-    await UserMenuOverride.bulkCreate(overrides);
+    await this.createPermissions(newUser.id, data.permissions);
 
     const userJson = newUser.toJSON();
     delete userJson.password;
 
-    return {
-      user: userJson,
-      temporaryPassword: tempPassword,
-    };
+    return { user: userJson, temporaryPassword: tempPassword };
   }
 
-  public async updateUserPermissions(
-    targetUserId: number,
-    permissions: { menuOptionId: number; hasAccess: boolean }[],
-  ) {
+  private async findExistingUser(email: string, dni: string) {
+    return await User.findOne({ where: { [Op.or]: [{ email }, { dni }] } });
+  }
+
+  private throwDuplicateError(existingUser: User, data: CreateUserData) {
+    if (existingUser.email === data.email) throw ApiError.emailExists("El correo electrónico ya existe");
+    if (existingUser.dni === data.dni) throw ApiError.conflict("El número de documento ya existe");
+  }
+
+  private generateTempPassword(): string {
+    return `Clini-${Math.random().toString(36).slice(-4)}!`;
+  }
+
+  private async createPermissions(userId: number, permissions: number[]) {
+    const allOptions = await MenuOption.findAll();
+    const overrides = allOptions.map(option => ({
+      userId,
+      menuOptionId: option.id,
+      hasAccess: permissions.includes(option.id),
+    }));
+    await UserMenuOverride.bulkCreate(overrides);
+  }
+
+  public async updateUserPermissions(targetUserId: number, permissions: { menuOptionId: number; hasAccess: boolean }[]) {
     const targetUser = await User.findByPk(targetUserId, {
       include: [{ model: Role, as: "roleData" }],
     });
 
-    if (!targetUser || targetUser.roleData?.code === "ADMIN") {
-      throw new Error(
-        "Forbidden: No se pueden modificar permisos de un administrador.",
-      );
-    }
+    if (!targetUser) throw ApiError.notFound("Usuario no encontrado");
+    if (targetUser.roleData?.code === "ADMIN") throw ApiError.forbidden("No se pueden modificar permisos de administrador");
 
     await UserMenuOverride.destroy({ where: { userId: targetUserId } });
 
-    const overrideData = permissions.map((p) => ({
+    const overrideData = permissions.map(p => ({
       userId: targetUserId,
       menuOptionId: p.menuOptionId,
       hasAccess: p.hasAccess,
@@ -92,13 +93,8 @@ export class UserService {
       include: [{ model: Role, as: "roleData" }],
     });
 
-    if (!user) {
-      throw new Error("Usuario no encontrado.");
-    }
-
-    if (user.roleData?.code === "ADMIN") {
-      throw new Error("No se puede cambiar el estado de un administrador.");
-    }
+    if (!user) throw ApiError.notFound("Usuario no encontrado");
+    if (user.roleData?.code === "ADMIN") throw ApiError.forbidden("No se puede cambiar estado de administrador");
 
     user.isActive = !user.isActive;
     await user.save();
@@ -110,3 +106,5 @@ export class UserService {
     };
   }
 }
+
+export default new UserService();

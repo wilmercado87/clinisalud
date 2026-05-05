@@ -1,34 +1,31 @@
 import { Op } from "sequelize";
 import Paciente from "../models/Paciente";
+import { ApiError } from "../middlewares/ErrorHandlerMiddleware";
+
+interface PatientData {
+  idPaciente?: number;
+  idTipoDocumento: number;
+  numDocumento: string;
+  primerNombre: string;
+  segundoNombre?: string;
+  primerApellido: string;
+  segundoApellido?: string;
+  fechaNacimiento: string;
+  genero: string;
+  direccion?: string;
+  telefono?: string;
+  idMunicipio: number;
+  idDepartamento: number;
+  idTipoUsuario: number;
+  idConvenio: string;
+}
 
 export class PatientService {
-  public async register(patientData: {
-    idPaciente?: number;
-    tipoDocumento: string;
-    numDocumento: string;
-    primerNombre: string;
-    segundoNombre?: string;
-    primerApellido: string;
-    segundoApellido?: string;
-    fechaNacimiento: string;
-    genero: string;
-    direccion?: string;
-    telefono?: string;
-    idMunicipio: number;
-    idDepartamento: number;
-    idTipoUsuario: number;
-    idConvenio: string;
-  }): Promise<Paciente> {
-    const existingPatient = await Paciente.findOne({
-      where: { numDocumento: patientData.numDocumento },
-    });
+  public async register(data: PatientData): Promise<Paciente> {
+    const existingPatient = await Paciente.findOne({ where: { numDocumento: data.numDocumento } });
+    if (existingPatient) throw ApiError.conflict("El paciente ya existe con este número de documento");
 
-    if (existingPatient) {
-      throw new Error("409:El paciente ya existe con este número de documento");
-    }
-
-    const patient = await Paciente.create(patientData);
-    return patient;
+    return await Paciente.create(data as any);
   }
 
   public async findByDocument(numDocumento: string): Promise<Paciente | null> {
@@ -44,7 +41,7 @@ export class PatientService {
     });
   }
 
-  public async findAll(limit: number = 50, offset: number = 0): Promise<Paciente[]> {
+  public async findAll(limit = 50, offset = 0): Promise<Paciente[]> {
     return await Paciente.findAll({
       limit,
       offset,
@@ -53,7 +50,7 @@ export class PatientService {
     });
   }
 
-  public async search(term: string, limit: number = 20): Promise<Paciente[]> {
+  public async search(term: string, limit = 20): Promise<Paciente[]> {
     return await Paciente.findAll({
       where: {
         [Op.or]: [
@@ -67,20 +64,17 @@ export class PatientService {
     });
   }
 
-  public async update(id: number, patientData: Partial<Paciente>): Promise<Paciente | null> {
+  public async update(id: number, data: Partial<PatientData>): Promise<Paciente> {
     const patient = await Paciente.findByPk(id);
-    if (!patient) {
-      throw new Error("404:Paciente no encontrado");
-    }
-    await patient.update(patientData);
+    if (!patient) throw ApiError.notFound();
+    await patient.update(data);
     return patient;
   }
 
   public async validateDuplicate(numDocumento: string, excludeId?: number): Promise<boolean> {
-    const where: any = { numDocumento };
-    if (excludeId) {
-      where.id = { [Op.ne]: excludeId };
-    }
+    const where: Record<string, any> = { numDocumento };
+    if (excludeId) where.id = { [Op.ne]: excludeId };
+
     const existing = await Paciente.findOne({ where });
     return !!existing;
   }

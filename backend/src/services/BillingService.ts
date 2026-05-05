@@ -1,47 +1,40 @@
 import { Op } from "sequelize";
 import FacturacionPaciente from "../models/FacturacionPaciente";
-import Paciente from "../models/Paciente";
+import { ApiError } from "../middlewares/ErrorHandlerMiddleware";
+
+interface BillingData {
+  numAdmision: string;
+  idOrigenCta: number;
+  idTarifario: number;
+  idTipoServicio: number;
+  idPaciente: number;
+  idContrato?: string;
+  codDiagnostico?: string;
+  codProcedimiento?: string;
+  idCama?: number;
+  idEspecialidad?: number;
+  fechaAdmision: string;
+  fechaEgreso?: string;
+  valorTotal: number;
+  estado?: string;
+}
 
 export class BillingService {
-  public async createBilling(billingData: {
-    numAdmision: string;
-    idOrigenCta: number;
-    idTarifario: number;
-    idTipoServicio: number;
-    idPaciente: number;
-    idContrato?: string;
-    codDiagnostico?: string;
-    codProcedimiento?: string;
-    idCama?: number;
-    idEspecialidad?: number;
-    fechaAdmision: string;
-    fechaEgreso?: string;
-    valorTotal: number;
-    estado?: string;
-  }): Promise<FacturacionPaciente> {
-    const existing = await FacturacionPaciente.findOne({
-      where: { numAdmision: billingData.numAdmision },
-    });
+  public async createBilling(data: BillingData) {
+    const existing = await FacturacionPaciente.findOne({ where: { numAdmision: data.numAdmision } });
+    if (existing) throw ApiError.conflict("Ya existe facturación con este número de admisión");
 
-    if (existing) {
-      throw new Error("409:Ya existe una facturación con este número de admisión");
-    }
-
-    const billing = await FacturacionPaciente.create({
-      ...billingData,
+    return await FacturacionPaciente.create({
+      ...data,
       valorPaciente: 0,
       valorCopago: 0,
-      estado: billingData.estado || "pendiente",
+      estado: data.estado || "pendiente",
     });
-
-    return billing;
   }
 
   public async calculateTotal(id: number): Promise<number> {
     const billing = await FacturacionPaciente.findByPk(id);
-    if (!billing) {
-      throw new Error("404:Facturación no encontrada");
-    }
+    if (!billing) throw ApiError.notFound("Facturación no encontrada");
     return Number(billing.valorTotal);
   }
 
@@ -50,17 +43,9 @@ export class BillingService {
       where: { idPaciente, estado: "pendiente" },
     });
 
-    const paciente = await Paciente.findByPk(idPaciente);
-    if (!paciente) {
-      throw new Error("404:Paciente no encontrado");
-    }
+    if (billings.length === 0) return 0;
 
-    let totalCopago = 0;
-    for (const bill of billings) {
-      totalCopago += Number(bill.valorTotal) * 0.1;
-    }
-
-    return totalCopago;
+    return billings.reduce((total, bill) => total + Number(bill.valorTotal) * 0.1, 0);
   }
 
   public async findByPatient(idPaciente: number): Promise<FacturacionPaciente[]> {
@@ -77,7 +62,7 @@ export class BillingService {
     });
   }
 
-  public async findAll(limit: number = 50, offset: number = 0): Promise<FacturacionPaciente[]> {
+  public async findAll(limit = 50, offset = 0): Promise<FacturacionPaciente[]> {
     return await FacturacionPaciente.findAll({
       limit,
       offset,
@@ -86,11 +71,9 @@ export class BillingService {
     });
   }
 
-  public async updateStatus(id: number, estado: string): Promise<FacturacionPaciente | null> {
+  public async updateStatus(id: number, estado: string): Promise<FacturacionPaciente> {
     const billing = await FacturacionPaciente.findByPk(id);
-    if (!billing) {
-      throw new Error("404:Facturación no encontrada");
-    }
+    if (!billing) throw ApiError.notFound("Facturación no encontrada");
     await billing.update({ estado });
     return billing;
   }
@@ -98,9 +81,7 @@ export class BillingService {
   public async getTotalByDateRange(startDate: string, endDate: string): Promise<number> {
     const billings = await FacturacionPaciente.findAll({
       where: {
-        fechaAdmision: {
-          [Op.between]: [startDate, endDate],
-        },
+        fechaAdmision: { [Op.between]: [startDate, endDate] },
         estado: "pagado",
       },
     });

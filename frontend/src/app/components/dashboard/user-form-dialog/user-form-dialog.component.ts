@@ -202,8 +202,9 @@ export class UserFormDialogComponent implements OnInit {
   }
 
   private handleError(err: any): void {
+    debugger;
     this.isLoading = false;
-    const errorCode = err.error?.message || '500';
+    const errorCode = err.error?.message.split(':')[0] || '500';
     const fieldMapping: Record<string, string> = {
       '405': 'email',
       '406': 'dni',

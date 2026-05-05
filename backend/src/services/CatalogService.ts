@@ -26,6 +26,9 @@ import ParrafoInclusion from "../models/ParrafoInclusion";
 import ParrafoValor from "../models/ParrafoValor";
 import TipoDocumento from "../models/TipoDocumento";
 
+const DEFAULT_LIMIT = 20;
+const DEFAULT_OFFSET = 0;
+
 export class CatalogService {
   public async getAllUserTypes(): Promise<TipoUsuario[]> {
     return await TipoUsuario.findAll();
@@ -108,9 +111,7 @@ export class CatalogService {
   }
 
   public async findMunicipalityById(id: number): Promise<Municipio | null> {
-    return await Municipio.findByPk(id, {
-      include: ["departamento"],
-    });
+    return await Municipio.findByPk(id, { include: ["departamento"] });
   }
 
   public async findMunicipalityByIdMunicipio(idMunicipio: string): Promise<Municipio | null> {
@@ -142,7 +143,7 @@ export class CatalogService {
     return await Especialidad.findOne({ where: { especilidad: name } });
   }
 
-  public async searchDiagnoses(term: string, limit: number = 20): Promise<Diagnostico[]> {
+  public async searchDiagnoses(term: string, limit = DEFAULT_LIMIT): Promise<Diagnostico[]> {
     return await Diagnostico.findAll({
       where: {
         [Op.or]: [
@@ -159,15 +160,11 @@ export class CatalogService {
     return await Diagnostico.findOne({ where: { codigoDiagnostico } });
   }
 
-  public async getAllDiagnoses(limit: number = 100, offset: number = 0): Promise<Diagnostico[]> {
-    return await Diagnostico.findAll({
-      limit,
-      offset,
-      order: [["codigoDiagnostico", "ASC"]],
-    });
+  public async getAllDiagnoses(limit = 100, offset = DEFAULT_OFFSET): Promise<Diagnostico[]> {
+    return await Diagnostico.findAll({ limit, offset, order: [["codigoDiagnostico", "ASC"]] });
   }
 
-  public async searchProcedures(term: string, limit: number = 20): Promise<Cups[]> {
+  public async searchProcedures(term: string, limit = DEFAULT_LIMIT): Promise<Cups[]> {
     return await Cups.findAll({
       where: {
         [Op.or]: [
@@ -184,12 +181,8 @@ export class CatalogService {
     return await Cups.findByPk(pkCodigoMapiiss);
   }
 
-  public async getAllProcedures(limit: number = 100, offset: number = 0): Promise<Cups[]> {
-    return await Cups.findAll({
-      limit,
-      offset,
-      order: [["pkCodigoMapiiss", "ASC"]],
-    });
+  public async getAllProcedures(limit = 100, offset = DEFAULT_OFFSET): Promise<Cups[]> {
+    return await Cups.findAll({ limit, offset, order: [["pkCodigoMapiiss", "ASC"]] });
   }
 
   public async getAllPayers(): Promise<Convenio[]> {
@@ -253,10 +246,10 @@ export class CatalogService {
   }
 
   public async findStayTypesByLevel(nivel: number): Promise<Estancia[]> {
-    const nivelStr = nivel === 1 ? "1ER" : nivel === 2 ? "SEG" : "TERCER";
-    return await Estancia.findAll({
-      where: { descripcion: { [Op.like]: `%${nivelStr}%` } },
-    });
+    const nivelMap: Record<number, string> = { 1: "1ER", 2: "SEG", 3: "TERCER" };
+    const nivelStr = nivelMap[nivel];
+    if (!nivelStr) return [];
+    return await Estancia.findAll({ where: { descripcion: { [Op.like]: `%${nivelStr}%` } } });
   }
 
   public async getAllPatientDiagnoses(): Promise<DiagnosticoPaciente[]> {
@@ -323,13 +316,8 @@ export class CatalogService {
     return await Mapiss.findByPk(codIss2001);
   }
 
-  public async searchMapiss(term: string, limit: number = 20): Promise<Mapiss[]> {
-    return await Mapiss.findAll({
-      where: {
-        descripcion: { [Op.iLike]: `%${term}%` },
-      },
-      limit,
-    });
+  public async searchMapiss(term: string, limit = DEFAULT_LIMIT): Promise<Mapiss[]> {
+    return await Mapiss.findAll({ where: { descripcion: { [Op.iLike]: `%${term}%` } }, limit });
   }
 
   public async getAllArticulados(): Promise<Articulado[]> {
