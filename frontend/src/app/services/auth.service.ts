@@ -38,6 +38,7 @@ export class AuthService {
 
   public logout(): void {
     this.roleService.clearCache();
+    this.roleService.clearMenuCache();
     localStorage.clear();
     this.menuSubject.next([]);
     this.router.navigate(['/login']);

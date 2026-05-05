@@ -13,22 +13,32 @@ export class RoleService {
   private readonly apiUrl = `${environment.apiUrl}/roles`;
 
   private rolesCache$?: Observable<Role[]>;
+  private menuCache$?: Observable<MenuOption[]>;
 
   getRoles(): Observable<Role[]> {
     if (!this.rolesCache$) {
-      this.rolesCache$ = this.http.get<Role[]>(this.apiUrl).pipe(
-        shareReplay(1),
-      );
+      this.rolesCache$ = this.http
+        .get<Role[]>(this.apiUrl)
+        .pipe(shareReplay(1));
     }
 
     return this.rolesCache$;
   }
 
   getMenuOptions(): Observable<MenuOption[]> {
-    return this.http.get<MenuOption[]>(`${this.apiUrl}/menus`);
+    if (!this.menuCache$) {
+      this.menuCache$ = this.http
+        .get<MenuOption[]>(`${this.apiUrl}/menus`)
+        .pipe(shareReplay(1));
+    }
+    return this.menuCache$;
   }
 
   clearCache(): void {
     this.rolesCache$ = undefined;
+  }
+
+  clearMenuCache(): void {
+    this.menuCache$ = undefined;
   }
 }
