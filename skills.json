@@ -1,0 +1,14 @@
+{
+  "skills": [
+    {
+      "name": "clinisalud",
+      "description": "Software Engineering Expert - Angular/SQLite-Sequelize - Clean Code, SOLID, KISS, DRY, Nomenclatura Híbrida (Inglés lógica, Español BD)",
+      "path": ".opencode/skills/angular-architect/SKILL.md"
+    },
+    {
+      "name": "clinisalud-simple",
+      "description": "Ingeniero de Software Senior - Angular/SQLite-Sequelize - Clean Code, SOLID, KISS, DRY",
+      "path": ".opencode/skills/clinisalud-simple/SKILL.md"
+    }
+  ]
+}
