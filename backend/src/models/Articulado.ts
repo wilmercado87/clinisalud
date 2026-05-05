@@ -53,10 +53,6 @@ Articulado.init(
     sequelize,
     tableName: "ARTICULADO",
     timestamps: false,
-    indexes: [
-      { fields: ["idTarifario"] },
-      { fields: ["codigoCups"] },
-    ],
   }
 );
 

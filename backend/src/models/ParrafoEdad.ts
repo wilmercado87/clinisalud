@@ -41,10 +41,6 @@ ParrafoEdad.init(
     sequelize,
     tableName: "PARRAFO_EDAD",
     timestamps: false,
-    indexes: [
-      { fields: ["idTarifario"] },
-      { fields: ["codigoCups"] },
-    ],
   }
 );
 

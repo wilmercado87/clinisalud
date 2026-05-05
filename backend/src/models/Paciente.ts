@@ -120,7 +120,6 @@ Paciente.init(
     sequelize,
     tableName: "PACIENTE",
     timestamps: false,
-    indexes: [{ fields: ["numDocumento"] }],
   }
 );
 

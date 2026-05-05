@@ -125,11 +125,6 @@ Cups.init(
     sequelize,
     tableName: "CUPS",
     timestamps: false,
-    indexes: [
-      {
-        fields: ["pkCodigoMapiiss"],
-      },
-    ],
   }
 );
 

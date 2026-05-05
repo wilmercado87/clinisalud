@@ -53,10 +53,6 @@ ParrafoValor.init(
     sequelize,
     tableName: "PARRAFO_VALOR",
     timestamps: false,
-    indexes: [
-      { fields: ["idTarifario"] },
-      { fields: ["codigoCups"] },
-    ],
   }
 );
 

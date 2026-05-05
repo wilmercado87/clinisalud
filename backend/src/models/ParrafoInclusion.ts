@@ -35,7 +35,6 @@ ParrafoInclusion.init(
     sequelize,
     tableName: "PARRAFO_INCLUSION",
     timestamps: false,
-    indexes: [{ fields: ["idTarifario"] }],
   }
 );
 

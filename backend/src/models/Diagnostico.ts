@@ -30,11 +30,6 @@ Diagnostico.init(
     sequelize,
     tableName: "DIAGNOSTICO",
     timestamps: false,
-    indexes: [
-      {
-        fields: ["codigoDiagnostico"],
-      },
-    ],
   }
 );
 

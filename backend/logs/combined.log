@@ -29,3 +29,10 @@
 {"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-05-05 18:17:34"}
 {"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-05-05 18:34:40"}
 {"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-05-05 18:35:59"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-05-05 18:44:45"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-05-05 18:46:37"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-05-05 18:46:53"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-05-05 18:47:38"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-05-05 18:49:06"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-05-05 18:49:15"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-05-05 18:49:16"}
