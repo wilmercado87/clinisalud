@@ -2,6 +2,9 @@ import { Op } from "sequelize";
 import Paciente from "../models/Paciente";
 import { ApiError } from "../middlewares/ErrorHandlerMiddleware";
 
+/**
+ * Interfaz para datos de paciente
+ */
 interface PatientData {
   idPaciente?: number;
   idTipoDocumento: number;
@@ -20,7 +23,17 @@ interface PatientData {
   idConvenio: string;
 }
 
+/**
+ * PatientService - Servicio de gestión de pacientes
+ * Maneja registro, búsqueda, actualización y validación de pacientes
+ */
 export class PatientService {
+  /**
+   * Registra un nuevo paciente
+   * @param data - Datos del paciente a registrar
+   * @returns Paciente registrado
+   * @throws ApiError si el paciente ya existe
+   */
   public async register(data: PatientData): Promise<Paciente> {
     const existingPatient = await Paciente.findOne({ where: { numDocumento: data.numDocumento } });
     if (existingPatient) throw ApiError.conflict("El paciente ya existe con este número de documento");
