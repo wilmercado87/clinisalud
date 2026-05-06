@@ -6,6 +6,8 @@ import userRoutes from './routes/UserRoutes';
 import { securityMiddleware, generalLimiter } from './middlewares/SecurityMiddleware';
 import { errorHandler, notFoundHandler } from './middlewares/ErrorHandlerMiddleware';
 import { logInfo, healthCheck, rootEndpoint } from './utils';
+import swaggerUiExpress from './config/swagger';
+import { swaggerSpec } from './config/swagger';
 
 const app = express();
 
@@ -20,6 +22,11 @@ app.get('/health', healthCheck);
 
 app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(API_PREFIX, userRoutes);
+
+app.use('/api-docs', swaggerUiExpress.serve, swaggerUiExpress.setup(swaggerSpec));
+app.get('/api-docs.json', (req: express.Request, res: express.Response) => {
+  res.json(swaggerSpec);
+});
 
 app.use(notFoundHandler);
 app.use(errorHandler);

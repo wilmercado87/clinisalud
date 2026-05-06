@@ -97,5 +97,3 @@ export class BillingService {
     });
   }
 }
-
-export default new BillingService();

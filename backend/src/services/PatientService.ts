@@ -92,5 +92,3 @@ export class PatientService {
     return !!existing;
   }
 }
-
-export default new PatientService();

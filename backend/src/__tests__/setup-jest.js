@@ -5,8 +5,5 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  // Cleanup
+  jest.restoreAllMocks();
 });
-
-global.beforeAll = beforeAll;
-global.afterAll = afterAll;

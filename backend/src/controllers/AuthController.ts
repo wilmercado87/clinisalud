@@ -6,7 +6,7 @@ import { logInfo, logError } from "../utils/Logger";
 
 const authService = new AuthService();
 
-export const login = async (req: Request, res: Response) => {
+export async function login(req: Request, res: Response) {
   try {
     const { email, password } = req.body;
 
@@ -34,4 +34,4 @@ export const login = async (req: Request, res: Response) => {
     const statusCode = getHttpCode(error.message);
     return res.status(statusCode).json({ message: error.message });
   }
-};
+}
