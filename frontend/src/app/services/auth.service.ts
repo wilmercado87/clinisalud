@@ -8,6 +8,12 @@ import { User } from '../models/user-manager.model';
 import { RoleService } from './roles.services';
 import { ERROR_MAPPING } from '../utils/status.codes';
 
+const STORAGE_KEYS = {
+  TOKEN: 'token',
+  USER: 'user',
+  MENU: 'menu',
+} as const;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -29,9 +35,9 @@ export class AuthService {
   }
 
   private saveSession(res: AuthResponse): void {
-    localStorage.setItem('token', res.token);
-    localStorage.setItem('user', JSON.stringify(res.user));
-    localStorage.setItem('menu', JSON.stringify(res.menu));
+    localStorage.setItem(STORAGE_KEYS.TOKEN, res.token);
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(res.user));
+    localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(res.menu));
 
     this.menuSubject.next(res.menu);
   }
@@ -45,11 +51,11 @@ export class AuthService {
   }
 
   public isLoggedIn(): boolean {
-    return !!localStorage.getItem('token');
+    return !!localStorage.getItem(STORAGE_KEYS.TOKEN);
   }
 
   public get currentUser(): User | null {
-    const user = localStorage.getItem('user');
+    const user = localStorage.getItem(STORAGE_KEYS.USER);
     return user ? (JSON.parse(user) as User) : null;
   }
 
@@ -58,7 +64,7 @@ export class AuthService {
   }
 
   private getMenuFromStorage(): MenuOption[] {
-    const menu = localStorage.getItem('menu');
+    const menu = localStorage.getItem(STORAGE_KEYS.MENU);
     return menu ? JSON.parse(menu) : [];
   }
 

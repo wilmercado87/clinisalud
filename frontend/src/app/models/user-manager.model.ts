@@ -28,3 +28,12 @@ export interface PermissionOverride {
   menuOptionId: number;
   hasAccess: boolean;
 }
+
+export interface PermissionPayload {
+  permissions: PermissionOverride[];
+}
+
+export interface ToggleStatusResponse {
+  isActive: boolean;
+  message: string;
+}

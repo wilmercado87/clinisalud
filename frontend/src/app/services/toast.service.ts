@@ -26,4 +26,12 @@ export class ToastService {
       panelClass: ['toast-custom', 'toast-custom--error']
     });
   }
+
+  info(message: string) {
+    this.snackBar.open(message, 'OK', {
+      ...this.defaultConfig,
+      duration: 3000,
+      panelClass: ['toast-custom', 'toast-custom--info']
+    });
+  }
 }

@@ -33,6 +33,7 @@ export class ManagerUsersComponent implements OnInit {
   ];
   public dataSource = new MatTableDataSource<User>([]);
   public isLoading = true;
+  public togglingUserId: number | null = null;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -95,16 +96,19 @@ export class ManagerUsersComponent implements OnInit {
   }
 
   openPermissionsDialog(user: User): void {
-    console.log('Gestionando permisos para:', user.firstName);
+    this.toast.info(`Gestionando permisos para: ${user.firstName}`);
   }
 
-  toggleUserStatus(user: any): void {
+  toggleUserStatus(user: User): void {
+    this.togglingUserId = user.id;
     this.userService.toggleStatus(user.id).subscribe({
       next: (result) => {
         user.isActive = result.isActive;
+        this.togglingUserId = null;
         this.toast.success(result.message);
       },
       error: (err) => {
+        this.togglingUserId = null;
         const msg = err.error?.message || "No se pudo cambiar el estado";
         this.toast.error(msg);
       }

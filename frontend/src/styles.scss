@@ -95,4 +95,10 @@ body {
     .mdc-snackbar__label { color: #{v.$color-red-light-600} !important; font-weight: 700; }
     .mat-mdc-snack-bar-action { color: #{v.$color-red-light-600} !important; }
   }
+
+  &--info {
+    --mdc-snackbar-container-color: #{v.$color-blue-light-100};
+    .mdc-snackbar__label { color: #{v.$color-blue-light-600} !important; font-weight: 700; }
+    .mat-mdc-snack-bar-action { color: #{v.$color-blue-light-600} !important; }
+  }
 }
