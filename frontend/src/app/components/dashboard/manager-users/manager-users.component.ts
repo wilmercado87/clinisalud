@@ -9,6 +9,7 @@ import { User } from '../../../models/user-manager.model';
 import { SharedModule } from '../../../shared/shared.module';
 import { MatDialog } from '@angular/material/dialog';
 import { UserFormDialogComponent } from '../user-form-dialog/user-form-dialog.component';
+import { PermissionsDialogComponent } from '../permissions-dialog/permissions-dialog.component';
 import { ToastService } from '../../../services/toast.service';
 
 @Component({
@@ -96,7 +97,15 @@ export class ManagerUsersComponent implements OnInit {
   }
 
   openPermissionsDialog(user: User): void {
-    this.toast.info(`Gestionando permisos para: ${user.firstName}`);
+    const dialogRef = this.dialog.open(PermissionsDialogComponent, {
+      width: '600px',
+      disableClose: true,
+      data: { user },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.success) this.fetchUsers();
+    });
   }
 
   toggleUserStatus(user: User): void {

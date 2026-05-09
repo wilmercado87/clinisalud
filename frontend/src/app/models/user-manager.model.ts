@@ -17,6 +17,7 @@ export interface Role {
   id: number;
   name: string;
   code: string;
+  permissions?: PermissionOverride[];
 }
 
 export interface CreateUserResponse {

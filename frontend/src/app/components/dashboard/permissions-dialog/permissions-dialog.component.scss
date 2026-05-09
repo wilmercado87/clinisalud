@@ -1,0 +1,160 @@
+@use "variables" as v;
+
+.permissions-dialog {
+  padding: 8px 24px;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  &__title {
+    margin: 0;
+    padding: 0;
+    color: v.$navy-500;
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  &__close-btn {
+    margin-right: -12px;
+    color: #666;
+  }
+
+  &__content {
+    padding: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    max-height: 60vh;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 10px;
+    }
+  }
+
+  &__user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: v.$navy-50;
+    border-radius: 8px;
+    margin-bottom: 16px;
+
+    mat-icon {
+      color: v.$navy-500;
+    }
+
+    span {
+      font-weight: 600;
+      color: v.$navy-500;
+    }
+  }
+
+  &__role {
+    margin-left: auto;
+    font-size: 12px;
+    background: v.$navy-500;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 32px;
+
+    span {
+      color: #666;
+      font-size: 14px;
+    }
+  }
+
+  &__permissions {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fafafa;
+  }
+
+  &__permission-item {
+    margin-bottom: 4px;
+  }
+
+  &__permission-parent {
+    background: rgba(v.$navy-500, 0.08);
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+
+    ::ng-deep .mdc-label {
+      color: v.$navy-500;
+      font-size: 12px;
+      font-weight: 700;
+    }
+  }
+
+  &__group-icon {
+    font-size: 18px;
+    vertical-align: middle;
+    margin-right: 6px;
+    color: v.$navy-500;
+  }
+
+  &__permission-children {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-left: 24px;
+  }
+
+  &__child-checkbox {
+    ::ng-deep .mdc-label {
+      font-size: 11px;
+      color: #555;
+    }
+  }
+
+  &__actions {
+    padding: 16px 24px;
+    gap: 12px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: 8px;
+  }
+
+  &__btn-save {
+    height: 44px;
+    padding: 0 24px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+
+    ::ng-deep .mdc-button__label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    mat-icon {
+      margin: 0 !important;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    &:disabled {
+      mat-spinner {
+        opacity: 0.5;
+      }
+    }
+  }
+}

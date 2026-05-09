@@ -1,0 +1,97 @@
+<div class="permissions-dialog">
+  <header class="permissions-dialog__header">
+    <h2 class="permissions-dialog__title" mat-dialog-title>
+      Gestionar Accesos
+    </h2>
+
+    @if (!isSaving()) {
+      <button
+        class="permissions-dialog__close-btn"
+        mat-icon-button
+        (click)="onCancel()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </header>
+
+  <mat-dialog-content class="permissions-dialog__content">
+    <div class="permissions-dialog__user-info">
+      <mat-icon>person</mat-icon>
+      <span>{{ data.user.firstName }} {{ data.user.lastName }}</span>
+      <span class="permissions-dialog__role">{{ data.user.roleData?.name }}</span>
+    </div>
+
+    @if (isFullAccessDenied()) {
+      <div class="permissions-dialog__warning">
+        <mat-icon>warning</mat-icon>
+        <span>Solo los administradores pueden tener acceso total al sistema.</span>
+      </div>
+    }
+
+    @if (isLoading()) {
+      <div class="permissions-dialog__loading">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span>Cargando opciones de acceso...</span>
+      </div>
+    } @else {
+      <div class="permissions-dialog__permissions">
+        @for (group of menuOptions(); track group.id) {
+          <div class="permissions-dialog__permission-item" [class.is-denied]="isFullAccessDenied()">
+            <div class="permissions-dialog__permission-parent">
+              <mat-checkbox
+                [checked]="isParentChecked(group)"
+                (change)="toggleParent(group, $event.checked)"
+                [disabled]="isSaving()"
+                color="primary"
+              >
+                <mat-icon class="permissions-dialog__group-icon">{{ group.icon || 'grid_view' }}</mat-icon>
+                <strong class="permissions-dialog__group-label">
+                  {{ group.label | uppercase }}
+                </strong>
+              </mat-checkbox>
+            </div>
+
+            <div class="permissions-dialog__permission-children">
+              @for (child of group.children; track child.id) {
+                <mat-checkbox
+                  [checked]="isChildSelected(child.id)"
+                  (change)="toggleChild(child.id, group)"
+                  [disabled]="isSaving()"
+                  class="permissions-dialog__child-checkbox"
+                >
+                  {{ child.label }}
+                </mat-checkbox>
+              }
+            </div>
+          </div>
+        } @empty {
+          <div class="permissions-dialog__empty">
+            <p>No hay opciones de menú configuradas.</p>
+          </div>
+        }
+      </div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="permissions-dialog__actions" align="end">
+    <button mat-button (click)="onCancel()" [disabled]="isSaving()">
+      CANCELAR
+    </button>
+
+    <button
+      mat-raised-button
+      color="primary"
+      class="permissions-dialog__btn-save"
+      [disabled]="!canSubmit()"
+      (click)="onSave()"
+    >
+      @if (isSaving()) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        <mat-icon>save</mat-icon>
+        <span>GUARDAR CAMBIOS</span>
+      }
+    </button>
+  </mat-dialog-actions>
+</div>

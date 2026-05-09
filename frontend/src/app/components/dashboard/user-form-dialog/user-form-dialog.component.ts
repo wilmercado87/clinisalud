@@ -100,78 +100,77 @@ export class UserFormDialogComponent implements OnInit {
   }
 
   private handleRoleChange(roleId: number): void {
-    const selectedRole = this.rolesList.find((r) => r.id === roleId);
-
-    if (selectedRole?.code === 'ADMIN') {
+    if (this.isRoleAdmin(roleId)) {
       this.selectAllPermissions();
-    } else {
-      this.selectedMenuIds = [];
+      return;
     }
-    this.validateFormState();
+
+    this.selectedMenuIds = [];
+    this.validateFormState
+  }
+
+  private isRoleAdmin(roleId: number): boolean {
+    const role = this.rolesList.find((r) => r.id === roleId);
+    return role?.code === 'ADMIN';
   }
 
   private validateFormState(): void {
     const selectedRoleId = this.userForm.get('roleId')?.value;
-    const selectedRole = this.rolesList.find((r) => r.id === selectedRoleId);
-    const isAdmin = selectedRole?.code === 'ADMIN';
+    const isAdmin = this.isRoleAdmin(selectedRoleId);
 
-    // Regla: ¿Es acceso total siendo No-Admin?
-    const hasAllSelected =
-      this.selectedMenuIds.length >= this.totalOptionsCount &&
-      this.totalOptionsCount > 0;
-    this.isFullAccessDenied = !isAdmin && hasAllSelected;
+    const hasFullAccess = this.selectedMenuIds.length >= this.totalOptionsCount;
+    this.isFullAccessDenied = !isAdmin && hasFullAccess && this.totalOptionsCount > 0;
 
-    this.canSubmit =
-      this.userForm.valid &&
-      this.selectedMenuIds.length > 0 &&
-      !this.isFullAccessDenied &&
-      !this.isLoading;
+    this.updateSubmissionStatus();
+  }
+
+  private updateSubmissionStatus(): void {
+    const isFormValid = this.userForm.valid;
+    const hasPermissions = this.selectedMenuIds.length > 0;
+
+    this.canSubmit = isFormValid && hasPermissions && !this.isFullAccessDenied && !this.isLoading;
   }
 
   private calculateTotalOptions(): void {
-    let count = 0;
-    this.filteredMenuOptions.forEach((group) => {
-      count++;
-      if (group.children) count += group.children.length;
-    });
-    this.totalOptionsCount = count;
+    this.totalOptionsCount = this.filteredMenuOptions.reduce(
+      (acc, group) => acc + 1 + (group.children?.length || 0), 
+      0
+    );
   }
 
   public toggleParent(group: any, isChecked: boolean): void {
     const childIds = group.children?.map((c: any) => c.id) || [];
 
-    if (isChecked) {
-      this.selectedMenuIds = Array.from(
-        new Set([...this.selectedMenuIds, group.id, ...childIds]),
+    if (!isChecked) {
+      this.selectedMenuIds = this.selectedMenuIds.filter(
+        (id) => id !== group.id && !childIds.includes(id)
       );
     } else {
-      this.selectedMenuIds = this.selectedMenuIds.filter(
-        (id) => id !== group.id && !childIds.includes(id),
-      );
+      this.selectedMenuIds = [...new Set([...this.selectedMenuIds, group.id, ...childIds])];
     }
+
     this.validateFormState();
   }
 
   public toggleChild(childId: number, parent: any): void {
-    const index = this.selectedMenuIds.indexOf(childId);
+    const isSelected = this.selectedMenuIds.includes(childId);
 
-    if (index > -1) {
-      this.selectedMenuIds.splice(index, 1);
+    if (isSelected) {
+      this.selectedMenuIds = this.selectedMenuIds.filter(id => id !== childId);
     } else {
-      this.selectedMenuIds.push(childId);
-      if (!this.selectedMenuIds.includes(parent.id))
-        this.selectedMenuIds.push(parent.id);
+      this.selectedMenuIds = [...new Set([...this.selectedMenuIds, childId, parent.id])];
     }
+
     this.validateFormState();
   }
 
-  private selectAllPermissions(): void {
-    const allIds: number[] = [];
-    this.filteredMenuOptions.forEach((group) => {
-      allIds.push(group.id);
-      group.children?.forEach((child: any) => allIds.push(child.id));
-    });
-    this.selectedMenuIds = [...new Set(allIds)];
+  public selectAllPermissions(): void {
+    this.selectedMenuIds = this.filteredMenuOptions.flatMap(group => [
+      group.id,
+      ...(group.children?.map((c: any) => c.id) || [])
+    ]);
+
+    this.validateFormState();
   }
 
   public isChecked(id: number): boolean {
