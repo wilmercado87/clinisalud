@@ -136,19 +136,12 @@ export const runSeeder = async () => {
         isActive: true,
       });
       console.log(`✅ Admin creado: ${adminEmail} / Admin2026!`);
+    } else {
+      console.log(`✅ Admin ya existente: ${adminEmail}`);
     }
 
-    // 5. Crear permisos del admin en UserMenuOverride
-    const existingOverrides = await UserMenuOverride.findOne({ where: { userId: adminUser.id } });
-    if (!existingOverrides) {
-      const overrideData = allOptions.map(opt => ({
-        userId: adminUser.id,
-        menuOptionId: opt.id,
-        hasAccess: true,
-      }));
-      await UserMenuOverride.bulkCreate(overrideData);
-      console.log(`✅ Permisos del admin configurados en UserMenuOverride`);
-    }
+    // 5. Admin hereda permisos del rol (RoleMenuPermission) — NO necesita UserMenuOverride
+    // Los overrides solo se crean para denegar permisos específicos del rol del usuario
 
     console.log("✨ Seed completado con éxito.");
   } catch (error) {

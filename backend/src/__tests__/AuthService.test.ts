@@ -16,7 +16,7 @@ import MenuOption from '../models/MenuOption';
 
 describe('AuthService', () => {
   let service: AuthService;
-  
+
   const mockUser = {
     id: 1,
     email: 'admin@test.com',
@@ -30,9 +30,9 @@ describe('AuthService', () => {
   beforeEach(() => {
     service = new AuthService();
     jest.clearAllMocks();
-    
+
     jest.spyOn(User, 'findOne').mockResolvedValue(mockUser as any);
-    jest.spyOn(Role, 'findByPk').mockResolvedValue({ code: 'ADMIN' } as any);
+    jest.spyOn(Role, 'findByPk').mockResolvedValue({ code: 'ADMIN', id: 1 } as any);
     jest.spyOn(RoleMenuPermission, 'findAll').mockResolvedValue([{ menuOptionId: 1 }] as any);
     jest.spyOn(UserMenuOverride, 'findAll').mockResolvedValue([] as any);
     jest.spyOn(MenuOption, 'findAll').mockResolvedValue([{ id: 1, get: () => ({ id: 1, label: 'Test', parentId: null }) }] as any);
@@ -48,7 +48,7 @@ describe('AuthService', () => {
     });
 
     it('should return menu array', async () => {
-      jest.spyOn(Role, 'findByPk').mockResolvedValue({ code: 'USER' } as any);
+      jest.spyOn(Role, 'findByPk').mockResolvedValue({ code: 'USER', id: 2 } as any);
       jest.spyOn(RoleMenuPermission, 'findAll').mockResolvedValue([{ menuOptionId: 1 }] as any);
 
       const result = await service.login('admin@test.com', 'any_password');

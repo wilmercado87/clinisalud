@@ -3,11 +3,7 @@ import sequelize from "./config/database";
 import { runSeeder } from "./seed";
 import { logInfo, logError } from "./utils/Logger";
 
-import "./models/Role";
-import "./models/User";
-import "./models/MenuOption";
-import "./models/RoleMenuPermission";
-import "./models/UserMenuOverride";
+import "./models/associations";
 
 const PORT = process.env["PORT"] || 3000;
 

@@ -3,6 +3,7 @@ import { Op } from "sequelize";
 import User from "../models/User";
 import Role from "../models/Role";
 import UserMenuOverride from "../models/UserMenuOverride";
+import RoleMenuPermission from "../models/RoleMenuPermission";
 import MenuOption from "../models/MenuOption";
 import { ApiError } from "../middlewares/ErrorHandlerMiddleware";
 
@@ -11,7 +12,8 @@ interface CreateUserData {
   dni: string;
   firstName: string;
   lastName: string;
-  idTipoDocumento: number;
+  phone?: string;
+  address?: string;
   roleId: number;
   permissions: number[];
 }
@@ -27,18 +29,46 @@ export class UserService {
       order: [["createdAt", "DESC"]],
     });
 
+    const roleIds = [...new Set(users.map(u => (u.toJSON() as any).roleData?.id).filter(Boolean))];
+    const allRolePerms = roleIds.length > 0
+      ? await RoleMenuPermission.findAll({ where: { roleId: roleIds } })
+      : [];
+    const permsByRole = new Map<number, RoleMenuPermission[]>();
+    for (const p of allRolePerms) {
+      if (!permsByRole.has(p.roleId)) permsByRole.set(p.roleId, []);
+      permsByRole.get(p.roleId)!.push(p);
+    }
+
     return users.map(user => {
       const userJson = user.toJSON() as any;
-      if (userJson.menuOverrides) {
-        userJson.roleData = userJson.roleData || {};
-        userJson.roleData.permissions = userJson.menuOverrides.map((override: any) => ({
-          menuOptionId: override.menuOptionId,
-          hasAccess: override.hasAccess,
-        }));
+      if (userJson.roleData) {
+        userJson.role = userJson.roleData.code;
+        const roleId = userJson.roleData.id;
+        const rolePerms = permsByRole.get(roleId) || [];
+        userJson.roleData.permissions = this.resolvePermissionsFromArrays(rolePerms, userJson.menuOverrides || []);
         delete userJson.menuOverrides;
       }
       return userJson;
     });
+  }
+
+  private resolvePermissionsFromArrays(rolePerms: RoleMenuPermission[], overrides: any[]): { menuOptionId: number; hasAccess: boolean }[] {
+    const overrideMap = new Map(overrides.map(o => [o.menuOptionId, o.hasAccess]));
+
+    const allMenuIds = new Set([
+      ...rolePerms.map(p => p.menuOptionId),
+      ...overrides.map(o => o.menuOptionId),
+    ]);
+
+    return Array.from(allMenuIds)
+      .sort((a, b) => a - b)
+      .map(menuOptionId => ({
+        menuOptionId,
+        hasAccess: overrideMap.has(menuOptionId)
+          ? overrideMap.get(menuOptionId)!
+          : rolePerms.some(p => p.menuOptionId === menuOptionId),
+      }))
+      .filter(p => p.hasAccess);
   }
 
   public async createUser(data: CreateUserData) {
@@ -54,7 +84,7 @@ export class UserService {
       isActive: true,
     });
 
-    await this.createPermissions(newUser.id, data.permissions);
+    await this.createPermissions(newUser.id, data.roleId, data.permissions);
 
     const userJson = newUser.toJSON();
     delete userJson.password;
@@ -75,14 +105,23 @@ export class UserService {
     return `Clini-${Math.random().toString(36).slice(-4)}!`;
   }
 
-  private async createPermissions(userId: number, permissions: number[]) {
-    const allOptions = await MenuOption.findAll();
-    const overrides = allOptions.map(option => ({
-      userId,
-      menuOptionId: option.id,
-      hasAccess: permissions.includes(option.id),
-    }));
-    await UserMenuOverride.bulkCreate(overrides);
+  private async createPermissions(userId: number, roleId: number, permissions: number[]) {
+    const rolePerms = await RoleMenuPermission.findAll({ where: { roleId } });
+    const roleAllowedIds = new Set(rolePerms.map(p => p.menuOptionId));
+
+    const selectedSet = new Set(permissions);
+
+    const toCreate: { userId: number; menuOptionId: number; hasAccess: boolean }[] = [];
+
+    for (const allowedId of roleAllowedIds) {
+      if (!selectedSet.has(allowedId)) {
+        toCreate.push({ userId, menuOptionId: allowedId, hasAccess: false });
+      }
+    }
+
+    if (toCreate.length > 0) {
+      await UserMenuOverride.bulkCreate(toCreate);
+    }
   }
 
   public async updateUserPermissions(targetUserId: number, permissions: { menuOptionId: number; hasAccess: boolean }[]) {

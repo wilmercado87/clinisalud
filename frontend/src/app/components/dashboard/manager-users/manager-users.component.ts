@@ -76,7 +76,7 @@ export class ManagerUsersComponent implements AfterViewInit {
 
       const toggleErr = this.toggleStatusResource.error() as any;
       if (toggleErr) {
-        this.toast.error(toggleErr.error?.message || 'Error al cambiar estado');
+        this.toast.error(toggleErr.error?.message?.split(':')[1] || 'Error al cambiar estado');
         this.toggleUserIdTrigger.set(null);
       }
     });

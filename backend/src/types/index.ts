@@ -22,57 +22,9 @@ export interface AuthRequest extends Request {
   };
 }
 
-export interface PatientData {
-  idPaciente?: number;
-  idTipoDocumento: number;
-  numDocumento: string;
-  primerNombre: string;
-  segundoNombre?: string;
-  primerApellido: string;
-  segundoApellido?: string;
-  fechaNacimiento: string;
-  genero: string;
-  direccion?: string;
-  telefono?: string;
-  idMunicipio: number;
-  idDepartamento: number;
-  idTipoUsuario: number;
-  idConvenio: string;
-}
-
-export interface BillingData {
-  numAdmision: string;
-  idOrigenCta: number;
-  idTarifario: number;
-  idTipoServicio: number;
-  idPaciente: number;
-  idContrato?: string;
-  codDiagnostico?: string;
-  codProcedimiento?: string;
-  idCama?: number;
-  idEspecialidad?: number;
-  fechaAdmision: string;
-  fechaEgreso?: string;
-  valorTotal: number;
-  estado?: string;
-}
-
 export interface LoginCredentials {
   email: string;
   password: string;
-}
-
-export interface UserData {
-  idTipoDocumento: number;
-  numDocumento: string;
-  primerNombre: string;
-  segundoNombre?: string;
-  primerApellido: string;
-  segundoApellido?: string;
-  email: string;
-  password: string;
-  roleId: number;
-  isActive?: boolean;
 }
 
 export interface ErrorResponse {

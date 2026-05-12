@@ -78,19 +78,4 @@ User.init(
   },
 );
 
-User.belongsTo(Role, {
-  foreignKey: "roleId",
-  as: "roleData",
-});
-
-Role.hasMany(User, {
-  foreignKey: "roleId",
-  as: "users",
-});
-
-User.hasMany(UserMenuOverride, {
-  foreignKey: "userId",
-  as: "menuOverrides",
-});
-
 export default User;

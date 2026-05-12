@@ -47,8 +47,4 @@ MenuOption.init(
   },
 );
 
-// Self-reference para el Acordeón (Padre -> Hijos)
-MenuOption.hasMany(MenuOption, { as: "children", foreignKey: "parent_id" });
-MenuOption.belongsTo(MenuOption, { as: "parent", foreignKey: "parent_id" });
-
 export default MenuOption;

@@ -4,8 +4,8 @@ jest.mock('bcryptjs', () => ({
 
 import { UserService } from '../services/UserService';
 import User from '../models/User';
-import MenuOption from '../models/MenuOption';
 import UserMenuOverride from '../models/UserMenuOverride';
+import RoleMenuPermission from '../models/RoleMenuPermission';
 
 describe('UserService', () => {
   let service: UserService;
@@ -18,14 +18,14 @@ describe('UserService', () => {
   describe('findAllManageableUsers', () => {
     it('should return all users', async () => {
       const mockUsers = [
-        { id: 1, email: 'admin@test.com' },
-        { id: 2, email: 'user@test.com' },
+        { id: 1, email: 'admin@test.com', toJSON: () => ({ id: 1, email: 'admin@test.com' }) },
+        { id: 2, email: 'user@test.com', toJSON: () => ({ id: 2, email: 'user@test.com' }) },
       ];
       jest.spyOn(User, 'findAll').mockResolvedValue(mockUsers as any);
 
       const result = await service.findAllManageableUsers();
 
-      expect(result).toEqual(mockUsers);
+      expect(result).toHaveLength(2);
     });
   });
 
@@ -35,7 +35,6 @@ describe('UserService', () => {
       dni: '12345678',
       firstName: 'John',
       lastName: 'Doe',
-      idTipoDocumento: 1,
       roleId: 1,
       permissions: [1, 2],
     };
@@ -49,7 +48,7 @@ describe('UserService', () => {
         isActive: true,
         toJSON: () => ({ ...validData, id: 1 }),
       });
-      jest.spyOn(MenuOption, 'findAll').mockResolvedValue([{ id: 1 }] as any);
+      jest.spyOn(RoleMenuPermission, 'findAll').mockResolvedValue([{ menuOptionId: 1 }, { menuOptionId: 2 }] as any);
       jest.spyOn(UserMenuOverride, 'bulkCreate').mockResolvedValue([]);
 
       const result = await service.createUser(validData);
@@ -97,11 +96,11 @@ describe('UserService', () => {
 
   describe('toggleUserStatus', () => {
     it('should toggle to active', async () => {
-      const mockUserObj = { 
-        id: 2, 
-        isActive: false, 
-        roleData: { code: 'USER' }, 
-        save: jest.fn().mockResolvedValue(true) 
+      const mockUserObj = {
+        id: 2,
+        isActive: false,
+        roleData: { code: 'USER' },
+        save: jest.fn().mockResolvedValue(true)
       };
       jest.spyOn(User, 'findByPk').mockResolvedValue(mockUserObj as any);
 

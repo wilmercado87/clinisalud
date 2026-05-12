@@ -105,13 +105,8 @@ export class PermissionsDialogComponent {
 
   private initializeUserPermissions(): void {
     const currentPermissions = this.data.user?.roleData?.permissions || [];
-    const initialSet = new Set<number>();
-
-    currentPermissions.forEach(p => {
-      if (p.hasAccess) initialSet.add(p.menuOptionId);
-    });
-
-    this.selectedIds.set(initialSet);
+    const ids = currentPermissions.map(p => p.menuOptionId);
+    this.selectedIds.set(new Set(ids));
   }
 
   public toggleParent(group: MenuOption, isChecked: boolean): void {
@@ -160,7 +155,7 @@ export class PermissionsDialogComponent {
   }
 
   private handleErrors(err: any): void {
-    const msg = err.error?.message || 'Ocurrió un error en la operación';
+    const msg = err.error?.message?.split(':')[1] || 'Ocurrió un error en la operación';
     this.toast.error(msg);
     this.saveTrigger.set(null);
   }
