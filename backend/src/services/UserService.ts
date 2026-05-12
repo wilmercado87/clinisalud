@@ -18,10 +18,26 @@ interface CreateUserData {
 
 export class UserService {
   public async findAllManageableUsers() {
-    return await User.findAll({
+    const users = await User.findAll({
       attributes: { exclude: ["password"] },
-      include: [{ model: Role, as: "roleData", attributes: ["id", "name", "code"] }],
+      include: [
+        { model: Role, as: "roleData", attributes: ["id", "name", "code"] },
+        { model: UserMenuOverride, as: "menuOverrides" },
+      ],
       order: [["createdAt", "DESC"]],
+    });
+
+    return users.map(user => {
+      const userJson = user.toJSON() as any;
+      if (userJson.menuOverrides) {
+        userJson.roleData = userJson.roleData || {};
+        userJson.roleData.permissions = userJson.menuOverrides.map((override: any) => ({
+          menuOptionId: override.menuOptionId,
+          hasAccess: override.hasAccess,
+        }));
+        delete userJson.menuOverrides;
+      }
+      return userJson;
     });
   }
 

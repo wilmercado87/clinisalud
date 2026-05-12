@@ -3,17 +3,16 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
-  selector: 'app-home',
-  standalone: true,
-  imports: [CommonModule],
-  template: `
+    selector: 'app-home',
+    imports: [CommonModule],
+    template: `
     <div class="welcome-container">
       <h1>Bienvenido, {{ userName }}</h1>
       <p>Este es el resumen médico de Clinisalud para hoy.</p>
     </div>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .welcome-container {
         padding: 20px;
         background: white;
@@ -22,7 +21,7 @@ import { AuthService } from '../../../services/auth.service';
         color: #004071;
       }
     `,
-  ],
+    ]
 })
 export class HomeComponent {
   private authService = inject(AuthService);

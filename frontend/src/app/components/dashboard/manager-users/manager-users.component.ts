@@ -1,126 +1,124 @@
-import { Component, OnInit, inject, ViewChild } from '@angular/core';
+import { Component, inject, ViewChild, signal, computed, effect, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
+import { MatDialog } from '@angular/material/dialog';
+import { rxResource } from '@angular/core/rxjs-interop';
+
 import { MaterialModule } from '../../../material/material.module';
 import { UserService } from '../../../services/user.service';
-import { User } from '../../../models/user-manager.model';
+import { ToggleStatusResponse, User } from '../../../models/user-manager.model';
 import { SharedModule } from '../../../shared/shared.module';
-import { MatDialog } from '@angular/material/dialog';
 import { UserFormDialogComponent } from '../user-form-dialog/user-form-dialog.component';
 import { PermissionsDialogComponent } from '../permissions-dialog/permissions-dialog.component';
 import { ToastService } from '../../../services/toast.service';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-manager-users',
-  standalone: true,
   imports: [CommonModule, MaterialModule, SharedModule],
   templateUrl: './manager-users.component.html',
   styleUrls: ['./manager-users.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ManagerUsersComponent implements OnInit {
-  private userService = inject(UserService);
-  private dialog = inject(MatDialog);
-  private toast = inject(ToastService);
+export class ManagerUsersComponent implements AfterViewInit {
+  private readonly userService = inject(UserService);
+  private readonly dialog = inject(MatDialog);
+  private readonly toast = inject(ToastService);
 
-  public displayedColumns: string[] = [
-    'name',
-    'dni',
-    'email',
-    'role',
-    'status',
-    'actions',
-  ];
+  public usersResource = rxResource({
+    loader: () => this.userService.getManageableUsers()
+  });
+
+  public toggleUserIdTrigger = signal<number | null>(null);
+
+  public toggleStatusResource = rxResource<ToggleStatusResponse | undefined, number | null>({
+    request: () => this.toggleUserIdTrigger(),
+    loader: ({ request: id }) => {
+      if (id === null) {
+        return of(undefined);
+      }
+
+      return this.userService.toggleStatus(id);
+    }
+  });
+
+  public filterValue = signal('');
   public dataSource = new MatTableDataSource<User>([]);
-  public isLoading = true;
-  public togglingUserId: number | null = null;
+  public displayedColumns: string[] = ['name', 'dni', 'email', 'role', 'status', 'actions'];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  ngOnInit(): void {
-    this.fetchUsers();
-  }
-
-  fetchUsers(): void {
-    this.isLoading = true;
-    this.userService.getManageableUsers().subscribe({
-      next: (users) => {
+  constructor() {
+    effect(() => {
+      const users = this.usersResource.value();
+      if (users) {
         this.dataSource.data = users;
         this.dataSource.filterPredicate = this.createFilterPredicate();
-        this.dataSource.paginator = this.paginator;
-        this.dataSource.sort = this.sort;
-        this.isLoading = false;
-      },
-      error: () => (this.isLoading = false),
+      }
     });
+
+    effect(() => {
+      const result = this.toggleStatusResource.value();
+      if (result && 'message' in result) {
+        this.toast.success(result.message);
+        this.usersResource.reload();
+        this.toggleUserIdTrigger.set(null);
+      }
+    });
+
+    effect(() => {
+      if (this.usersResource.error()) {
+        this.toast.error('Error al sincronizar datos del servidor');
+      }
+
+      const toggleErr = this.toggleStatusResource.error() as any;
+      if (toggleErr) {
+        this.toast.error(toggleErr.error?.message || 'Error al cambiar estado');
+        this.toggleUserIdTrigger.set(null);
+      }
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
   }
 
   private createFilterPredicate(): (data: User, filter: string) => boolean {
     return (data: User, filter: string): boolean => {
-      const transformedFilter = filter.trim().toLowerCase();
-
       const searchTerms = [
-        data.firstName,
-        data.lastName,
-        data.dni,
-        data.email,
-        data.roleData?.name,
-        data.isActive ? 'activo' : 'inactivo',
-      ]
-        .join(' ')
-        .toLowerCase();
-
-      return searchTerms.includes(transformedFilter);
+        data.firstName, data.lastName, data.dni, data.email,
+        data.roleData?.name, data.isActive ? 'activo' : 'inactivo'
+      ].join(' ').toLowerCase();
+      return searchTerms.includes(filter.trim().toLowerCase());
     };
   }
 
-  applyFilter(event: Event): void {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue;
+  public applyFilter(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.filterValue.set(val);
+    this.dataSource.filter = val;
+    this.paginator?.firstPage();
+  }
 
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  public toggleUserStatus(user: User): void {
+    if (!this.toggleStatusResource.isLoading()) {
+      this.toggleUserIdTrigger.set(user.id);
     }
   }
 
-  openCreateDialog(): void {
-    const dialogRef = this.dialog.open(UserFormDialogComponent, {
-      width: '700px',
-      disableClose: true,
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) this.fetchUsers();
-    });
+  public openCreateDialog(): void {
+    this.dialog.open(UserFormDialogComponent, { width: '700px', disableClose: true })
+      .afterClosed()
+      .subscribe(result => result && this.usersResource.reload());
   }
 
-  openPermissionsDialog(user: User): void {
-    const dialogRef = this.dialog.open(PermissionsDialogComponent, {
-      width: '600px',
-      disableClose: true,
-      data: { user },
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result?.success) this.fetchUsers();
-    });
-  }
-
-  toggleUserStatus(user: User): void {
-    this.togglingUserId = user.id;
-    this.userService.toggleStatus(user.id).subscribe({
-      next: (result) => {
-        user.isActive = result.isActive;
-        this.togglingUserId = null;
-        this.toast.success(result.message);
-      },
-      error: (err) => {
-        this.togglingUserId = null;
-        const msg = err.error?.message || "No se pudo cambiar el estado";
-        this.toast.error(msg);
-      }
-    });
+  public openPermissionsDialog(user: User): void {
+    this.dialog.open(PermissionsDialogComponent, { width: '600px', disableClose: true, data: { user } })
+      .afterClosed()
+      .subscribe(result => result?.success && this.usersResource.reload());
   }
 }

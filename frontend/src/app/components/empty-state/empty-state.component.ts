@@ -1,16 +1,16 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-  selector: 'app-empty-state',
-  template: `
+    selector: 'app-empty-state',
+    template: `
     <div class="empty-state-container">
       <mat-icon class="empty-icon">{{ icono }}</mat-icon>
       <h3 class="empty-title">{{ titulo }}</h3>
       <p class="empty-message">{{ mensaje }}</p>
     </div>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .empty-state-container {
         padding: 60px 20px;
         display: flex;
@@ -39,7 +39,8 @@ import { Component, Input } from '@angular/core';
         max-width: 350px;
       }
     `,
-  ],
+    ],
+    standalone: false
 })
 export class EmptyStateComponent {
   @Input() titulo: string = 'No se encontraron resultados';

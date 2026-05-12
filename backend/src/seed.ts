@@ -3,6 +3,7 @@ import Role from "./models/Role";
 import MenuOption from "./models/MenuOption";
 import User from "./models/User";
 import RoleMenuPermission from "./models/RoleMenuPermission";
+import UserMenuOverride from "./models/UserMenuOverride";
 
 export const runSeeder = async () => {
   try {
@@ -121,11 +122,11 @@ export const runSeeder = async () => {
 
     // 4. Crear Usuario Admin Inicial
     const adminEmail = "admin@clinisalud.com";
-    const existingAdmin = await User.findOne({ where: { email: adminEmail } });
+    let adminUser = await User.findOne({ where: { email: adminEmail } });
 
-    if (!existingAdmin) {
+    if (!adminUser) {
       const hashedPassword = await bcrypt.hash("Admin2026!", 10);
-      await User.create({
+      adminUser = await User.create({
         firstName: "Admin",
         lastName: "General",
         dni: "00000000",
@@ -135,6 +136,18 @@ export const runSeeder = async () => {
         isActive: true,
       });
       console.log(`✅ Admin creado: ${adminEmail} / Admin2026!`);
+    }
+
+    // 5. Crear permisos del admin en UserMenuOverride
+    const existingOverrides = await UserMenuOverride.findOne({ where: { userId: adminUser.id } });
+    if (!existingOverrides) {
+      const overrideData = allOptions.map(opt => ({
+        userId: adminUser.id,
+        menuOptionId: opt.id,
+        hasAccess: true,
+      }));
+      await UserMenuOverride.bulkCreate(overrideData);
+      console.log(`✅ Permisos del admin configurados en UserMenuOverride`);
     }
 
     console.log("✨ Seed completado con éxito.");

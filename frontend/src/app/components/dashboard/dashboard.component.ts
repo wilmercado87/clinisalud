@@ -1,12 +1,14 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, NavigationEnd } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
+
 import { AuthService } from '../../services/auth.service';
-import { map, Observable } from 'rxjs';
-import { MenuOption } from '../../models/auth.model';
+import { ConfigService } from '../../services/config.service';
 import { MaterialModule } from '../../material/material.module';
 import { SidebarMenuComponent } from './sidebar-menu/sidebar-menu.component';
-import { ConfigService } from '../../services/config.service';
+import { MenuOption } from '../../models/auth.model';
 
 export interface MenuOptionUI extends MenuOption {
   isOpen?: boolean;
@@ -14,42 +16,45 @@ export interface MenuOptionUI extends MenuOption {
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true,
   imports: [CommonModule, RouterModule, MaterialModule, SidebarMenuComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent {
-  private router = inject(Router);
-  private authService = inject(AuthService);
-  public configService = inject(ConfigService);
-  public isSidebarExpanded = true;
-  public currentUser = this.authService.currentUser;
-  public menu$!: Observable<MenuOptionUI[]>;
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  public readonly configService = inject(ConfigService);
 
-  ngOnInit(): void {
-    this.listernerMenu();
+  public isSidebarExpanded = signal(true);
+
+  public currentUser = signal(this.authService.currentUser);
+
+  private rawMenu = toSignal(this.authService.userMenu$, { initialValue: [] as MenuOption[] });
+
+  public menuItems = computed<MenuOptionUI[]>(() =>
+    this.rawMenu().map(group => ({ ...group, isOpen: false }))
+  );
+
+  private currentUrl = toSignal(
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(() => this.router.url)
+    ),
+    { initialValue: this.router.url }
+  );
+
+  public isWelcomePage = computed(() => this.currentUrl() === '/dashboard/home');
+
+  public toggleSidebar(): void {
+    this.isSidebarExpanded.update(val => !val);
   }
 
-  listernerMenu(): void {
-    this.menu$ = this.authService.userMenu$.pipe(
-      map((menu) => menu.map((group) => ({ ...group, isOpen: false }))),
-    );
-  }
-
-  toggleSidebar(): void {
-    this.isSidebarExpanded = !this.isSidebarExpanded;
-  }
-
-  handleLogout(): void {
+  public handleLogout(): void {
     this.authService.logout();
   }
 
-  toggleMainPanel(group: any): void {
+  public toggleMainPanel(group: MenuOptionUI): void {
     group.isOpen = !group.isOpen;
-  }
-
-  get isWelcomePage(): boolean {
-    return this.router.url === '/dashboard/home';
   }
 }

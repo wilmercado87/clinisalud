@@ -31,7 +31,7 @@
     </div>
 
     <mat-card-content [formGroup]="loginForm">
-      <div class="login-form">
+      <form class="login-form" (submit)="onLogin()">
         <mat-form-field appearance="outline">
           <mat-label>Correo Electrónico</mat-label>
           <input matInput formControlName="email" type="email" placeholder="ejemplo@clinisalud.com" />
@@ -44,22 +44,27 @@
           <mat-icon matSuffix>lock</mat-icon>
         </mat-form-field>
 
-        @if (errorMessage) {
+        @if (errorMessage()) {
           <div class="error-banner">
-            {{ errorMessage }}
+            {{ errorMessage() }}
           </div>
         }
 
         <button
           mat-raised-button
           class="btn-navy"
-          type="button"
-          (click)="onLogin()"
-          [disabled]="loginForm.invalid"
+          type="submit"
+          [disabled]="!canSubmit()"
         >
-          INICIAR SESIÓN
+          @if (loginResource.isLoading()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            <ng-container>
+              <span>INICIAR SESIÓN</span>
+            </ng-container>
+          }
         </button>
-      </div>
+      </form>
     </mat-card-content>
   </mat-card>
 </div>

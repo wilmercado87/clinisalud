@@ -1,6 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
 import Role from "./Role";
+import UserMenuOverride from "./UserMenuOverride";
 
 class User extends Model {
   public id!: number;
@@ -85,6 +86,11 @@ User.belongsTo(Role, {
 Role.hasMany(User, {
   foreignKey: "roleId",
   as: "users",
+});
+
+User.hasMany(UserMenuOverride, {
+  foreignKey: "userId",
+  as: "menuOverrides",
 });
 
 export default User;

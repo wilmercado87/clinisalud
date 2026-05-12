@@ -1,0 +1,9 @@
+{"error":"401:Usuario no encontrado","level":"error","message":"Login failed for email: admin2@clinisalud.com","service":"clinisalud-api","timestamp":"2026-05-09 16:17:52"}
+{"error":"401:Credenciales inválidas","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-05-09 16:17:57"}
+{"error":"401:Credenciales inválidas","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-05-09 16:18:14"}
+{"error":"401:Credenciales inválidas","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-05-09 16:18:25"}
+{"error":"401:Usuario no encontrado","level":"error","message":"Login failed for email: admin2@clinisalud.com","service":"clinisalud-api","timestamp":"2026-05-09 16:18:33"}
+{"error":"401:Credenciales inválidas","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-05-09 16:19:01"}
+{"error":"401:Usuario no encontrado","level":"error","message":"Login failed for email: admin2@clinisalud.com","service":"clinisalud-api","timestamp":"2026-05-09 16:19:10"}
+{"error":"401:Usuario no encontrado","level":"error","message":"Login failed for email: wilmercado@gmail.com","service":"clinisalud-api","timestamp":"2026-05-11 22:56:16"}
+{"error":"401:Credenciales inválidas","level":"error","message":"Login failed for email: wmercado@gmail.com","service":"clinisalud-api","timestamp":"2026-05-12 00:10:36"}

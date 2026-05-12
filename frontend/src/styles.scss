@@ -2,6 +2,9 @@
 @use "variables" as v;
 @include mat.core();
 
+@import "@angular/material/prebuilt-themes/indigo-pink.css";
+
+
 
 // 1. PALETA NAVY OFICIAL
 $clinisalud-navy: (
@@ -102,3 +105,9 @@ body {
     .mat-mdc-snack-bar-action { color: #{v.$color-blue-light-600} !important; }
   }
 }
+
+.cdk-overlay-container {
+  z-index: 9999 !important;
+}
+
+

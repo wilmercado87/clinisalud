@@ -1,160 +1,148 @@
 @use "variables" as v;
 
 .permissions-dialog {
-  padding: 8px 24px;
+  padding: 8px 16px;
 
   &__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
   }
 
   &__title {
     margin: 0;
-    padding: 0;
     color: v.$navy-500;
-    font-size: 1.4rem;
-    font-weight: 700;
-  }
-
-  &__close-btn {
-    margin-right: -12px;
-    color: #666;
+    font-size: 1.3rem;
+    font-weight: 800;
   }
 
   &__content {
-    padding: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden;
-    max-height: 60vh;
-
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-    &::-webkit-scrollbar-thumb {
-      background: #d1d5db;
-      border-radius: 10px;
-    }
+    padding: 12px 0 !important;
+    max-height: 65vh;
   }
 
   &__user-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
     padding: 12px 16px;
-    background: v.$navy-50;
-    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
     margin-bottom: 16px;
+  }
 
-    mat-icon {
-      color: v.$navy-500;
-    }
-
-    span {
-      font-weight: 600;
-      color: v.$navy-500;
+  &__user-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    mat-icon { color: v.$navy-500; }
+    span { 
+      font-weight: 700; 
+      color: #1e293b;
+      font-size: 0.95rem;
     }
   }
 
-  &__role {
-    margin-left: auto;
-    font-size: 12px;
+  &__role-badge {
+    font-size: 10px;
     background: v.$navy-500;
     color: white;
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  &__loading {
+  // --- ESTILO DEL WARNING ---
+  &__warning {
     display: flex;
-    flex-direction: column;
     align-items: center;
     gap: 12px;
-    padding: 32px;
+    background: #fff1f2;
+    border: 1px solid #fda4af;
+    padding: 10px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    color: #be123c;
 
-    span {
-      color: #666;
-      font-size: 14px;
+    mat-icon { font-size: 20px; }
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+      strong { font-weight: 700; }
     }
   }
 
   &__permissions {
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    padding: 10px 12px;
-    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   &__permission-item {
-    margin-bottom: 4px;
-  }
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.2s;
 
-  &__permission-parent {
-    background: rgba(v.$navy-500, 0.08);
-    padding: 4px 10px;
-    border-radius: 6px;
-    margin-bottom: 8px;
-
-    ::ng-deep .mdc-label {
-      color: v.$navy-500;
-      font-size: 12px;
-      font-weight: 700;
+    &.is-denied {
+      border-color: #fda4af;
+      background: rgba(255, 241, 242, 0.3);
     }
   }
 
-  &__group-icon {
-    font-size: 18px;
-    vertical-align: middle;
-    margin-right: 6px;
-    color: v.$navy-500;
+  &__permission-parent {
+    background: #f1f5f9;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e5e7eb;
+
+    ::ng-deep .mdc-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 2px;
+      color: v.$navy-500 !important;
+      font-weight: 800 !important;
+      font-size: 12px !important;
+    }
   }
 
   &__permission-children {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    padding-left: 24px;
+    padding: 12px 16px;
+    gap: 8px;
   }
 
   &__child-checkbox {
     ::ng-deep .mdc-label {
-      font-size: 11px;
-      color: #555;
+      font-size: 12px !important;
+      color: #475569 !important;
     }
   }
 
   &__actions {
-    padding: 16px 24px;
-    gap: 12px;
-    border-top: 1px solid #f0f0f0;
-    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
   }
 
   &__btn-save {
-    height: 44px;
-    padding: 0 24px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+    border-radius: 8px !important;
+    padding: 0 20px !important;
 
-    ::ng-deep .mdc-button__label {
+    .permissions-dialog__btn-content {
       display: flex;
       align-items: center;
-      justify-content: center;
       gap: 8px;
-    }
-
-    mat-icon {
-      margin: 0 !important;
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
-
-    &:disabled {
-      mat-spinner {
-        opacity: 0.5;
-      }
+      font-weight: 700;
     }
   }
 }

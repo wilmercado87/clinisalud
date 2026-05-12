@@ -4,7 +4,7 @@
       Gestionar Accesos
     </h2>
 
-    @if (!isSaving()) {
+    @if (!saveResource.isLoading()) {
       <button
         class="permissions-dialog__close-btn"
         mat-icon-button
@@ -17,22 +17,27 @@
 
   <mat-dialog-content class="permissions-dialog__content">
     <div class="permissions-dialog__user-info">
-      <mat-icon>person</mat-icon>
-      <span>{{ data.user.firstName }} {{ data.user.lastName }}</span>
-      <span class="permissions-dialog__role">{{ data.user.roleData?.name }}</span>
+      <div class="permissions-dialog__user-main">
+        <mat-icon>account_circle</mat-icon>
+        <span>{{ data.user.firstName }} {{ data.user.lastName }}</span>
+      </div>
+      <span class="permissions-dialog__role-badge">{{ data.user.roleData?.name }}</span>
     </div>
 
     @if (isFullAccessDenied()) {
       <div class="permissions-dialog__warning">
-        <mat-icon>warning</mat-icon>
-        <span>Solo los administradores pueden tener acceso total al sistema.</span>
+        <mat-icon>security</mat-icon>
+        <div class="permissions-dialog__warning-text">
+          <strong>Acceso Total Restringido</strong>
+          <span>Solo administradores pueden poseer todos los permisos.</span>
+        </div>
       </div>
     }
 
-    @if (isLoading()) {
+    @if (menuResource.isLoading()) {
       <div class="permissions-dialog__loading">
         <mat-spinner diameter="30"></mat-spinner>
-        <span>Cargando opciones de acceso...</span>
+        <span>Cargando opciones...</span>
       </div>
     } @else {
       <div class="permissions-dialog__permissions">
@@ -42,10 +47,12 @@
               <mat-checkbox
                 [checked]="isParentChecked(group)"
                 (change)="toggleParent(group, $event.checked)"
-                [disabled]="isSaving()"
+                [disabled]="saveResource.isLoading()"
                 color="primary"
               >
-                <mat-icon class="permissions-dialog__group-icon">{{ group.icon || 'grid_view' }}</mat-icon>
+                <mat-icon class="permissions-dialog__group-icon">
+                  {{ group.icon || 'grid_view' }}
+                </mat-icon>
                 <strong class="permissions-dialog__group-label">
                   {{ group.label | uppercase }}
                 </strong>
@@ -55,9 +62,9 @@
             <div class="permissions-dialog__permission-children">
               @for (child of group.children; track child.id) {
                 <mat-checkbox
-                  [checked]="isChildSelected(child.id)"
+                  [checked]="selectedIds().has(child.id)"
                   (change)="toggleChild(child.id, group)"
-                  [disabled]="isSaving()"
+                  [disabled]="saveResource.isLoading()"
                   class="permissions-dialog__child-checkbox"
                 >
                   {{ child.label }}
@@ -67,7 +74,8 @@
           </div>
         } @empty {
           <div class="permissions-dialog__empty">
-            <p>No hay opciones de menú configuradas.</p>
+            <mat-icon>error_outline</mat-icon>
+            <p>No se encontraron opciones de menú disponibles.</p>
           </div>
         }
       </div>
@@ -75,7 +83,7 @@
   </mat-dialog-content>
 
   <mat-dialog-actions class="permissions-dialog__actions" align="end">
-    <button mat-button (click)="onCancel()" [disabled]="isSaving()">
+    <button mat-button (click)="onCancel()" [disabled]="saveResource.isLoading()">
       CANCELAR
     </button>
 
@@ -86,11 +94,13 @@
       [disabled]="!canSubmit()"
       (click)="onSave()"
     >
-      @if (isSaving()) {
+      @if (saveResource.isLoading()) {
         <mat-spinner diameter="20"></mat-spinner>
       } @else {
-        <mat-icon>save</mat-icon>
-        <span>GUARDAR CAMBIOS</span>
+        <div class="permissions-dialog__btn-content">
+          <mat-icon>save</mat-icon>
+          <span>CONFIRMAR CAMBIOS</span>
+        </div>
       }
     </button>
   </mat-dialog-actions>

@@ -14,7 +14,7 @@ const PORT = process.env["PORT"] || 3000;
 async function main() {
   try {
     console.log("⏳ Sincronizando base de datos...");
-    await sequelize.sync({ alter: { drop: false } });
+    await sequelize.sync({ force: true });
     console.log("✅ Tablas sincronizadas con éxito.");
 
     console.log("🌱 Corriendo Seeders...");

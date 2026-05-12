@@ -42,8 +42,19 @@
     }
   }
 
+  ::ng-deep &__profile-tooltip {
+    color: v.$navy-contrast !important;
+    font-size: 12px !important;
+    padding: 8px 12px !important;
+    white-space: nowrap !important;
+    border-radius: 8px;
+    margin-top: 9rem;
+    margin-left: 2rem;
+  }
+
   &__profile {
     padding: 0 15px 25px 15px;
+    position: relative;
 
     &-card {
       display: flex;
@@ -54,6 +65,7 @@
       padding: 10px 14px;
       border-radius: 16px;
       transition: background 0.3s ease;
+      cursor: help;
 
       &:hover {
         background: rgba(v.$navy-contrast, 0.15);
