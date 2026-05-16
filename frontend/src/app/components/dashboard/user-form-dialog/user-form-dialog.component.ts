@@ -10,7 +10,6 @@ import { UserService } from '../../../services/user.service';
 import { RoleService } from '../../../services/roles.services';
 import { ToastService } from '../../../services/toast.service';
 
-import { Role } from '../../../models/user-manager.model';
 import { MenuOption } from '../../../models/auth.model';
 import { ERROR_MAPPING } from '../../../utils/status.codes';
 
@@ -63,7 +62,7 @@ export class UserFormDialogComponent {
   });
 
   public filteredMenuOptions = computed(() =>
-    (this.menuResource.value() ?? []).filter(item => item.label.toUpperCase() === 'PANEL PRINCIPAL')
+    (this.menuResource.value() ?? []).filter(item => item.label === 'Panel Principal')
   );
 
   public totalOptionsCount = computed(() =>

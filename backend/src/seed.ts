@@ -3,7 +3,6 @@ import Role from "./models/Role";
 import MenuOption from "./models/MenuOption";
 import User from "./models/User";
 import RoleMenuPermission from "./models/RoleMenuPermission";
-import UserMenuOverride from "./models/UserMenuOverride";
 
 export const runSeeder = async () => {
   try {
@@ -26,8 +25,8 @@ export const runSeeder = async () => {
     });
 
     const [mainPanel] = await MenuOption.findOrCreate({
-      where: { label: "PANEL PRINCIPAL" },
-      defaults: { label: "PANEL PRINCIPAL", icon: "grid_view", order: 1 },
+      where: { label: "Panel Principal" },
+      defaults: { label: "Panel Principal", icon: "grid_view", order: 1 },
     });
 
     const subOptions = [
@@ -68,11 +67,13 @@ export const runSeeder = async () => {
       },
     ];
 
+    const createdSubOptions: MenuOption[] = [];
     for (const sub of subOptions) {
-      await MenuOption.findOrCreate({
+      const [opt] = await MenuOption.findOrCreate({
         where: { label: sub.label },
         defaults: sub,
       });
+      createdSubOptions.push(opt);
     }
 
     const [userGestor] = await MenuOption.findOrCreate({
@@ -96,24 +97,26 @@ export const runSeeder = async () => {
     }
 
     // --- DOC: Acceso limitado (Solo Médico) ---
-    const medicalLabels = ["PANEL PRINCIPAL", "Citas", "Historia Clinica"];
-    const medicalMenu = allOptions.filter((o) =>
-      medicalLabels.includes(o.label),
-    );
+    const medicalLabels = ["Panel Principal", "Citas", "Historia Clinica"];
+    const allOptionLabels = allOptions.map(o => o.label);
+    const missingDoc = medicalLabels.filter(l => !allOptionLabels.includes(l));
+    if (missingDoc.length > 0) {
+      console.warn(`⚠️ ADVERTENCIA: Labels DOC no encontrados: ${missingDoc.join(', ')}`);
+    }
+    const medicalMenu = allOptions.filter(o => medicalLabels.includes(o.label));
     for (const opt of medicalMenu) {
       await RoleMenuPermission.findOrCreate({
         where: { roleId: docRole.id, menuOptionId: opt.id },
       });
     }
 
-    // --- FACT: Acceso administrativo (Nuevo ajuste) ---
-    const factLabels = [
-      "PANEL PRINCIPAL",
-      "Admision",
-      "Autorizaciones",
-      "Facturacion Rips",
-    ];
-    const factMenu = allOptions.filter((o) => factLabels.includes(o.label));
+    // --- FACT: Acceso administrativo ---
+    const factLabels = ["Panel Principal", "Admision", "Autorizaciones", "Facturacion Rips"];
+    const missingFact = factLabels.filter(l => !allOptionLabels.includes(l));
+    if (missingFact.length > 0) {
+      console.warn(`⚠️ ADVERTENCIA: Labels FACT no encontrados: ${missingFact.join(', ')}`);
+    }
+    const factMenu = allOptions.filter(o => factLabels.includes(o.label));
     for (const opt of factMenu) {
       await RoleMenuPermission.findOrCreate({
         where: { roleId: factRole.id, menuOptionId: opt.id },

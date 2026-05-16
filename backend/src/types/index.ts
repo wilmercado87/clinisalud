@@ -14,14 +14,6 @@ export interface PaginatedResponse<T> extends ApiResponse<T> {
   };
 }
 
-export interface AuthRequest extends Request {
-  user?: {
-    id: number;
-    role: string;
-    email: string;
-  };
-}
-
 export interface LoginCredentials {
   email: string;
   password: string;

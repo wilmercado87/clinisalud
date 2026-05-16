@@ -25,7 +25,7 @@ export async function login(req: Request, res: Response) {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        role: user.roleData?.code,
+        role: user.role,
       },
       menu,
     });

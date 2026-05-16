@@ -28,7 +28,8 @@ UserMenuOverride.init(
   {
     sequelize,
     tableName: "user_menu_overrides",
-    timestamps: true,
+    timestamps: false,
+    indexes: [{ unique: true, fields: ["user_id", "menu_option_id"] }]
   },
 );
 

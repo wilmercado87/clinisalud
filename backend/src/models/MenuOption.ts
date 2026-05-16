@@ -39,6 +39,11 @@ MenuOption.init(
       field: "parent_id",
       references: { model: "menu_options", key: "id" },
     },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      field: "is_active",
+    },
   },
   {
     sequelize,

@@ -6,7 +6,7 @@ import { AuthResponse, LoginCredentials, MenuOption } from '../models/auth.model
 import { environment } from '../../environments/environment';
 import { User } from '../models/user-manager.model';
 import { RoleService } from './roles.services';
-import { ERROR_MAPPING } from '../utils/status.codes';
+import { ERROR_MAPPING, HTTP_STATUS } from '../utils/status.codes';
 
 const STORAGE_KEYS = {
   TOKEN: 'token',
@@ -69,8 +69,18 @@ export class AuthService {
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {
-    const businessMessage = ERROR_MAPPING[error.status] ?? 'Error en el sistema. Intente más tarde.';
-
+    const businessMessage = this.getErrorValidation(error);
     return throwError(() => businessMessage);
+  }
+
+  private getErrorValidation(error: HttpErrorResponse): string {
+    const { status, error: body } = error;
+
+    if (status === HTTP_STATUS.VALIDATION_ERROR) {
+      const detail = body?.errors?.[0]?.message;
+      if (detail) return detail;
+    }
+
+    return ERROR_MAPPING[status] || body?.message || 'Error inesperado en el servidor';
   }
 }

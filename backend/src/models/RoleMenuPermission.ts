@@ -15,7 +15,8 @@ RoleMenuPermission.init({
   {
     sequelize,
     tableName: "role_menu_permissions",
-    timestamps: false
+    timestamps: false,
+    indexes: [{ unique: true, fields: ["role_id", "menu_option_id"] }]
   }
 );
 

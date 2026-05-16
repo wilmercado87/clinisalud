@@ -4,7 +4,6 @@ import User from "../models/User";
 import Role from "../models/Role";
 import UserMenuOverride from "../models/UserMenuOverride";
 import RoleMenuPermission from "../models/RoleMenuPermission";
-import MenuOption from "../models/MenuOption";
 import { ApiError } from "../middlewares/ErrorHandlerMiddleware";
 
 interface CreateUserData {

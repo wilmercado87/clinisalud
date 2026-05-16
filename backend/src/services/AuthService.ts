@@ -9,18 +9,8 @@ import { buildMenuTree } from "../utils/MenuTree.util";
 import { JWT_CONFIG } from "../constants";
 import { ApiError } from "../middlewares/ErrorHandlerMiddleware";
 
-/**
- * AuthService - Servicio de autenticación y autorización
- * Maneja login de usuarios, generación de tokens JWT y construcción de menús autorizados
- */
 export class AuthService {
-  /**
-   * Autentica un usuario con email y contraseña
-   * @param email - Correo electrónico del usuario
-   * @param pass - Contraseña del usuario
-   * @returns Objeto con usuario, menú y token JWT
-   * @throws ApiError si credenciales inválidas o usuario inactivo
-   */
+
   public async login(email: string, pass: string) {
     const user = await User.findOne({
       where: { email },
@@ -58,7 +48,9 @@ export class AuthService {
     const authorizedIds = new Set(rolePermissions.map(p => p.menuOptionId));
 
     for (const ov of overrides) {
-      ov.hasAccess ? authorizedIds.add(ov.menuOptionId) : authorizedIds.delete(ov.menuOptionId);
+      if (authorizedIds.has(ov.menuOptionId)) {
+        if (!ov.hasAccess) authorizedIds.delete(ov.menuOptionId);
+      }
     }
 
     if (isAdmin) {

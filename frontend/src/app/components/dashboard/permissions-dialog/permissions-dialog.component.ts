@@ -40,7 +40,7 @@ export class PermissionsDialogComponent {
   return rawMenu.filter(item => {
     const label = item.label.toUpperCase();
 
-    if (label === 'GESTOR USUARIOS') {
+    if (label === 'Gestor Usuarios') {
       return is_admin;
     }
 
