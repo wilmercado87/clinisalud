@@ -32,6 +32,7 @@ export class UserService {
     const allRolePerms = roleIds.length > 0
       ? await RoleMenuPermission.findAll({ where: { roleId: roleIds } })
       : [];
+
     const permsByRole = new Map<number, RoleMenuPermission[]>();
     for (const p of allRolePerms) {
       if (!permsByRole.has(p.roleId)) permsByRole.set(p.roleId, []);
@@ -52,11 +53,13 @@ export class UserService {
   }
 
   private resolvePermissionsFromArrays(rolePerms: RoleMenuPermission[], overrides: any[]): { menuOptionId: number; hasAccess: boolean }[] {
-    const overrideMap = new Map(overrides.map(o => [o.menuOptionId, o.hasAccess]));
+    const overrideMap = new Map<number, boolean>(
+      overrides.map(o => [Number(o.menuOptionId), Boolean(o.hasAccess)])
+    );
 
-    const allMenuIds = new Set([
-      ...rolePerms.map(p => p.menuOptionId),
-      ...overrides.map(o => o.menuOptionId),
+    const allMenuIds = new Set<number>([
+      ...rolePerms.map(p => Number(p.menuOptionId)),
+      ...overrides.map(o => Number(o.menuOptionId)),
     ]);
 
     return Array.from(allMenuIds)
@@ -65,7 +68,7 @@ export class UserService {
         menuOptionId,
         hasAccess: overrideMap.has(menuOptionId)
           ? overrideMap.get(menuOptionId)!
-          : rolePerms.some(p => p.menuOptionId === menuOptionId),
+          : rolePerms.some(p => Number(p.menuOptionId) === menuOptionId),
       }))
       .filter(p => p.hasAccess);
   }
@@ -129,7 +132,6 @@ export class UserService {
     });
 
     if (!targetUser) throw ApiError.notFound("Usuario no encontrado");
-    if (targetUser.roleData?.code === "ADMIN") throw ApiError.forbidden("No se pueden modificar permisos de administrador");
 
     await UserMenuOverride.destroy({ where: { userId: targetUserId } });
 

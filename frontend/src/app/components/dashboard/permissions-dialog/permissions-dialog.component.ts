@@ -15,12 +15,16 @@ export interface PermissionsDialogData {
   user: User;
 }
 
+interface LocalMenuOption extends MenuOption {
+  isUserManager: boolean;
+}
+
 @Component({
   selector: 'app-permissions-dialog',
   imports: [CommonModule, MaterialModule],
   templateUrl: './permissions-dialog.component.html',
   styleUrls: ['./permissions-dialog.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionsDialogComponent {
   private readonly roleService = inject(RoleService);
@@ -30,23 +34,16 @@ export class PermissionsDialogComponent {
   public readonly data = inject<PermissionsDialogData>(MAT_DIALOG_DATA);
 
   public menuResource = rxResource({
-    loader: () => this.roleService.getMenuOptions()
+    loader: () => this.roleService.getMenuOptions(),
   });
 
-  public menuOptions = computed(() => {
-  const rawMenu = this.menuResource.value() ?? [];
-  const is_admin = this.isAdmin(); // Capturamos la señal
-
-  return rawMenu.filter(item => {
-    const label = item.label.toUpperCase();
-
-    if (label === 'Gestor Usuarios') {
-      return is_admin;
-    }
-
-    return true;
+  public menuOptions = computed<LocalMenuOption[]>(() => {
+    const rawMenu = this.menuResource.value() ?? [];
+    return rawMenu.map((group) => ({
+      ...group,
+      isUserManager: group.label.toUpperCase() === 'GESTOR USUARIOS',
+    }));
   });
-});
 
   public selectedIds = signal<Set<number>>(new Set());
   public saveTrigger = signal<PermissionOverride[] | null>(null);
@@ -56,27 +53,38 @@ export class PermissionsDialogComponent {
     loader: ({ request: perms }) => {
       if (!perms) return of(undefined);
       return this.userService.updatePermissions(this.data.user.id, perms);
-    }
+    },
   });
 
   public totalOptionsCount = computed(() =>
-    this.menuOptions().reduce((acc, opt) => acc + 1 + (opt.children?.length || 0), 0)
+    this.menuOptions().reduce(
+      (acc, opt) => acc + 1 + (opt.children?.length || 0),
+      0,
+    ),
   );
 
   public isAdmin = computed(() => this.data.user.roleData?.code === 'ADMIN');
 
   public isFullAccessDenied = computed(() => {
     if (this.isAdmin()) return false;
-    const selectedCount = this.selectedIds().size;
-    const total = this.totalOptionsCount();
-    return total > 0 && selectedCount >= total;
+
+    const selectableCountForNonAdmin = this.menuOptions().reduce((acc, opt) => {
+      if (opt.isUserManager) return acc; 
+      return acc + 1 + (opt.children?.length || 0);
+    }, 0);
+
+    return (
+      this.selectedIds().size >= selectableCountForNonAdmin &&
+      selectableCountForNonAdmin > 0
+    );
   });
 
-  public canSubmit = computed(() =>
-    this.selectedIds().size > 0 &&
-    !this.isFullAccessDenied() &&
-    !this.saveResource.isLoading() &&
-    !this.menuResource.isLoading()
+  public canSubmit = computed(
+    () =>
+      this.selectedIds().size > 0 &&
+      !this.isFullAccessDenied() &&
+      !this.saveResource.isLoading() &&
+      !this.menuResource.isLoading(),
   );
 
   constructor() {
@@ -85,8 +93,9 @@ export class PermissionsDialogComponent {
 
   private registerEffects(): void {
     effect(() => {
-      if (this.menuResource.value()) {
-        this.initializeUserPermissions();
+      const menu = this.menuOptions();
+      if (menu.length > 0) {
+        this.initializeUserPermissions(menu);
       }
     });
 
@@ -103,59 +112,112 @@ export class PermissionsDialogComponent {
     });
   }
 
-  private initializeUserPermissions(): void {
-    const currentPermissions = this.data.user?.roleData?.permissions || [];
-    const ids = currentPermissions.map(p => p.menuOptionId);
-    this.selectedIds.set(new Set(ids));
+  private initializeUserPermissions(menu: LocalMenuOption[]): void {
+    const ids = new Set<number>();
+
+    const backendPermissions = this.data.user?.roleData?.permissions || [];
+    backendPermissions.forEach((p) => {
+      if (p.hasAccess) {
+        ids.add(Number(p.menuOptionId));
+      }
+    });
+
+    for (const group of menu) {
+      const groupKey = Number(group.id);
+      const childIds = group.children?.map((c) => Number(c.id)) || [];
+
+      if (childIds.length > 0) {
+        const hasSelectedChild = childIds.some((id) => ids.has(id));
+        if (hasSelectedChild) {
+          ids.add(groupKey);
+        } else {
+          ids.delete(groupKey);
+        }
+      }
+    }
+
+    const userManagerGroup = menu.find((g) => g.isUserManager);
+    if (userManagerGroup) {
+      const groupKey = Number(userManagerGroup.id);
+      const childIds = userManagerGroup.children?.map((c) => Number(c.id)) || [];
+
+      if (this.isAdmin()) {
+        ids.add(groupKey);
+        childIds.forEach((id) => ids.add(id));
+      } else {
+        ids.delete(groupKey);
+        childIds.forEach((id) => ids.delete(id));
+      }
+    }
+
+    this.selectedIds.set(ids);
   }
 
-  public toggleParent(group: MenuOption, isChecked: boolean): void {
+  public toggleParent(group: LocalMenuOption, isChecked: boolean): void {
+    if (group.isUserManager || this.saveResource.isLoading()) return;
+
     const newSet = new Set(this.selectedIds());
-    const childIds = group.children?.map(c => c.id) || [];
+    const groupKey = Number(group.id);
+    const childIds = group.children?.map((c) => Number(c.id)) || [];
 
     if (isChecked) {
-      newSet.add(group.id);
-      childIds.forEach(id => newSet.add(id));
+      newSet.add(groupKey);
+      childIds.forEach((id) => newSet.add(id));
     } else {
-      newSet.delete(group.id);
-      childIds.forEach(id => newSet.delete(id));
+      newSet.delete(groupKey);
+      childIds.forEach((id) => newSet.delete(id));
     }
     this.selectedIds.set(newSet);
   }
 
-  public toggleChild(childId: number, parent: MenuOption): void {
+  public toggleChild(childId: number, parent: LocalMenuOption): void {
+    if (parent.isUserManager || this.saveResource.isLoading()) return;
+
     const newSet = new Set(this.selectedIds());
-    if (newSet.has(childId)) {
-      newSet.delete(childId);
-    } else {
-      newSet.add(childId);
-      newSet.add(parent.id);
-    }
-    this.selectedIds.set(newSet);
-  }
+    const parentKey = Number(parent.id);
+    const childKey = Number(childId);
+    const childIds = parent.children?.map((c) => Number(c.id)) || [];
 
-  public isParentChecked(group: MenuOption): boolean {
-    const childIds = group.children?.map(c => c.id) || [];
-    if (childIds.length === 0) return this.selectedIds().has(group.id);
-    return childIds.every(id => this.selectedIds().has(id));
+    if (newSet.has(childKey)) {
+      newSet.delete(childKey);
+      const hasSelectedSiblings = childIds.some(
+        (id) => id !== childKey && newSet.has(id),
+      );
+      if (!hasSelectedSiblings) {
+        newSet.delete(parentKey);
+      }
+    } else {
+      newSet.add(childKey);
+      newSet.add(parentKey);
+    }
+
+    this.selectedIds.set(newSet);
   }
 
   public onSave(): void {
     if (!this.canSubmit()) return;
 
-    const permissions: PermissionOverride[] = this.menuOptions().flatMap(group => [
-      { menuOptionId: group.id, hasAccess: this.selectedIds().has(group.id) },
-      ...(group.children?.map(child => ({
-        menuOptionId: child.id,
-        hasAccess: this.selectedIds().has(child.id)
-      })) || [])
-    ]);
+    const permissions: PermissionOverride[] = this.menuOptions().flatMap(
+      (group) => {
+        const groupKey = Number(group.id);
+        return [
+          {
+            menuOptionId: groupKey,
+            hasAccess: this.selectedIds().has(groupKey),
+          },
+          ...(group.children?.map((child) => ({
+            menuOptionId: Number(child.id),
+            hasAccess: this.selectedIds().has(Number(child.id)),
+          })) || []),
+        ];
+      },
+    );
 
     this.saveTrigger.set(permissions);
   }
 
   private handleErrors(err: any): void {
-    const msg = err.error?.message?.split(':')[1] || 'Ocurrió un error en la operación';
+    const msg = err.error?.message || 'Ocurrió un error en la operación';
     this.toast.error(msg);
     this.saveTrigger.set(null);
   }

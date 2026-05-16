@@ -115,8 +115,6 @@ export class UserFormDialogComponent {
   }
 
   public toggleParent(group: MenuOption, isChecked: boolean): void {
-    if (this.isAdmin()) return; // Bloqueado para ADMIN
-
     const newSet = new Set(this.selectedIds());
     const childIds = group.children?.map(c => c.id) || [];
 
@@ -131,15 +129,19 @@ export class UserFormDialogComponent {
   }
 
   public toggleChild(childId: number, parent: MenuOption): void {
-    if (this.isAdmin()) return;
-
     const newSet = new Set(this.selectedIds());
-    if (newSet.has(childId)) {
+    const childIds = parent.children?.map(c => c.id) || [];
+    const isChildSelected = newSet.has(childId);
+
+    if (isChildSelected) {
       newSet.delete(childId);
+      const hasSelectedSiblings = childIds.some(id => id !== childId && newSet.has(id));
+      if (!hasSelectedSiblings) newSet.delete(parent.id);
     } else {
       newSet.add(childId);
       newSet.add(parent.id);
     }
+
     this.selectedIds.set(newSet);
   }
 

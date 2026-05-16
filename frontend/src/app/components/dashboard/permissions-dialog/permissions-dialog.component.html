@@ -5,11 +5,7 @@
     </h2>
 
     @if (!saveResource.isLoading()) {
-      <button
-        class="permissions-dialog__close-btn"
-        mat-icon-button
-        (click)="onCancel()"
-      >
+      <button class="permissions-dialog__close-btn" mat-icon-button (click)="onCancel()">
         <mat-icon>close</mat-icon>
       </button>
     }
@@ -43,11 +39,12 @@
       <div class="permissions-dialog__permissions">
         @for (group of menuOptions(); track group.id) {
           <div class="permissions-dialog__permission-item" [class.is-denied]="isFullAccessDenied()">
+            
             <div class="permissions-dialog__permission-parent">
               <mat-checkbox
-                [checked]="isParentChecked(group)"
+                [checked]="selectedIds().has(+group.id)"
                 (change)="toggleParent(group, $event.checked)"
-                [disabled]="saveResource.isLoading()"
+                [disabled]="saveResource.isLoading() || group.isUserManager"
                 color="primary"
               >
                 <mat-icon class="permissions-dialog__group-icon">
@@ -62,20 +59,16 @@
             <div class="permissions-dialog__permission-children">
               @for (child of group.children; track child.id) {
                 <mat-checkbox
-                  [checked]="selectedIds().has(child.id)"
+                  [checked]="selectedIds().has(+child.id)"
                   (change)="toggleChild(child.id, group)"
-                  [disabled]="saveResource.isLoading()"
+                  [disabled]="saveResource.isLoading() || group.isUserManager"
                   class="permissions-dialog__child-checkbox"
                 >
                   {{ child.label }}
                 </mat-checkbox>
               }
             </div>
-          </div>
-        } @empty {
-          <div class="permissions-dialog__empty">
-            <mat-icon>error_outline</mat-icon>
-            <p>No se encontraron opciones de menú disponibles.</p>
+
           </div>
         }
       </div>
