@@ -1,11 +1,16 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
+import User from "./User";           // 👈 Importación del modelo padre
+import MenuOption from "./MenuOption"; // 👈 Importación del modelo padre
 
 class UserMenuOverride extends Model {
   public id!: number;
   public userId!: number;
   public menuOptionId!: number;
   public hasAccess!: boolean;
+
+  public user?: User;
+  public menuOption?: MenuOption;
 }
 
 UserMenuOverride.init(
@@ -14,12 +19,10 @@ UserMenuOverride.init(
     userId: {
       type: DataTypes.INTEGER,
       field: "user_id",
-      references: { model: "users", key: "id" },
     },
     menuOptionId: {
       type: DataTypes.INTEGER,
       field: "menu_option_id",
-      references: { model: "menu_options", key: "id" }
     },
     hasAccess: {
       type: DataTypes.BOOLEAN,

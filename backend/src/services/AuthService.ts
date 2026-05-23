@@ -48,8 +48,10 @@ export class AuthService {
     const authorizedIds = new Set(rolePermissions.map(p => p.menuOptionId));
 
     for (const ov of overrides) {
-      if (authorizedIds.has(ov.menuOptionId)) {
-        if (!ov.hasAccess) authorizedIds.delete(ov.menuOptionId);
+      if (ov.hasAccess) {
+        authorizedIds.add(ov.menuOptionId);
+      } else {
+        authorizedIds.delete(ov.menuOptionId);
       }
     }
 

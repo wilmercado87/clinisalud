@@ -7,3 +7,6 @@
 {"error":"401:Usuario no encontrado","level":"error","message":"Login failed for email: admin2@clinisalud.com","service":"clinisalud-api","timestamp":"2026-05-09 16:19:10"}
 {"error":"401:Usuario no encontrado","level":"error","message":"Login failed for email: wilmercado@gmail.com","service":"clinisalud-api","timestamp":"2026-05-11 22:56:16"}
 {"error":"401:Credenciales inválidas","level":"error","message":"Login failed for email: wmercado@gmail.com","service":"clinisalud-api","timestamp":"2026-05-12 00:10:36"}
+{"error":"401:Usuario no encontrado","level":"error","message":"Login failed for email: sal@gmail.com","service":"clinisalud-api","timestamp":"2026-05-23 17:14:24"}
+{"error":"401:Credenciales inválidas","level":"error","message":"Login failed for email: sal@gmail.com","service":"clinisalud-api","timestamp":"2026-05-23 17:15:10"}
+{"error":"401:Credenciales inválidas","level":"error","message":"Login failed for email: sa@gmail.com","service":"clinisalud-api","timestamp":"2026-05-23 17:25:44"}

@@ -8,7 +8,7 @@ class CentroCosto extends Model {
   public levelId!: number;
   public scopeType!: string;
 
-  public levelData?: NivelAtencion;
+  public level?: NivelAtencion;
 }
 
 CentroCosto.init(
@@ -18,8 +18,7 @@ CentroCosto.init(
     levelId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "pk_id_nivel_atencion",
-      references: { model: "nivel_atencion", key: "id" },
+      field: "pk_id_nivel_atencion"
     },
     scopeType: { type: DataTypes.STRING(50), allowNull: false, field: "tipo_ambito" },
   },

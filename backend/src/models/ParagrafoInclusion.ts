@@ -7,10 +7,10 @@ class ParagrafoInclusion extends Model {
   public id!: number;
   public feeScheduleId!: number;
   public mapiissCode!: string;
-  public includeType!: string;
+  public simpleCode!: string;
 
-  public feeScheduleData?: Tarifarios;
-  public cupsData?: Cups;
+  public feeSchedule?: Tarifarios;
+  public cups?: Cups;
 }
 
 ParagrafoInclusion.init(
@@ -19,14 +19,12 @@ ParagrafoInclusion.init(
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario",
-      references: { model: "tarifarios", key: "id" },
+      field: "fk_id_tarifario"
     },
     mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "fk_codigo_mapiiss",
-      references: { model: "cups", key: "mapiissCode" },
+      field: "fk_codigo_mapiiss"
     },
     simpleCode: { type: DataTypes.STRING(30), allowNull: false, field: "codigo_simple" },
   },

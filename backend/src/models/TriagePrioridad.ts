@@ -10,7 +10,7 @@ class TriagePrioridad extends Model {
   public ageTo!: number;
   public gender!: string;
 
-  public triageData?: TipoTriage;
+  public triage?: TipoTriage;
 }
 
 TriagePrioridad.init(
@@ -20,7 +20,6 @@ TriagePrioridad.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "fk_id_triage",
-      references: { model: "tipo_triage", key: "id" },
     },
     priorityType: { type: DataTypes.INTEGER, allowNull: false, field: "tipo_prioridad" },
     ageFrom: { type: DataTypes.INTEGER, allowNull: false, field: "rango_edad_desde" },

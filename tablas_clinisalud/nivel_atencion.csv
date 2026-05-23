@@ -1,5 +1,5 @@
-pk_id_nivel_atencion;complejidad;descriipcion;tipo_personal
-1;Baja;Primer nivel;Medicos generales, personal auxiliar de enfermerða y odontologos generales
-2;Media;Segundo nivel;Medicos especialistas en ˜reas basicas y generales con interconsulta especializada y anteriores
+pk_id_nivel_atencion;complejidad;descripcion;tipo_personal
+1;Baja;Primer nivel;Medicos generales, personal auxiliar de enfermerï¿½a y odontologos generales
+2;Media;Segundo nivel;Medicos especialistas en ï¿½reas basicas y generales con interconsulta especializada y anteriores
 3;Alta;Tercer nivel;Subespecialistas (cardiologos, neurologos, nefrologos) y equipos de salud altamente entrenados y anteriores
 4;Muy alta;Cuarto nivel;Grupos medicos multidisciplinarios de supraespecialistas y anteriores

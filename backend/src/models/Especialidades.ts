@@ -11,7 +11,7 @@ Especialidades.init(
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_especialidad" },
     specialtyId: { type: DataTypes.STRING(20), allowNull: false, field: "id_especialidad" },
-    description: { type: DataTypes.STRING(150), allowNull: false, field: "descripcion_especilidad" },
+    description: { type: DataTypes.STRING(150), allowNull: false, field: "descripcion_especialidad" },
   },
   {
     sequelize,

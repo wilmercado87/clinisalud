@@ -8,12 +8,12 @@ class Articulados extends Model {
   public feeScheduleId!: number;
   public articleCode!: number;
   public paragraph!: string;
-  public cupsCode!: string;
+  public mapiissCode!: string;
   public description!: string | null;
   public paragraphType!: string;
 
-  public feeScheduleData?: Tarifarios;
-  public cupsData?: Cups;
+  public feeSchedule?: Tarifarios;
+  public cups?: Cups;
 }
 
 Articulados.init(
@@ -22,16 +22,14 @@ Articulados.init(
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario",
-      references: { model: "tarifarios", key: "id" },
+      field: "fk_id_tarifario"
     },
     articleCode: { type: DataTypes.INTEGER, allowNull: false, field: "cod_articulo" },
     paragraph: { type: DataTypes.STRING(50), allowNull: false, field: "paragrafo" },
-    cupsCode: {
+    mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "codigo_cups",
-      references: { model: "cups", key: "mapiissCode" },
+      field: "codigo_cups"
     },
     description: { type: DataTypes.TEXT, field: "descripcion" },
     paragraphType: { type: DataTypes.STRING(100), allowNull: false, field: "tipo_paragrafo" },

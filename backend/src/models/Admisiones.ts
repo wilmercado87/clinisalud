@@ -35,11 +35,11 @@ class Admisiones extends Model {
   public companionNotes!: string | null;
   public systemUserId!: number;
 
+  public room?: Camas;
   public documentTypeData?: TipoDocumento;
   public userTypeData?: TipoUsuario;
-  public epsData?: Convenios;
-  public systemUserData?: User;
-  public roomData?: Camas;
+  public eps?: Convenios;
+  public systemUser?: User;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -53,7 +53,6 @@ Admisiones.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "fk_id_tipo_documento",
-      references: { model: "tipo_documento", key: "id" },
     },
     patientFirstName: { type: DataTypes.STRING(100), allowNull: false, field: "nombre_paciente" },
     patientLastName: { type: DataTypes.STRING(100), allowNull: false, field: "apellido_paciente" },
@@ -64,7 +63,6 @@ Admisiones.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "fk_id_tipo_usuario",
-      references: { model: "tipo_usuario", key: "id" },
     },
     admissionDate: { type: DataTypes.STRING(30), allowNull: false, field: "fecha_ingreso" },
     roomId: { type: DataTypes.INTEGER, allowNull: false, field: "pk_id_habitacion" },
@@ -76,7 +74,6 @@ Admisiones.init(
       type: DataTypes.STRING(30),
       allowNull: false,
       field: "fk_cod_eps",
-      references: { model: "convenios", key: "epsCode" },
     },
     epsName: { type: DataTypes.STRING(150), allowNull: false, field: "nombre_eps" },
     observations: { type: DataTypes.TEXT, field: "observaciones_admision_paciente" },
@@ -92,7 +89,6 @@ Admisiones.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "id_usuario_sistema",
-      references: { model: "users", key: "id" },
     },
   },
   {

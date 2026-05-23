@@ -10,9 +10,10 @@ class ParagrafoAplicacion extends Model {
   public mapiissCode!: string;
   public diagnosticCode!: string;
 
-  public feeScheduleData?: Tarifarios;
-  public cupsData?: Cups;
-  public diagnosticData?: Diagnostico;
+  // 🔄 Propiedades virtuales sincronizadas con los alias exactos de associations.ts
+  public feeSchedule?: Tarifarios;
+  public cups?: Cups;
+  public diagnostic?: Diagnostico;
 }
 
 ParagrafoAplicacion.init(
@@ -21,20 +22,17 @@ ParagrafoAplicacion.init(
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario",
-      references: { model: "tarifarios", key: "id" },
+      field: "fk_id_tarifario"
     },
     mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "fk_codigo_mapiiss",
-      references: { model: "cups", key: "mapiissCode" },
+      field: "fk_codigo_mapiiss"
     },
     diagnosticCode: {
       type: DataTypes.STRING(20),
       allowNull: false,
-      field: "fk_codigo_diagnostico",
-      references: { model: "diagnostico", key: "code" },
+      field: "fk_codigo_diagnostico"
     },
   },
   {

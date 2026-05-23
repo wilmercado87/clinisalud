@@ -9,7 +9,7 @@ class Diagnostico extends Model {
   public originTypeId!: number;
   public applyGender!: string;
 
-  public originTypeData?: TipoOrigen;
+  public originType?: TipoOrigen;
 }
 
 Diagnostico.init(
@@ -20,8 +20,7 @@ Diagnostico.init(
     originTypeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tipo_origen",
-      references: { model: "tipo_origen", key: "id" },
+      field: "fk_id_tipo_origen"
     },
     applyGender: { type: DataTypes.STRING(20), allowNull: false, field: "aplica_sexo" },
   },

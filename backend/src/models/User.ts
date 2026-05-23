@@ -15,8 +15,12 @@ class User extends Model {
   public address!: string;
   public isActive!: boolean;
   public roleId!: number;
+
+  // 🔄 Propiedades virtuales perfectamente sincronizadas con los alias de associations.ts
   public roleData?: Role;
   public documentTypeData?: TipoDocumento;
+  
+  // Timestamps habilitados implícitamente por la configuración del modelo
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -41,11 +45,7 @@ User.init(
     documentTypeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "document_type_id",
-      references: {
-        model: "tipo_documento",
-        key: "pk_id_tipo_documento",
-      },
+      field: "fk_id_tipo_documento"
     },
     dni: {
       type: DataTypes.STRING,
@@ -76,10 +76,6 @@ User.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "role_id",
-      references: {
-        model: "roles",
-        key: "id",
-      },
     },
   },
   {

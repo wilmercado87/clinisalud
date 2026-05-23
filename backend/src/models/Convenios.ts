@@ -14,21 +14,20 @@ class Convenios extends Model {
   public startDate!: string | null;
   public endDate!: string | null;
 
-  public feeScheduleData?: Tarifarios;
+  public feeSchedule?: Tarifarios;
 }
 
 Convenios.init(
   {
-    idEps: { type: DataTypes.BIGINT, allowNull: false, field: "id_eps" },
-    epsCode: { type: DataTypes.STRING(30), primaryKey: true, field: "pk_cod_eps" },
+    idEps: { type: DataTypes.BIGINT, primaryKey : true, allowNull: false, field: "id_eps" },
+    epsCode: { type: DataTypes.STRING(30), allowNull: false, field: "cod_eps" },
     epsName: { type: DataTypes.STRING(150), allowNull: false, field: "nombre_eps" },
     address: { type: DataTypes.STRING(255), field: "direccion" },
     phone: { type: DataTypes.STRING(50), field: "telefono" },
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario",
-      references: { model: "tarifarios", key: "id" },
+      field: "fk_id_tarifario"
     },
     variationType: { type: DataTypes.STRING(20), allowNull: false, field: "tipo_variacion" },
     contractPercentage: { type: DataTypes.DECIMAL(5, 2), allowNull: false, field: "porcentaje_contrato" },

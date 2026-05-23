@@ -12,8 +12,8 @@ class ParagrafoValor extends Model {
   public variationType!: string;
   public paragraphType!: string;
 
-  public feeScheduleData?: Tarifarios;
-  public cupsData?: Cups;
+  public feeSchedule?: Tarifarios;
+  public cups?: Cups;
 }
 
 ParagrafoValor.init(
@@ -22,15 +22,13 @@ ParagrafoValor.init(
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario",
-      references: { model: "tarifarios", key: "id" },
+      field: "fk_id_tarifario"
     },
     articleCode: { type: DataTypes.INTEGER, allowNull: false, field: "cod_articulo" },
     mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "fk_codigo_mapiiss",
-      references: { model: "cups", key: "mapiissCode" },
+      field: "fk_codigo_mapiiss"
     },
     percentage: { type: DataTypes.DECIMAL(5, 2), allowNull: false, field: "porcentaje" },
     variationType: { type: DataTypes.STRING(50), allowNull: false, field: "tipo_variacion" },

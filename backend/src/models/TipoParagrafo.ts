@@ -19,14 +19,12 @@ TipoParagrafo.init(
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario",
-      references: { model: "tarifarios", key: "id" },
+      field: "fk_id_tarifario"
     },
     mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "fk_codigo_mapiiss",
-      references: { model: "cups", key: "mapiissCode" },
+      field: "fk_codigo_mapiiss"
     },
     paragraphType: { type: DataTypes.STRING(100), allowNull: false, field: "tipo_paragrafo" },
   },

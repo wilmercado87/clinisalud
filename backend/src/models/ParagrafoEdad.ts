@@ -10,8 +10,8 @@ class ParagrafoEdad extends Model {
   public rangeFrom!: number;
   public rangeTo!: number;
 
-  public feeScheduleData?: Tarifarios;
-  public cupsData?: Cups;
+  public feeSchedule?: Tarifarios;
+  public cups?: Cups;
 }
 
 ParagrafoEdad.init(
@@ -20,14 +20,12 @@ ParagrafoEdad.init(
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario",
-      references: { model: "tarifarios", key: "id" },
+      field: "fk_id_tarifario"
     },
     mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "fk_codigo_mapiiss",
-      references: { model: "cups", key: "mapiissCode" },
+      field: "fk_codigo_mapiiss"
     },
     rangeFrom: { type: DataTypes.INTEGER, defaultValue: 0, field: "rango_desde" },
     rangeTo: { type: DataTypes.INTEGER, defaultValue: 150, field: "rango_hasta" },

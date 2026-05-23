@@ -1,9 +1,9 @@
-pk_id_especialidad;id_especialidad;descripcion_especilidad
+pk_id_especialidad;id_especialidad;descripcion_especialidad
 1;esp01;ALERGOLOGIA
-2;esp02;ANALISIS CLINICOSÿ
+2;esp02;ANALISIS CLINICOSï¿½
 3;esp03;ANATONOMIA Y PATOLOGICA
 4;esp04;ANESTESIA/REANIMACION
-5;esp05;ANGIOLOGIA Y CIRUGIAÿÿ VASCULARÿ
+5;esp05;ANGIOLOGIA Y CIRUGIAï¿½ï¿½ VASCULARï¿½
 6;esp06;APARATO DIGESTIVO
 7;esp07;BIOQUIMICA CLINICA
 8;esp08;CARDIOLOGIA

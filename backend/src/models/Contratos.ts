@@ -14,7 +14,7 @@ class Contratos extends Model {
   public startDate!: string;
   public endDate!: string;
 
-  public feeScheduleData?: Tarifarios;
+  public feeSchedule?: Tarifarios;
 }
 
 Contratos.init(
@@ -24,8 +24,7 @@ Contratos.init(
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "id_tarifario",
-      references: { model: "tarifarios", key: "id" },
+      field: "id_tarifario"
     },
     variationType: { type: DataTypes.STRING(20), allowNull: false, field: "tipo_variacion" },
     ambulatoryPercentage: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0.0, field: "porcentaje_amb" },

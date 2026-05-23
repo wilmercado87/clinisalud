@@ -1,4 +1,4 @@
-id_eps;pk_cod_eps;nombre_eps;direccion;telefono;fk_id_tarifario;tipo_variacion;porcentaje_ontrato;fecha_ini_contrato;fecha_fin_contrato
+id_eps;cod_eps;nombre_eps;direccion;telefono;fk_id_tarifario;tipo_variacion;porcentaje_contrato;fecha_ini_contrato;fecha_fin_contrato
 8301138310;EPS000;ALIANSALUD EPS ;;;1;aumento;5.5;;
 8600274041;EPS001;ALLIANZA SEG. DE VIDA  S.A.;;;4;descuento;2;;
 8600052246;EPS002;BAVARIA S.A. DIVIMED;;;1;aumento;2.3;;

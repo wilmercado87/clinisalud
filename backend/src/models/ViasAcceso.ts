@@ -8,7 +8,7 @@ class ViasAcceso extends Model {
   public honoraryDescription!: string;
   public percentage!: number;
 
-  public accessViaData?: TiposAcceso;
+  public accessVia?: TiposAcceso;
 }
 
 ViasAcceso.init(
@@ -18,7 +18,6 @@ ViasAcceso.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "id_via_acceso",
-      references: { model: "tipos_de_acceso", key: "id" },
     },
     honoraryDescription: { type: DataTypes.STRING(100), allowNull: false, field: "descripcion_honorario" },
     percentage: { type: DataTypes.DECIMAL(5, 2), allowNull: false, field: "porcentaje" },

@@ -9,6 +9,8 @@ class MenuOption extends Model {
   public order!: number;
   public parentId!: number | null;
   public isActive!: boolean;
+
+  public parent?: MenuOption;
 }
 
 MenuOption.init(
@@ -37,8 +39,7 @@ MenuOption.init(
     parentId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "parent_id",
-      references: { model: "menu_options", key: "id" },
+      field: "parent_id"
     },
     isActive: {
       type: DataTypes.BOOLEAN,

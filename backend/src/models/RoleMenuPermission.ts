@@ -1,10 +1,15 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
+import Role from "./Role";
+import MenuOption from "./MenuOption";
 
 class RoleMenuPermission extends Model {
   public id!: number;
   public roleId!: number;
   public menuOptionId!: number;
+
+  public role?: Role;
+  public menuOption?: MenuOption;
 }
 
 RoleMenuPermission.init(
@@ -13,12 +18,10 @@ RoleMenuPermission.init(
     roleId: {
       type: DataTypes.INTEGER,
       field: "role_id",
-      references: { model: "roles", key: "id" },
     },
     menuOptionId: {
       type: DataTypes.INTEGER,
       field: "menu_option_id",
-      references: { model: "menu_options", key: "id" },
     },
   },
   {

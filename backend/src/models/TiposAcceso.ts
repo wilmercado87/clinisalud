@@ -7,7 +7,7 @@ class TiposAcceso extends Model {
   public accessVia!: string;
   public feeScheduleId!: number;
 
-  public feeScheduleData?: Tarifarios;
+  public feeSchedule?: Tarifarios;
 }
 
 TiposAcceso.init(
@@ -17,8 +17,7 @@ TiposAcceso.init(
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario",
-      references: { model: "tarifarios", key: "id" },
+      field: "fk_id_tarifario"
     },
   },
   {

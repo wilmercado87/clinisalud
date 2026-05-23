@@ -6,11 +6,10 @@ import Diagnostico from "./Diagnostico";
 class DiagnosticoPaciente extends Model {
   public id!: number;
   public admissionNumber!: string;
-  public documentType!: string | null;
   public diagnosticId!: number;
 
-  public admissionData?: Admisiones;
-  public diagnosticData?: Diagnostico;
+  public admission?: Admisiones;
+  public diagnostic?: Diagnostico;
 }
 
 DiagnosticoPaciente.init(
@@ -19,19 +18,12 @@ DiagnosticoPaciente.init(
     admissionNumber: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      field: "fk_numero_admision",
-      references: { model: "admisiones", key: "admissionNumber" },
+      field: "fk_numero_admision"
     },
-documentType: {
-        type: DataTypes.STRING(10),
-        allowNull: false,
-        field: "pk_tipo_documento",
-      },
     diagnosticId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_diagnostico",
-      references: { model: "diagnostico", key: "id" },
+      field: "fk_id_diagnostico"
     },
   },
   {

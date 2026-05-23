@@ -1,4 +1,4 @@
-pk_id_paragrafo_aplicacion;fk_id_tarifario;fk_codigo_mapiiss;pk_codido_diagnistico
+pk_id_paragrafo_aplicacion;fk_id_tarifario;fk_codigo_mapiiss;fk_codigo_diagnostico
 1;1;778931;B213
 2;1;778931;B217
 3;1;778931;B218

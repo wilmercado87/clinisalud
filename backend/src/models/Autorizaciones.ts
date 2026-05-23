@@ -15,10 +15,10 @@ class Autorizaciones extends Model {
   public quantity!: number;
   public systemUserId!: number;
 
-  public admissionData?: Admisiones;
-  public authTypeData?: TipoAutorizacion;
-  public cupsData?: Cups;
-  public systemUserData?: User;
+  public admission?: Admisiones;
+  public authType?: TipoAutorizacion;
+  public cups?: Cups;
+  public systemUser?: User;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -30,21 +30,18 @@ Autorizaciones.init(
     admissionNumber: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      field: "fk_numero_admision",
-      references: { model: "admisiones", key: "admissionNumber" },
+      field: "fk_numero_admision"
     },
     authTypeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "fk_id_tipo_autorizacion",
-      references: { model: "tipo_autorizacion", key: "id" },
     },
     authNumber: { type: DataTypes.STRING(50), allowNull: false, field: "numero_autorizacion" },
     mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
       field: "fk_codigo_mapiiss",
-      references: { model: "cups", key: "mapiissCode" },
     },
     mapiissDescription: { type: DataTypes.TEXT, allowNull: false, field: "descripcion_mapiiss" },
     quantity: { type: DataTypes.INTEGER, defaultValue: 1, field: "cantidad" },
@@ -52,7 +49,6 @@ Autorizaciones.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "id_usuario_sistema",
-      references: { model: "users", key: "id" },
     },
   },
   {
