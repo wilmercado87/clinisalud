@@ -1,4 +1,4 @@
-id;via_acceso;id_tarifario
+pk_id_tipo_acceso;via_acceso;fk_id_tarifario
 1;unico_evento;1
 2;misma_via;1
 3;diferente_via;1

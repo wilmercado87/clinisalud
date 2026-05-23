@@ -1,4 +1,4 @@
-id;id_tarifario;cod_articulo;paragrafo;codigo_cups;descripcion;tipo_paragrafo
+id;fk_id_tarifario;cod_articulo;paragrafo;codigo_cups;descripcion;tipo_paragrafo
 1;1;7;aplica 1;502201;Procedimiento No aplica de acuerdo a Patologia de Base (Diagnostico);aplicación
 2;1;11;aplica 1;660101;Procedimiento No aplica de acuerdo a Patologia de Base (Diagnostico);aplicación
 3;1;12;aplica 1;660203;Procedimiento No aplica de acuerdo a Patologia de Base (Diagnostico);aplicación

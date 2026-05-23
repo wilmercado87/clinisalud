@@ -1,12 +1,13 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
 import Role from "./Role";
-import UserMenuOverride from "./UserMenuOverride";
+import TipoDocumento from "./TipoDocumento";
 
 class User extends Model {
   public id!: number;
   public firstName!: string;
   public lastName!: string;
+  public documentTypeId!: number;
   public dni!: string;
   public email!: string;
   public password!: string;
@@ -15,6 +16,7 @@ class User extends Model {
   public isActive!: boolean;
   public roleId!: number;
   public roleData?: Role;
+  public documentTypeData?: TipoDocumento;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -35,6 +37,15 @@ User.init(
       type: DataTypes.STRING,
       allowNull: false,
       field: "last_name",
+    },
+    documentTypeId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "document_type_id",
+      references: {
+        model: "tipo_documento",
+        key: "pk_id_tipo_documento",
+      },
     },
     dni: {
       type: DataTypes.STRING,

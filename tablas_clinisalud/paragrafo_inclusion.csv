@@ -1,4 +1,4 @@
-id;id_tarifario;codigo_compuesto;codigo_simple
+pk_id_paragrafo_inclusion;fk_id_tarifario;fk_codigo_mapiiss;codigo_simple
 1;1;103106;103108
 2;1;128800;128100
 3;1;115101;128800

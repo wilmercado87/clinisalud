@@ -5,9 +5,10 @@ class MenuOption extends Model {
   public id!: number;
   public label!: string;
   public icon!: string;
-  public path!: string;
+  public path!: string | null;
   public order!: number;
   public parentId!: number | null;
+  public isActive!: boolean;
 }
 
 MenuOption.init(
@@ -27,7 +28,7 @@ MenuOption.init(
     },
     path: {
       type: DataTypes.STRING,
-      allowNull: true, // Las opciones que son padres de un acordeón pueden no tener path
+      allowNull: true,
     },
     order: {
       type: DataTypes.INTEGER,

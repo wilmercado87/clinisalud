@@ -3,12 +3,48 @@ import Role from "./models/Role";
 import MenuOption from "./models/MenuOption";
 import User from "./models/User";
 import RoleMenuPermission from "./models/RoleMenuPermission";
+import TipoDocumento from "./models/TipoDocumento";
+import { initAssociations } from "./models/associations"; // 👈 1. Importamos la función central de relaciones
 
 export const runSeeder = async () => {
   try {
     console.log("🚀 Iniciando Seed de Clinisalud 2026...");
 
+    // ----------------------------------------------------------------
+    // Inicialización del Mapa Relacional de Sequelize
+    // ----------------------------------------------------------------
+    initAssociations(); // 👈 2. Cargamos las relaciones en memoria antes de cualquier consulta
+    console.log("🔗 Asociaciones de modelos inicializadas correctamente.");
+
+    // ----------------------------------------------------------------
+    // 0. Crear Tipos de Documento Oficiales
+    // ----------------------------------------------------------------
+    const documentTypesData = [
+      { code: "CC", description: "CÉDULA DE CIUDADANÍA" },
+      { code: "CE", description: "CÉDULA DE EXTRANJERÍA" },
+      { code: "TI", description: "TARJETA DE IDENTIDAD" },
+      { code: "RC", description: "REGISTRO CIVIL DE NACIMIENTO" },
+      { code: "PA", description: "PASAPORTE" },
+      { code: "MS", description: "MENOR SIN IDENTIFICACIÓN" },
+      { code: "AS", description: "ADULTO SIN IDENTIFICACIÓN" },
+    ];
+
+    let defaultDocType;
+    for (const docType of documentTypesData) {
+      const [createdType] = await TipoDocumento.findOrCreate({
+        where: { code: docType.code },
+        defaults: { description: docType.description },
+      });
+      
+      if (docType.code === "CC") {
+        defaultDocType = createdType;
+      }
+    }
+    console.log("✅ Catálogo de Tipos de Documento inicializado.");
+
+    // ----------------------------------------------------------------
     // 1. Crear Roles (Asegurando que el ADMIN sea el primero)
+    // ----------------------------------------------------------------
     const [adminRole] = await Role.findOrCreate({
       where: { code: "ADMIN" },
       defaults: { name: "Administrador Sistema", code: "ADMIN" },
@@ -24,6 +60,9 @@ export const runSeeder = async () => {
       defaults: { name: "Facturador/Admisiones", code: "FACT" },
     });
 
+    // ----------------------------------------------------------------
+    // 2. Crear Opciones de Menú
+    // ----------------------------------------------------------------
     const [mainPanel] = await MenuOption.findOrCreate({
       where: { label: "Panel Principal" },
       defaults: { label: "Panel Principal", icon: "grid_view", order: 1 },
@@ -86,7 +125,9 @@ export const runSeeder = async () => {
       },
     });
 
+    // ----------------------------------------------------------------
     // 3. Asignación Masiva de Permisos
+    // ----------------------------------------------------------------
     const allOptions = await MenuOption.findAll();
 
     // --- ADMIN: Acceso a TODO (Incluyendo el Gestor de Usuarios) ---
@@ -123,7 +164,9 @@ export const runSeeder = async () => {
       });
     }
 
+    // ----------------------------------------------------------------
     // 4. Crear Usuario Admin Inicial
+    // ----------------------------------------------------------------
     const adminEmail = "admin@clinisalud.com";
     let adminUser = await User.findOne({ where: { email: adminEmail } });
 
@@ -132,6 +175,7 @@ export const runSeeder = async () => {
       adminUser = await User.create({
         firstName: "Admin",
         lastName: "General",
+        documentTypeId: defaultDocType ? defaultDocType.id : 1,
         dni: "00000000",
         email: adminEmail,
         password: hashedPassword,
@@ -142,9 +186,6 @@ export const runSeeder = async () => {
     } else {
       console.log(`✅ Admin ya existente: ${adminEmail}`);
     }
-
-    // 5. Admin hereda permisos del rol (RoleMenuPermission) — NO necesita UserMenuOverride
-    // Los overrides solo se crean para denegar permisos específicos del rol del usuario
 
     console.log("✨ Seed completado con éxito.");
   } catch (error) {

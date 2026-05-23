@@ -1,4 +1,4 @@
-id_habitacion;codigo;estado;estado_paciente
+pk_id_habitacion;codigo_cama;estado_cama;estado_paciente
 1;TRIAGE;0;valoracion
 2;OBSERV101;0;oservacion
 3;OBSERV102;0;oservacion

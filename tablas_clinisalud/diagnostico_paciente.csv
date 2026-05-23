@@ -1,1 +1,1 @@
-id;codigo;identificacion;numero_admision;tipo_diagnostico
+pk_diag_paciente;fk_numero_admision;pk_tipo_documento;fk_id_diagnostico

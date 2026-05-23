@@ -33,6 +33,7 @@ describe('UserService', () => {
     const validData = {
       email: 'new@test.com',
       dni: '12345678',
+      documentTypeId: 1,
       firstName: 'John',
       lastName: 'Doe',
       roleId: 1,

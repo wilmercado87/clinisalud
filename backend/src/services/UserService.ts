@@ -5,10 +5,12 @@ import Role from "../models/Role";
 import UserMenuOverride from "../models/UserMenuOverride";
 import RoleMenuPermission from "../models/RoleMenuPermission";
 import { ApiError } from "../middlewares/ErrorHandlerMiddleware";
+import TipoDocumento from "../models/TipoDocumento";
 
 interface CreateUserData {
   email: string;
   dni: string;
+  documentTypeId: number;
   firstName: string;
   lastName: string;
   phone?: string;
@@ -74,24 +76,26 @@ export class UserService {
   }
 
   public async createUser(data: CreateUserData) {
-    const existingUser = await this.findExistingUser(data.email, data.dni);
-    if (existingUser) this.throwDuplicateError(existingUser, data);
+      const existingUser = await this.findExistingUser(data.email, data.dni);
+      if (existingUser) this.throwDuplicateError(existingUser, data);
 
-    const tempPassword = this.generateTempPassword();
-    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      const ccDocument = await TipoDocumento.findOne({ where: { code: "CC" } });
+      const defaultDocumentTypeId = ccDocument ? ccDocument.id : 1;
+      const tempPassword = this.generateTempPassword();
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
-    const newUser = await User.create({
-      ...data,
-      password: hashedPassword,
-      isActive: true,
-    });
+      const newUser = await User.create({
+        ...data,
+        documentTypeId: data.documentTypeId || defaultDocumentTypeId, 
+        password: hashedPassword,
+        isActive: true,
+      });
 
-    await this.createPermissions(newUser.id, data.roleId, data.permissions);
+      await this.createPermissions(newUser.id, data.roleId, data.permissions);
+      const userJson = newUser.toJSON();
+      delete userJson.password;
 
-    const userJson = newUser.toJSON();
-    delete userJson.password;
-
-    return { user: userJson, temporaryPassword: tempPassword };
+      return { user: userJson, temporaryPassword: tempPassword };
   }
 
   private async findExistingUser(email: string, dni: string) {

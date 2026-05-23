@@ -1,4 +1,4 @@
-id;nombre
+pk_id_tarifario;nombre_tarifario
 1;ISS_2001
 2;ISS_2000
 3;ISS_2004

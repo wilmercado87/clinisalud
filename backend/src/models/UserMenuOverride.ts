@@ -14,10 +14,12 @@ UserMenuOverride.init(
     userId: {
       type: DataTypes.INTEGER,
       field: "user_id",
+      references: { model: "users", key: "id" },
     },
     menuOptionId: {
       type: DataTypes.INTEGER,
       field: "menu_option_id",
+      references: { model: "menu_options", key: "id" }
     },
     hasAccess: {
       type: DataTypes.BOOLEAN,
@@ -30,7 +32,7 @@ UserMenuOverride.init(
     tableName: "user_menu_overrides",
     timestamps: false,
     indexes: [{ unique: true, fields: ["user_id", "menu_option_id"] }]
-  },
+  }
 );
 
 export default UserMenuOverride;

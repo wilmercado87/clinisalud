@@ -7,16 +7,25 @@ class RoleMenuPermission extends Model {
   public menuOptionId!: number;
 }
 
-RoleMenuPermission.init({
+RoleMenuPermission.init(
+  {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    roleId: { type: DataTypes.INTEGER, field: "role_id" },
-    menuOptionId: { type: DataTypes.INTEGER, field: "menu_option_id" }
+    roleId: {
+      type: DataTypes.INTEGER,
+      field: "role_id",
+      references: { model: "roles", key: "id" },
+    },
+    menuOptionId: {
+      type: DataTypes.INTEGER,
+      field: "menu_option_id",
+      references: { model: "menu_options", key: "id" },
+    },
   },
   {
     sequelize,
     tableName: "role_menu_permissions",
     timestamps: false,
-    indexes: [{ unique: true, fields: ["role_id", "menu_option_id"] }]
+    indexes: [{ unique: true, fields: ["role_id", "menu_option_id"] }],
   }
 );
 

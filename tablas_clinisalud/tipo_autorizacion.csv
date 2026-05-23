@@ -1,0 +1,6 @@
+pk_id_tipo_autorizacion;descripcion_tipo_autorizacion
+1;Aut. Urgencia
+2;Aut. Hospitalizacion
+3;Aut. Cirugia
+4;Aut. Procedimientos
+5;Aut. No Pos
