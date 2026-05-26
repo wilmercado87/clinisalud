@@ -18,6 +18,7 @@ export interface MenuOption {
   path: string | null;
   order: number;
   parentId: number | null;
+  isActive: boolean;
   children: MenuOption[];
 }
 

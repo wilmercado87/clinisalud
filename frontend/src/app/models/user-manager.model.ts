@@ -10,7 +10,9 @@ export interface User {
   isActive: boolean;
   roleId: number;
   roleData?: Role;
-  createdAt?: Date;
+  documentTypeId: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Role {
@@ -35,6 +37,7 @@ export interface PermissionPayload {
 }
 
 export interface ToggleStatusResponse {
+  id: number;
   isActive: boolean;
   message: string;
 }

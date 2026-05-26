@@ -103,11 +103,12 @@ export const runSeeder = async () => {
     });
 
     const subOptions = [
-      { label: "Admision", icon: "person_add", path: "/dashboard/admission", parentId: mainPanel.id, order: 1 },
-      { label: "Autorizaciones", icon: "verified", path: "/dashboard/authorizations", parentId: mainPanel.id, order: 2 },
-      { label: "Facturacion Rips", icon: "receipt_long", path: "/dashboard/billing", parentId: mainPanel.id, order: 3 },
-      { label: "Citas", icon: "event", path: "/dashboard/appointments", parentId: mainPanel.id, order: 4 },
-      { label: "Historia Clinica", icon: "description", path: "/dashboard/history", parentId: mainPanel.id, order: 5 },
+      { label: "Triage", icon: "emergency", path: "/dashboard/triage", parentId: mainPanel.id, order: 1 },
+      { label: "Admision", icon: "person_add", path: "/dashboard/admission", parentId: mainPanel.id, order: 2 },
+      { label: "Autorizaciones", icon: "verified", path: "/dashboard/authorizations", parentId: mainPanel.id, order: 3 },
+      { label: "Facturacion Rips", icon: "receipt_long", path: "/dashboard/billing", parentId: mainPanel.id, order: 4 },
+      { label: "Citas", icon: "event", path: "/dashboard/appointments", parentId: mainPanel.id, order: 5 },
+      { label: "Historia Clinica", icon: "description", path: "/dashboard/history", parentId: mainPanel.id, order: 6 },
     ];
 
     for (const sub of subOptions) {
@@ -119,7 +120,7 @@ export const runSeeder = async () => {
 
     await MenuOption.findOrCreate({
       where: { label: "Gestor Usuarios" },
-      defaults: { label: "Gestor Usuarios", icon: "manage_accounts", path: "/dashboard/users", order: 6 },
+      defaults: { label: "Gestor Usuarios", icon: "manage_accounts", path: "/dashboard/users", order: 7 },
     });
 
     // ----------------------------------------------------------------
