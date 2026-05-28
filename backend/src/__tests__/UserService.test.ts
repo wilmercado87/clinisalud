@@ -2,16 +2,16 @@ jest.mock('bcryptjs', () => ({
   hash: jest.fn(() => Promise.resolve('hashed')),
 }));
 
-import { UserService } from '../services/UserService';
+import { UsersService } from '../modules/users/users.service';
 import User from '../models/User';
 import UserMenuOverride from '../models/UserMenuOverride';
 import RoleMenuPermission from '../models/RoleMenuPermission';
 
-describe('UserService', () => {
-  let service: UserService;
+describe('UsersService', () => {
+  let service: UsersService;
 
   beforeEach(() => {
-    service = new UserService();
+    service = new UsersService();
     jest.clearAllMocks();
   });
 

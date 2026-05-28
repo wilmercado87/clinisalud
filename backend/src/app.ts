@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import { API_PREFIX } from './constants';
-import authRoutes from './routes/AuthRoutes';
-import userRoutes from './routes/UserRoutes';
+import authRoutes from './modules/auth/auth.routes';
+import userRoutes from './modules/users/users.routes';
 import { securityMiddleware, generalLimiter } from './middlewares/SecurityMiddleware';
 import { errorHandler, notFoundHandler } from './middlewares/ErrorHandlerMiddleware';
 import { logInfo, healthCheck, rootEndpoint } from './utils';

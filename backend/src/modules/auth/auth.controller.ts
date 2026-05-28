@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { AuthService } from "../services/AuthService";
-import { getHttpCode } from "../utils/StatusCodes";
-import { HTTP_STATUS } from "../constants";
-import { logInfo, logError } from "../utils/Logger";
+import { AuthService } from "./auth.service";
+import { getHttpCode } from "../../utils/StatusCodes";
+import { HTTP_STATUS } from "../../constants";
+import { logInfo, logError } from "../../utils/Logger";
 
 const authService = new AuthService();
 

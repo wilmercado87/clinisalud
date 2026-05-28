@@ -9,8 +9,8 @@ class TipoParagrafo extends Model {
   public mapiissCode!: string;
   public paragraphType!: string;
 
-  public feeScheduleData?: Tarifarios;
-  public cupsData?: Cups;
+  public feeSchedule?: Tarifarios;
+  public cups?: Cups;
 }
 
 TipoParagrafo.init(

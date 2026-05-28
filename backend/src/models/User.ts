@@ -2,6 +2,7 @@ import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
 import Role from "./Role";
 import TipoDocumento from "./TipoDocumento";
+import UserMenuOverride from "./UserMenuOverride";
 
 class User extends Model {
   public id!: number;
@@ -16,11 +17,10 @@ class User extends Model {
   public isActive!: boolean;
   public roleId!: number;
 
-  // 🔄 Propiedades virtuales perfectamente sincronizadas con los alias de associations.ts
   public roleData?: Role;
   public documentTypeData?: TipoDocumento;
-  
-  // Timestamps habilitados implícitamente por la configuración del modelo
+  public menuOverrides?: UserMenuOverride[];
+
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }

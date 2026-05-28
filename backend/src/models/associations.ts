@@ -79,6 +79,7 @@ export function initAssociations() {
   Convenios.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   Contratos.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   CentroCosto.belongsTo(NivelAtencion, { foreignKey: "levelId", as: "level" });
+  CentroCosto.belongsTo(Especialidades, { foreignKey: "specialtyId", as: "especialidad" });
   Cups.belongsTo(CentroCosto, { foreignKey: "costCenterId", as: "costCenter" });
   Cups.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   Cups.belongsTo(NivelAtencion, { foreignKey: "attentionLevelId", as: "attentionLevel" });
@@ -91,11 +92,17 @@ export function initAssociations() {
 
   // === [MÓDULO 6: REGLAS DE AUDITORÍA Y PARÁGRAFOS] ===
   Articulados.belongsTo(Cups, { foreignKey: "mapiissCode", as: "cups" });
+  Articulados.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   TipoParagrafo.belongsTo(Cups, { foreignKey: "mapiissCode", as: "cups" });
+  TipoParagrafo.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   ParagrafoAplicacion.belongsTo(Cups, { foreignKey: "mapiissCode", as: "cups" });
+  ParagrafoAplicacion.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   ParagrafoEdad.belongsTo(Cups, { foreignKey: "mapiissCode", as: "cups" });
+  ParagrafoEdad.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   ParagrafoInclusion.belongsTo(Cups, { foreignKey: "mapiissCode", as: "cups" });
+  ParagrafoInclusion.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   ParagrafoValor.belongsTo(Cups, { foreignKey: "mapiissCode", as: "cups" });
+  ParagrafoValor.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   TiposAcceso.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   ViasAcceso.belongsTo(TiposAcceso, { foreignKey: "accessViaId", as: "accessVia" });
 

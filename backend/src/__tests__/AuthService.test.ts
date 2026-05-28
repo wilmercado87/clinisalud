@@ -7,7 +7,7 @@ jest.mock('jsonwebtoken', () => ({
   sign: jest.fn(() => 'mock_token'),
 }));
 
-import { AuthService } from '../services/AuthService';
+import { AuthService } from '../modules/auth/auth.service';
 import User from '../models/User';
 import Role from '../models/Role';
 import UserMenuOverride from '../models/UserMenuOverride';

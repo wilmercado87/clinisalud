@@ -1,11 +1,13 @@
 import * as bcrypt from "bcryptjs";
 import { Op } from "sequelize";
-import User from "../models/User";
-import Role from "../models/Role";
-import UserMenuOverride from "../models/UserMenuOverride";
-import RoleMenuPermission from "../models/RoleMenuPermission";
-import { ApiError } from "../middlewares/ErrorHandlerMiddleware";
-import TipoDocumento from "../models/TipoDocumento";
+import User from "../../models/User";
+import Role from "../../models/Role";
+import MenuOption from "../../models/MenuOption";
+import UserMenuOverride from "../../models/UserMenuOverride";
+import RoleMenuPermission from "../../models/RoleMenuPermission";
+import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
+import TipoDocumento from "../../models/TipoDocumento";
+import { buildMenuTree } from "../../utils/MenuTree.util";
 
 interface CreateUserData {
   email: string;
@@ -19,7 +21,19 @@ interface CreateUserData {
   permissions: number[];
 }
 
-export class UserService {
+export class UsersService {
+  public async findAllRoles(): Promise<Role[]> {
+    return await Role.findAll({ order: [["name", "ASC"]] });
+  }
+
+  public async findAllMenuOptions(): Promise<any[]> {
+    const options = await MenuOption.findAll({
+      where: { isActive: true },
+      order: [["order", "ASC"]]
+    });
+    return buildMenuTree(options.map(opt => opt.toJSON()));
+  }
+
   public async findAllManageableUsers() {
     const users = await User.findAll({
       attributes: { exclude: ["password"] },
@@ -86,7 +100,7 @@ export class UserService {
 
       const newUser = await User.create({
         ...data,
-        documentTypeId: data.documentTypeId || defaultDocumentTypeId, 
+        documentTypeId: data.documentTypeId || defaultDocumentTypeId,
         password: hashedPassword,
         isActive: true,
       });
@@ -136,6 +150,7 @@ export class UserService {
     });
 
     if (!targetUser) throw ApiError.notFound("Usuario no encontrado");
+    if (targetUser.roleData?.code === "ADMIN") throw ApiError.forbidden("No se puede cambiar permisos de administrador");
 
     await UserMenuOverride.destroy({ where: { userId: targetUserId } });
 

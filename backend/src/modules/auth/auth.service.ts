@@ -1,13 +1,13 @@
 import * as bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/User";
-import Role from "../models/Role";
-import MenuOption from "../models/MenuOption";
-import UserMenuOverride from "../models/UserMenuOverride";
-import RoleMenuPermission from "../models/RoleMenuPermission";
-import { buildMenuTree } from "../utils/MenuTree.util";
-import { JWT_CONFIG } from "../constants";
-import { ApiError } from "../middlewares/ErrorHandlerMiddleware";
+import User from "../../models/User";
+import Role from "../../models/Role";
+import MenuOption from "../../models/MenuOption";
+import UserMenuOverride from "../../models/UserMenuOverride";
+import RoleMenuPermission from "../../models/RoleMenuPermission";
+import { buildMenuTree } from "../../utils/MenuTree.util";
+import { JWT_CONFIG } from "../../constants";
+import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 
 export class AuthService {
 

@@ -1,14 +1,17 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
 import NivelAtencion from "./NivelAtencion";
+import Especialidades from "./Especialidades";
 
 class CentroCosto extends Model {
   public id!: number;
   public description!: string;
   public levelId!: number;
   public scopeType!: string;
+  public specialtyId!: number | null;
 
   public level?: NivelAtencion;
+  public especialidad?: Especialidades;
 }
 
 CentroCosto.init(
@@ -19,6 +22,11 @@ CentroCosto.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "pk_id_nivel_atencion"
+    },
+    specialtyId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: "fk_id_especialidad"
     },
     scopeType: { type: DataTypes.STRING(50), allowNull: false, field: "tipo_ambito" },
   },
