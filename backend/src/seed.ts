@@ -84,80 +84,14 @@ export const runSeeder = async () => {
       defaults: { name: "Administrador Sistema", code: "ADMIN" },
     });
 
-    const [docRole] = await Role.findOrCreate({
-      where: { code: "DOC" },
-      defaults: { name: "Cuerpo Médico", code: "DOC" },
-    });
-
-    const [factRole] = await Role.findOrCreate({
-      where: { code: "FACT" },
-      defaults: { name: "Facturador/Admisiones", code: "FACT" },
-    });
-
     // ----------------------------------------------------------------
-    // PASO 2: Estructura Estática de Menús y Accesos
-    // ----------------------------------------------------------------
-    const [mainPanel] = await MenuOption.findOrCreate({
-      where: { label: "Panel Principal" },
-      defaults: { label: "Panel Principal", icon: "grid_view", order: 1 },
-    });
-
-    const subOptions = [
-      { label: "Triage", icon: "emergency", path: "/dashboard/triage", parentId: mainPanel.id, order: 1 },
-      { label: "Admision", icon: "person_add", path: "/dashboard/admission", parentId: mainPanel.id, order: 2 },
-      { label: "Autorizaciones", icon: "verified", path: "/dashboard/authorizations", parentId: mainPanel.id, order: 3 },
-      { label: "Facturacion Rips", icon: "receipt_long", path: "/dashboard/billing", parentId: mainPanel.id, order: 4 },
-      { label: "Citas", icon: "event", path: "/dashboard/appointments", parentId: mainPanel.id, order: 5 },
-      { label: "Historia Clinica", icon: "description", path: "/dashboard/history", parentId: mainPanel.id, order: 6 },
-    ];
-
-    for (const sub of subOptions) {
-      await MenuOption.findOrCreate({
-        where: { label: sub.label },
-        defaults: sub,
-      });
-    }
-
-    await MenuOption.findOrCreate({
-      where: { label: "Gestor Usuarios" },
-      defaults: { label: "Gestor Usuarios", icon: "manage_accounts", path: "/dashboard/users", order: 7 },
-    });
-
-    // ----------------------------------------------------------------
-    // PASO 3: Asignación de Permisos de Menú por Rol
-    // ----------------------------------------------------------------
-    const allOptions = await MenuOption.findAll();
-
-    for (const opt of allOptions) {
-      await RoleMenuPermission.findOrCreate({
-        where: { roleId: adminRole.id, menuOptionId: opt.id },
-      });
-    }
-
-    const medicalLabels = ["Panel Principal", "Citas", "Historia Clinica"];
-    const medicalMenu = allOptions.filter(o => medicalLabels.includes(o.label));
-    for (const opt of medicalMenu) {
-      await RoleMenuPermission.findOrCreate({
-        where: { roleId: docRole.id, menuOptionId: opt.id },
-      });
-    }
-
-    const factLabels = ["Panel Principal", "Admision", "Autorizaciones", "Facturacion Rips"];
-    const factMenu = allOptions.filter(o => factLabels.includes(o.label));
-    for (const opt of factMenu) {
-      await RoleMenuPermission.findOrCreate({
-        where: { roleId: factRole.id, menuOptionId: opt.id },
-      });
-    }
-    console.log("✅ Estructura de permisos estáticos inyectada.");
-
-    // ----------------------------------------------------------------
-    // PASO 4: Secuencia y Validación Estricta de los 28 CSV
+    // PASO 2: Secuencia y Validación Estricta de los 29 CSV
     // ----------------------------------------------------------------
     console.log("📦 Iniciando procesamiento e inserción de archivos CSV...");
     const csvFolder = path.join(__dirname, "../../tablas_clinisalud");
 
     const loadingSequence: { model: any; file: string }[] = [
+      { model: MenuOption, file: "menu_option.csv" },
       { model: TipoDocumento, file: "tipo_documento.csv" },
       { model: TipoUsuario, file: "tipo_usuario.csv" },
       { model: Camas, file: "camas.csv" },
@@ -226,7 +160,18 @@ export const runSeeder = async () => {
     }
 
     // ----------------------------------------------------------------
-    // PASO 5: Crear Usuario Admin Inicial
+    // PASO 3: Permisos totales para el rol ADMIN
+    // ----------------------------------------------------------------
+    const allOptions = await MenuOption.findAll();
+    for (const opt of allOptions) {
+      await RoleMenuPermission.findOrCreate({
+        where: { roleId: adminRole.id, menuOptionId: opt.id },
+      });
+    }
+    console.log(`✅ Acceso total a ${allOptions.length} opciones de menú para rol ADMIN.`);
+
+    // ----------------------------------------------------------------
+    // PASO 4: Crear Usuario Admin Inicial
     // ----------------------------------------------------------------
     const adminEmail = "admin@clinisalud.com";
     let adminUser = await User.findOne({ where: { email: adminEmail } });
