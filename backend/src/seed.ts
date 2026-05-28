@@ -15,6 +15,8 @@ import { autoMapCsvRow } from "./utils/bd/autoMapper";
 
 // Importación de la arquitectura de modelos
 import TipoUsuario from "./models/TipoUsuario";
+import TipoGenero from "./models/TipoGenero";
+import TipoEstado from "./models/TipoEstado";
 import Camas from "./models/Camas";
 import Tarifarios from "./models/Tarifarios";
 import NivelAtencion from "./models/NivelAtencion";
@@ -30,6 +32,8 @@ import TriagePrioridad from "./models/TriagePrioridad";
 import Convenios from "./models/Convenios";
 import Contratos from "./models/Contratos";
 import Cups from "./models/Cups";
+import Paciente from "./models/Paciente";
+import Triage from "./models/Triage";
 import Admisiones from "./models/Admisiones";
 import Autorizaciones from "./models/Autorizaciones";
 import DiagnosticoPaciente from "./models/DiagnosticoPaciente";
@@ -58,14 +62,14 @@ export const runSeeder = async () => {
     // Desactivamos restricciones temporales de llave foránea para SQLite
     await sequelize.query("PRAGMA foreign_keys = OFF;");
 
-    // 👈 2. Incluimos UserMenuOverride en el array de vaciado para evitar bloqueos
     const allModels: any[] = [
       RoleMenuPermission, UserMenuOverride, User, Role, MenuOption, TipoDocumento, 
-      TipoUsuario, Camas, Tarifarios, NivelAtencion, TipoAutorizacion, TipoOrigen, 
-      TipoTriage, Especialidades, Departamentos, CentroCosto, Municipios, Diagnostico,
-      TriagePrioridad, Convenios, Contratos, Cups, Admisiones, Autorizaciones,
-      DiagnosticoPaciente, Articulados, TipoParagrafo, ParagrafoAplicacion,
-      ParagrafoEdad, ParagrafoInclusion, ParagrafoValor, TiposAcceso, ViasAcceso
+      TipoUsuario, TipoGenero, TipoEstado, Camas, Tarifarios, NivelAtencion,
+      TipoAutorizacion, TipoOrigen, TipoTriage, Especialidades, Departamentos,
+      CentroCosto, Municipios, Diagnostico, TriagePrioridad, Convenios, Contratos,
+      Cups, Paciente, Triage, Admisiones, Autorizaciones, DiagnosticoPaciente,
+      Articulados, TipoParagrafo, ParagrafoAplicacion, ParagrafoEdad,
+      ParagrafoInclusion, ParagrafoValor, TiposAcceso, ViasAcceso
     ];
 
     for (const model of allModels) {
@@ -85,7 +89,7 @@ export const runSeeder = async () => {
     });
 
     // ----------------------------------------------------------------
-    // PASO 2: Secuencia y Validación Estricta de los 29 CSV
+    // PASO 2: Secuencia y Validación Estricta de los 33 CSV
     // ----------------------------------------------------------------
     console.log("📦 Iniciando procesamiento e inserción de archivos CSV...");
     const csvFolder = path.join(__dirname, "../../tablas_clinisalud");
@@ -93,6 +97,8 @@ export const runSeeder = async () => {
     const loadingSequence: { model: any; file: string }[] = [
       { model: MenuOption, file: "menu_option.csv" },
       { model: TipoDocumento, file: "tipo_documento.csv" },
+      { model: TipoGenero, file: "tipo_genero.csv" },
+      { model: TipoEstado, file: "tipo_estado.csv" },
       { model: TipoUsuario, file: "tipo_usuario.csv" },
       { model: Camas, file: "camas.csv" },
       { model: Tarifarios, file: "tarifarios.csv" },
@@ -109,6 +115,8 @@ export const runSeeder = async () => {
       { model: Convenios, file: "convenios.csv" },
       { model: Contratos, file: "contratos.csv" },
       { model: Cups, file: "cups.csv" },
+      { model: Paciente, file: "paciente.csv" },
+      { model: Triage, file: "triage.csv" },
       { model: Admisiones, file: "admisiones.csv" },
       { model: Autorizaciones, file: "autorizaciones.csv" },
       { model: DiagnosticoPaciente, file: "diagnostico_paciente.csv" },

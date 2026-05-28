@@ -1,6 +1,3 @@
-// ----------------------------------------------------------------
-// 1. IMPORTACIÓN DE TODOS LOS MODELOS (33)
-// ----------------------------------------------------------------
 import User from "./User";
 import Role from "./Role";
 import MenuOption from "./MenuOption";
@@ -9,10 +6,14 @@ import UserMenuOverride from "./UserMenuOverride";
 
 import TipoDocumento from "./TipoDocumento";
 import TipoUsuario from "./TipoUsuario";
+import TipoGenero from "./TipoGenero";
+import TipoEstado from "./TipoEstado";
 import Camas from "./Camas";
 import Convenios from "./Convenios";
 import Contratos from "./Contratos";
+import Paciente from "./Paciente";
 import Admisiones from "./Admisiones";
+import Triage from "./Triage";
 
 import Tarifarios from "./Tarifarios";
 import NivelAtencion from "./NivelAtencion";
@@ -39,34 +40,42 @@ import Especialidades from "./Especialidades";
 import Departamentos from "./Departamentos";
 import Municipios from "./Municipios";
 
-// ----------------------------------------------------------------
-// 2. FUNCIÓN CENTRAL DE ASOCIACIONES (Solo objetos Eager BelongsTo)
-// ----------------------------------------------------------------
 export function initAssociations() {
-  // === [MÓDULO 0: ASOCIACIONES DE SEGURIDAD] ===
+  // === [MÓDULO 0: SEGURIDAD] ===
   User.belongsTo(Role, { foreignKey: "roleId", as: "roleData" });
-  
+  User.belongsTo(TipoDocumento, { foreignKey: "documentTypeId", as: "documentTypeData" });
+
   RoleMenuPermission.belongsTo(Role, { foreignKey: "roleId", as: "role" });
   RoleMenuPermission.belongsTo(MenuOption, { foreignKey: "menuOptionId", as: "menuOption" });
 
-  // 🛠️ ÚNICO AJUSTE ADICIONADO: Creamos el puente desde User hacia sus excepciones
   User.hasMany(UserMenuOverride, { foreignKey: "userId", as: "menuOverrides" });
   UserMenuOverride.belongsTo(User, { foreignKey: "userId", as: "user" });
   UserMenuOverride.belongsTo(MenuOption, { foreignKey: "menuOptionId", as: "menuOption" });
 
   MenuOption.belongsTo(MenuOption, { as: "parent", foreignKey: "parent_id" });
 
+  // === [MÓDULO 1: PACIENTE] ===
+  Paciente.belongsTo(TipoDocumento, { foreignKey: "documentTypeId", as: "documentType" });
+  Paciente.belongsTo(TipoUsuario, { foreignKey: "userTypeId", as: "userType" });
+  Paciente.belongsTo(TipoGenero, { foreignKey: "genderId", as: "gender" });
+  Paciente.belongsTo(TipoEstado, { foreignKey: "statusId", as: "status" });
+  Paciente.belongsTo(User, { foreignKey: "systemUserId", as: "systemUser" });
 
-  // === [MÓDULO 1: RELACIONES DE ADMISIONES E INFRAESTRUCTURA] ===
+  // === [MÓDULO 2: ADMISIONES E INFRAESTRUCTURA] ===
+  Admisiones.belongsTo(Paciente, { foreignKey: "documentPatient", targetKey: "document", as: "patient" });
   Admisiones.belongsTo(Camas, { foreignKey: "roomId", as: "room" });
-  User.belongsTo(TipoDocumento, { foreignKey: "documentTypeId", as: "documentTypeData" });
-  Admisiones.belongsTo(TipoDocumento, { foreignKey: "documentTypeId", as: "documentTypeData" });
-  Admisiones.belongsTo(TipoUsuario, { foreignKey: "userTypeId", as: "userTypeData" });
-  Admisiones.belongsTo(Convenios, { foreignKey: "idEps", as: "eps" });
+  Admisiones.belongsTo(Convenios, { foreignKey: "epsCode", targetKey: "epsCode", as: "eps" });
+  Admisiones.belongsTo(TipoEstado, { foreignKey: "statusId", as: "admissionStatus" });
   Admisiones.belongsTo(User, { foreignKey: "systemUserId", as: "systemUser" });
 
+  // === [MÓDULO 3: TRIAGE] ===
+  Triage.belongsTo(TipoTriage, { foreignKey: "priorityTypeId", as: "priorityType" });
+  Triage.belongsTo(TipoDocumento, { foreignKey: "documentTypeId", as: "documentType" });
+  Triage.belongsTo(Convenios, { foreignKey: "epsCode", targetKey: "epsCode", as: "eps" });
+  Triage.belongsTo(Diagnostico, { foreignKey: "diagnosticCode", targetKey: "code", as: "diagnostic" });
+  Triage.belongsTo(User, { foreignKey: "systemUserId", as: "systemUser" });
 
-  // === [MÓDULO 2: CONFIGURACIÓN COMERCIAL Y TARIFARIOS] ===
+  // === [MÓDULO 4: CONFIGURACIÓN COMERCIAL Y TARIFARIOS] ===
   Convenios.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   Contratos.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   CentroCosto.belongsTo(NivelAtencion, { foreignKey: "levelId", as: "level" });
@@ -74,16 +83,13 @@ export function initAssociations() {
   Cups.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   Cups.belongsTo(NivelAtencion, { foreignKey: "attentionLevelId", as: "attentionLevel" });
 
-
-  // === [MÓDULO 3: AUTORIZACIONES TRANSACCIONALES] ===
+  // === [MÓDULO 5: AUTORIZACIONES] ===
   Autorizaciones.belongsTo(Admisiones, { foreignKey: "admissionNumber", as: "admission" });
   Autorizaciones.belongsTo(TipoAutorizacion, { foreignKey: "authTypeId", as: "authType" });
   Autorizaciones.belongsTo(Cups, { foreignKey: "cupsId", as: "cups" });
   Autorizaciones.belongsTo(User, { foreignKey: "systemUserId", as: "systemUser" });
 
-
-  // === [MÓDULO 4: REGLAS DE AUDITORÍA Y PARÁGRAFOS MÉDICOS] ===
-  // 📑 MÓDULO 5: REGLAS DE ASOCIACIÓN DE CUPS (Camino A)
+  // === [MÓDULO 6: REGLAS DE AUDITORÍA Y PARÁGRAFOS] ===
   Articulados.belongsTo(Cups, { foreignKey: "mapiissCode", as: "cups" });
   TipoParagrafo.belongsTo(Cups, { foreignKey: "mapiissCode", as: "cups" });
   ParagrafoAplicacion.belongsTo(Cups, { foreignKey: "mapiissCode", as: "cups" });
@@ -93,8 +99,7 @@ export function initAssociations() {
   TiposAcceso.belongsTo(Tarifarios, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   ViasAcceso.belongsTo(TiposAcceso, { foreignKey: "accessViaId", as: "accessVia" });
 
-
-  // === [MÓDULO 5: HISTORIAL CLÍNICO, TRIAGE Y GEOGRAFÍA] ===
+  // === [MÓDULO 7: HISTORIAL CLÍNICO, TRIAGE Y GEOGRAFÍA] ===
   Diagnostico.belongsTo(TipoOrigen, { foreignKey: "originTypeId", as: "originType" });
   DiagnosticoPaciente.belongsTo(Admisiones, { foreignKey: "admissionNumber", as: "admission" });
   DiagnosticoPaciente.belongsTo(Diagnostico, { foreignKey: "diagnosticId", as: "diagnostic" });

@@ -1,0 +1,1 @@
+pk_id_paciente;fk_id_tipo_documento;pk_documento_paciente;nombre_paciente;apellido_paciente;edad_paciente;direccion_paciente;telefono_paciente;correo;discapacidad;fk_id_tipo_usuario;fecha_nacimiento;fk_id_tipo_genero;fk_id_tipo_estado;id_usuario_sistema

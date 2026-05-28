@@ -1,0 +1,1 @@
+pk_id_triage;fk_tipo_prioridad;fk_tipo_documento;numero_documento;fecha_atencion;fk_cod_eps;fk_codigo_diagnostico;id_usuario_sistema
