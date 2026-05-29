@@ -7,7 +7,6 @@ import { of } from 'rxjs';
 
 import { MaterialModule } from '../../../../shared/material/material.module';
 import { AuthService } from '../../../../core/services/auth.service';
-import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-profile-dialog',
@@ -19,7 +18,6 @@ import { ToastService } from '../../../../core/services/toast.service';
 export class ProfileDialogComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
-  private readonly toast = inject(ToastService);
   private readonly dialogRef = inject(MatDialogRef<ProfileDialogComponent>);
 
   public readonly currentUser = computed(() => this.authService.currentUser);
