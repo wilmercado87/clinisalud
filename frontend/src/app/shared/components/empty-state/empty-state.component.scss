@@ -1,0 +1,32 @@
+@use "variables" as v;
+
+.empty-state-container {
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 64px;
+  height: 64px;
+  width: 64px;
+  margin-bottom: 16px;
+  color: v.$color-icon-muted;
+}
+
+.empty-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: v.$color-indigo-800;
+}
+
+.empty-message {
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+  color: v.$color-gray-500;
+  max-width: 350px;
+}

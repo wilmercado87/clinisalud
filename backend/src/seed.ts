@@ -1,12 +1,12 @@
 import * as bcrypt from "bcryptjs";
-import path from "path";
+import path from "node:path";
 import sequelize from "./config/database";
 import Role from "./models/Role";
 import MenuOption from "./models/MenuOption";
 import User from "./models/User";
 import RoleMenuPermission from "./models/RoleMenuPermission";
 import TipoDocumento from "./models/TipoDocumento";
-import UserMenuOverride from "./models/UserMenuOverride"; // 👈 1. Importación agregada
+import UserMenuOverride from "./models/UserMenuOverride";
 import { initAssociations } from "./models/associations";
 
 // Helpers de automatización
@@ -46,55 +46,145 @@ import ParagrafoValor from "./models/ParagrafoValor";
 import TiposAcceso from "./models/TiposAcceso";
 import ViasAcceso from "./models/ViasAcceso";
 
+// ----------------------------------------------------------------
+// FUNCIONES AUXILIARES (Solución S3776: Reduce Complejidad Cognitiva)
+// ----------------------------------------------------------------
+
+async function resetDatabaseTables() {
+  await sequelize.query("PRAGMA foreign_keys = OFF;");
+  
+  const allModels: any[] = [
+    RoleMenuPermission, UserMenuOverride, User, Role, MenuOption, TipoDocumento, 
+    TipoUsuario, TipoGenero, TipoEstado, Camas, Tarifarios, NivelAtencion,
+    TipoAutorizacion, TipoOrigen, TipoTriage, Especialidades, Departamentos,
+    CentroCosto, Municipios, Diagnostico, TriagePrioridad, Convenios, Contratos,
+    Cups, Paciente, Triage, Admisiones, Autorizaciones, DiagnosticoPaciente,
+    Articulados, TipoParagrafo, ParagrafoAplicacion, ParagrafoEdad,
+    ParagrafoInclusion, ParagrafoValor, TiposAcceso, ViasAcceso
+  ];
+
+  for (const model of allModels) {
+    await model.truncate({ force: true });
+  }
+
+  await sequelize.query("PRAGMA foreign_keys = ON;");
+}
+
+async function seedSystemRoles() {
+  const rolesData = [
+    { code: "ADMIN", name: "Administrador Sistema" },
+    { code: "MEDICO", name: "Personal Médico" },
+    { code: "FACTURADOR", name: "Personal de Facturación" }
+  ];
+
+  const initializedRoles: Record<string, Role> = {};
+
+  for (const item of rolesData) {
+    const [roleInstance] = await Role.findOrCreate({
+      where: { code: item.code },
+      defaults: item,
+    });
+    initializedRoles[item.code] = roleInstance;
+  }
+
+  return initializedRoles;
+}
+
+async function validateAndLoadCsv(step: { model: any; file: string }, csvFolder: string) {
+  const fullPath = path.join(csvFolder, step.file);
+  console.log(`⏳ Analizando concordancia estructural para: ${step.file} ...`);
+
+  const rawRecords = await parseCSV<any>(fullPath);
+  if (rawRecords.length === 0) return;
+
+  const csvHeaders = Object.keys(rawRecords[0]);
+  const modelAttributes = step.model.getAttributes();
+
+  for (const [camelCaseKey, attributeConfig] of Object.entries(modelAttributes)) {
+    if (camelCaseKey === "createdAt" || camelCaseKey === "updatedAt") continue;
+
+    const config = attributeConfig as any;
+    const expectedColumnInCsv = config.field || camelCaseKey;
+
+    if (config.allowNull === false && !config.autoIncrement && !csvHeaders.includes(expectedColumnInCsv)) {
+      throw new Error(
+        `💥 ERROR CRÍTICO DE CONCORDANCIA: La columna obligatoria '${expectedColumnInCsv}' exigida por el modelo '${step.model.name}' NO existe en el archivo '${step.file}'. Proceso interrumpido.`
+      );
+    }
+  }
+
+  const mappedRows = rawRecords.map(row => autoMapCsvRow(step.model, row));
+  await step.model.bulkCreate(mappedRows, { ignoreDuplicates: false, hooks: false, validate: false });
+  console.log(`   --> Éxito: ${mappedRows.length} registros nuevos inyectados.`);
+}
+
+async function assignAllRolePermissions(rolesMap: Record<string, Role>) {
+  const allOptions = await MenuOption.findAll();
+
+  for (const opt of allOptions) {
+    await RoleMenuPermission.findOrCreate({
+      where: { roleId: rolesMap["ADMIN"].id, menuOptionId: opt.id },
+    });
+
+    const isUserManager = opt.label.toUpperCase() === 'GESTOR USUARIOS';
+
+    if (!isUserManager) {
+      await RoleMenuPermission.findOrCreate({
+        where: { roleId: rolesMap["MEDICO"].id, menuOptionId: opt.id },
+      });
+
+      await RoleMenuPermission.findOrCreate({
+        where: { roleId: rolesMap["FACTURADOR"].id, menuOptionId: opt.id },
+      });
+    }
+  }
+  console.log(`✅ Matriz de permisos inicializada (ADMIN total, MEDICO/FACTURADOR operativo).`);
+}
+
+async function deployInitialAdmin(adminRoleId: number) {
+  const adminEmail = "admin@clinisalud.com";
+  const adminExists = await User.findOne({ where: { email: adminEmail } });
+
+  // 🛡️ Solución S1854: Remoción de la asignación inútil a "adminUser"
+  if (!adminExists) {
+    const ccDocType = await TipoDocumento.findOne({ where: { code: "CC" } });
+    const hashedPassword = await bcrypt.hash("Admin2026!", 10);
+
+    await User.create({
+      firstName: "Admin",
+      lastName: "General",
+      documentTypeId: ccDocType ? ccDocType.id : 1,
+      dni: "00000000",
+      email: adminEmail,
+      password: hashedPassword,
+      roleId: adminRoleId,
+      isActive: true,
+    });
+    console.log(`✅ Cuenta de Administrador desplegada: ${adminEmail} / Admin2026!`);
+  }
+}
+
+// ----------------------------------------------------------------
+// FUNCIÓN PRINCIPAL DE EJECUCIÓN (Limpia y Lineal)
+// ----------------------------------------------------------------
 export const runSeeder = async () => {
   try {
     console.log("🚀 Iniciando Seed de Clinisalud 2026...");
 
-    // Inicialización del mapa de relaciones en memoria
     initAssociations();
     console.log("🔗 Asociaciones de modelos inicializadas correctamente.");
 
-    // ----------------------------------------------------------------
-    // PASO 0: Vaciar por completo la Base de Datos (Truncate Global)
-    // ----------------------------------------------------------------
     console.log("🧹 Borrando datos existentes para reiniciar las tablas...");
-
-    // Desactivamos restricciones temporales de llave foránea para SQLite
-    await sequelize.query("PRAGMA foreign_keys = OFF;");
-
-    const allModels: any[] = [
-      RoleMenuPermission, UserMenuOverride, User, Role, MenuOption, TipoDocumento, 
-      TipoUsuario, TipoGenero, TipoEstado, Camas, Tarifarios, NivelAtencion,
-      TipoAutorizacion, TipoOrigen, TipoTriage, Especialidades, Departamentos,
-      CentroCosto, Municipios, Diagnostico, TriagePrioridad, Convenios, Contratos,
-      Cups, Paciente, Triage, Admisiones, Autorizaciones, DiagnosticoPaciente,
-      Articulados, TipoParagrafo, ParagrafoAplicacion, ParagrafoEdad,
-      ParagrafoInclusion, ParagrafoValor, TiposAcceso, ViasAcceso
-    ];
-
-    for (const model of allModels) {
-      await model.truncate({ force: true });
-    }
-
-    // Re-activamos las restricciones para SQLite
-    await sequelize.query("PRAGMA foreign_keys = ON;");
+    await resetDatabaseTables();
     console.log("🗑️ Base de datos completamente limpia y vacía.");
 
-    // ----------------------------------------------------------------
-    // PASO 1: Inicialización de Roles del Sistema
-    // ----------------------------------------------------------------
-    const [adminRole] = await Role.findOrCreate({
-      where: { code: "ADMIN" },
-      defaults: { name: "Administrador Sistema", code: "ADMIN" },
-    });
+    console.log("👥 Inicializando roles base del sistema...");
+    const rolesMap = await seedSystemRoles();
 
-    // ----------------------------------------------------------------
-    // PASO 2: Secuencia y Validación Estricta de los 33 CSV
-    // ----------------------------------------------------------------
     console.log("📦 Iniciando procesamiento e inserción de archivos CSV...");
     const csvFolder = path.join(__dirname, "../../tablas_clinisalud");
 
-    const loadingSequence: { model: any; file: string }[] = [
+    const loadingSequence = [
       { model: MenuOption, file: "menu_option.csv" },
       { model: TipoDocumento, file: "tipo_documento.csv" },
       { model: TipoGenero, file: "tipo_genero.csv" },
@@ -131,75 +221,11 @@ export const runSeeder = async () => {
     ];
 
     for (const step of loadingSequence) {
-      const fullPath = path.join(csvFolder, step.file);
-      console.log(`⏳ Analizando concordancia estructural para: ${step.file} ...`);
-
-      const rawRecords = await parseCSV<any>(fullPath);
-
-      if (rawRecords.length > 0) {
-        const csvHeaders = Object.keys(rawRecords[0]);
-        const modelAttributes = step.model.getAttributes();
-
-        for (const [camelCaseKey, attributeConfig] of Object.entries(modelAttributes)) {
-          if (camelCaseKey === "createdAt" || camelCaseKey === "updatedAt") continue;
-
-          const config = attributeConfig as any;
-          const expectedColumnInCsv = config.field || camelCaseKey;
-
-          if (config.allowNull === false && !config.autoIncrement) {
-            if (!csvHeaders.includes(expectedColumnInCsv)) {
-              throw new Error(
-                `💥 ERROR CRÍTICO DE CONCORDANCIA: La columna obligatoria '${expectedColumnInCsv}' exigida por el modelo '${step.model.name}' NO existe en el archivo '${step.file}'. Proceso interrumpido.`
-              );
-            }
-          }
-        }
-      }
-
-      const mappedRows = rawRecords.map(row => autoMapCsvRow(step.model, row));
-
-      await step.model.bulkCreate(mappedRows, {
-        ignoreDuplicates: false,
-        hooks: false,
-        validate: false
-      });
-
-      console.log(`   --> Éxito: ${mappedRows.length} registros nuevos inyectados.`);
+      await validateAndLoadCsv(step, csvFolder);
     }
 
-    // ----------------------------------------------------------------
-    // PASO 3: Permisos totales para el rol ADMIN
-    // ----------------------------------------------------------------
-    const allOptions = await MenuOption.findAll();
-    for (const opt of allOptions) {
-      await RoleMenuPermission.findOrCreate({
-        where: { roleId: adminRole.id, menuOptionId: opt.id },
-      });
-    }
-    console.log(`✅ Acceso total a ${allOptions.length} opciones de menú para rol ADMIN.`);
-
-    // ----------------------------------------------------------------
-    // PASO 4: Crear Usuario Admin Inicial
-    // ----------------------------------------------------------------
-    const adminEmail = "admin@clinisalud.com";
-    let adminUser = await User.findOne({ where: { email: adminEmail } });
-
-    if (!adminUser) {
-      const ccDocType = await TipoDocumento.findOne({ where: { code: "CC" } });
-      const hashedPassword = await bcrypt.hash("Admin2026!", 10);
-
-      adminUser = await User.create({
-        firstName: "Admin",
-        lastName: "General",
-        documentTypeId: ccDocType ? ccDocType.id : 1,
-        dni: "00000000",
-        email: adminEmail,
-        password: hashedPassword,
-        roleId: adminRole.id,
-        isActive: true,
-      });
-      console.log(`✅ Cuenta de Administrador desplegada: ${adminEmail} / Admin2026!`);
-    }
+    await assignAllRolePermissions(rolesMap);
+    await deployInitialAdmin(rolesMap["ADMIN"].id);
 
     console.log("🎉 ¡Reset global, validación estructural e importación masiva exitosos!");
   } catch (error) {

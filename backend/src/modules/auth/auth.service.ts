@@ -21,9 +21,10 @@ export class AuthService {
     if (!await bcrypt.compare(pass, user.password)) throw ApiError.unauthorized("Credenciales inválidas");
     if (!user.isActive) throw ApiError.forbidden("Usuario inactivo");
 
+    const tokenPromise = Promise.resolve(this.generateToken(user));
     const [menu, token] = await Promise.all([
       this.getAuthorizedMenu(user.id, user.roleId),
-      this.generateToken(user),
+      tokenPromise,
     ]);
 
     const userJson = user.toJSON();

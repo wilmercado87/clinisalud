@@ -1,0 +1,148 @@
+@use "variables" as v;
+
+.permissions-dialog {
+  padding: 8px 16px;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid v.$color-gray-light-150;
+  }
+
+  &__title {
+    margin: 0;
+    color: v.$navy-500;
+    font-size: 1.3rem;
+    font-weight: 800;
+  }
+
+  &__content {
+    padding: 12px 0 !important;
+    max-height: 65vh;
+  }
+
+  &__user-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: v.$color-gray-light-50;
+    border: 1px solid v.$color-gray-light-200;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  &__user-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    mat-icon { color: v.$navy-500; }
+
+    span {
+      font-weight: 700;
+      color: v.$color-gray-800;
+      font-size: 0.95rem;
+    }
+  }
+
+  &__role-badge {
+    font-size: 10px;
+    background: v.$navy-500;
+    color: v.$navy-contrast;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__warning {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: v.$color-rose-50;
+    border: 1px solid v.$color-rose-300;
+    padding: 10px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    color: v.$color-rose-700;
+
+    mat-icon { font-size: 20px; }
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+      strong { font-weight: 700; }
+    }
+  }
+
+  &__permissions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__permission-item {
+    border: 1px solid v.$color-gray-light-300;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.2s;
+
+    &.is-denied {
+      border-color: v.$color-rose-300;
+      background: rgba(v.$color-rose-50, 0.3);
+    }
+  }
+
+  &__permission-parent {
+    background: v.$color-gray-light-100;
+    padding: 8px 12px;
+    border-bottom: 1px solid v.$color-gray-light-300;
+
+    ::ng-deep .mdc-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 2px;
+      color: v.$navy-500 !important;
+      font-weight: 800 !important;
+      font-size: 12px !important;
+    }
+  }
+
+  &__permission-children {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 12px 16px;
+    gap: 8px;
+  }
+
+  &__child-checkbox {
+    ::ng-deep .mdc-label {
+      font-size: 12px !important;
+      color: v.$color-gray-700 !important;
+    }
+  }
+
+  &__actions {
+    padding-top: 16px;
+    border-top: 1px solid v.$color-gray-light-100;
+  }
+
+  &__btn-save {
+    border-radius: 8px !important;
+    padding: 0 20px !important;
+
+    .permissions-dialog__btn-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+  }
+}

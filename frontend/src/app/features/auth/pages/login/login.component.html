@@ -1,0 +1,61 @@
+<div class="login">
+  <mat-card class="login__card">
+    <div class="login__header">
+      <div class="login__logo">
+        @if (configService.config().clientLogo) {
+          <img
+            [src]="configService.config().clientLogo"
+            class="login__logo-img"
+            [alt]="configService.config().clientName"
+          >
+        } @else {
+          <svg viewBox="0 0 24 24" class="login__logo-default">
+            <path
+              d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.41,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.59,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z"
+            />
+          </svg>
+        }
+      </div>
+
+      <h1 class="login__title">{{ configService.config().clientName }}</h1>
+      <p class="login__subtitle">
+        Acceso al Sistema {{ configService.config().clientName === 'Clinisalud' ? 'Médico' : configService.config().clientName }}
+      </p>
+    </div>
+
+    <mat-card-content [formGroup]="loginForm">
+      <form class="login__form" (submit)="onLogin()">
+        <mat-form-field appearance="outline">
+          <mat-label>Correo Electrónico</mat-label>
+          <input matInput formControlName="email" type="email" placeholder="ejemplo@clinisalud.com" />
+          <mat-icon matSuffix>email</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Contraseña</mat-label>
+          <input matInput formControlName="password" type="password" />
+          <mat-icon matSuffix>lock</mat-icon>
+        </mat-form-field>
+
+        @if (errorMessage()) {
+          <div class="login__error">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <button
+          mat-raised-button
+          class="login__btn"
+          type="submit"
+          [disabled]="!canSubmit()"
+        >
+          @if (loginResource.isLoading()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            <span>INICIAR SESIÓN</span>
+          }
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
