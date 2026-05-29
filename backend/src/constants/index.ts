@@ -39,6 +39,11 @@ export const ERROR_MESSAGES = {
   FORBIDDEN: 'Acceso prohibido',
   NO_TOKEN: 'No hay token de acceso',
   INVALID_TOKEN: 'Token inválido o expirado',
+  CREATE_ADMIN_FORBIDDEN: 'No tienes permisos para crear usuarios administradores',
+  PERMISSIONS_SUPER_ADMIN_FORBIDDEN: 'No se puede cambiar permisos del super administrador',
+  PERMISSIONS_ADMIN_FORBIDDEN: 'No se puede cambiar permisos de administrador',
+  STATUS_SUPER_ADMIN_FORBIDDEN: 'No se puede cambiar estado del super administrador',
+  STATUS_ADMIN_FORBIDDEN: 'No se puede cambiar estado de administrador',
 } as const;
 
 export const PAGINATION = {

@@ -4,10 +4,13 @@ import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 
+import { MatDialog } from '@angular/material/dialog';
+
 import { AuthService } from '../../core/services/auth.service';
 import { ConfigService } from '../../core/services/config.service';
 import { MaterialModule } from '../../shared/material/material.module';
 import { SidebarMenuComponent } from './components/sidebar-menu/sidebar-menu.component';
+import { ProfileDialogComponent } from './components/profile-dialog/profile-dialog.component';
 import { MenuOption } from '../../models/auth.model';
 
 export interface MenuOptionUI extends MenuOption {
@@ -24,6 +27,7 @@ export interface MenuOptionUI extends MenuOption {
 export class DashboardComponent {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
   public readonly configService = inject(ConfigService);
 
   public isSidebarExpanded = signal(true);
@@ -52,6 +56,13 @@ export class DashboardComponent {
 
   public handleLogout(): void {
     this.authService.logout();
+  }
+
+  public openProfileDialog(): void {
+    this.dialog.open(ProfileDialogComponent, {
+      width: '550px',
+      disableClose: true,
+    });
   }
 
   public toggleMainPanel(group: MenuOptionUI): void {

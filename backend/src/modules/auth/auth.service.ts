@@ -97,6 +97,23 @@ export class AuthService {
     await this.ensureParentHierarchy(map);
   }
 
+  public async updateProfile(userId: number, data: Partial<{ firstName: string; lastName: string; phone: string; address: string }>) {
+    const user = await User.findByPk(userId);
+    if (!user) throw ApiError.notFound("Usuario no encontrado");
+
+    const allowedFields: (keyof typeof data)[] = ["firstName", "lastName", "phone", "address"];
+    for (const field of allowedFields) {
+      if (data[field] !== undefined) {
+        (user as any)[field] = data[field];
+      }
+    }
+
+    await user.save();
+    const userJson = user.toJSON();
+    delete userJson.password;
+    return userJson;
+  }
+
   private generateToken(user: User): string {
     return jwt.sign(
       { id: user.id, role: user.roleData?.code, email: user.email },

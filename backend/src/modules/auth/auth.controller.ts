@@ -3,6 +3,7 @@ import { AuthService } from "./auth.service";
 import { getHttpCode } from "../../utils/StatusCodes";
 import { HTTP_STATUS } from "../../constants";
 import { logInfo, logError } from "../../utils/Logger";
+import { AuthRequest } from "../../middlewares/AuthMiddleware";
 
 const authService = new AuthService();
 
@@ -25,12 +26,33 @@ export async function login(req: Request, res: Response) {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        dni: user.dni,
+        phone: user.phone,
+        address: user.address,
         role: user.role,
+        roleId: user.roleId,
+        isActive: user.isActive,
+        documentTypeId: user.documentTypeId,
+        roleData: user.roleData,
       },
       menu,
     });
   } catch (error: any) {
     logError(`Login failed for email: ${req.body.email}`, { error: error.message });
+    const statusCode = getHttpCode(error.message);
+    return res.status(statusCode).json({ message: error.message });
+  }
+}
+
+export async function updateProfile(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user!.id;
+    const { firstName, lastName, phone, address } = req.body;
+    const result = await authService.updateProfile(userId, { firstName, lastName, phone, address });
+    logInfo(`Profile updated for user ID: ${userId}`);
+    return res.status(HTTP_STATUS.OK).json(result);
+  } catch (error: any) {
+    logError(`Profile update failed`, { error: error.message });
     const statusCode = getHttpCode(error.message);
     return res.status(statusCode).json({ message: error.message });
   }

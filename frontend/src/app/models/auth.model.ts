@@ -8,7 +8,14 @@ export interface UserSession {
   firstName: string;
   lastName: string;
   email: string;
+  dni: string;
+  phone?: string;
+  address?: string;
   role: string;
+  roleId: number;
+  isActive: boolean;
+  documentTypeId: number;
+  roleData?: { id: number; name: string; code: string };
 }
 
 export interface MenuOption {

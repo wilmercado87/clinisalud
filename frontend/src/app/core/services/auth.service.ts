@@ -24,6 +24,7 @@ export class AuthService {
 
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 
+  private readonly userSubject = new BehaviorSubject<User | null>(this.getUserFromStorage());
   private readonly menuSubject = new BehaviorSubject<MenuOption[]>(this.getMenuFromStorage());
   public login(credentials: LoginCredentials): Observable<AuthResponse> {
     return this.http
@@ -39,13 +40,20 @@ export class AuthService {
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(res.user));
     localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(res.menu));
 
+    this.userSubject.next(res.user as unknown as User);
     this.menuSubject.next(res.menu);
+  }
+
+  public updateStoredUser(user: User): void {
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    this.userSubject.next(user);
   }
 
   public logout(): void {
     this.roleService.clearCache();
     this.roleService.clearMenuCache();
     localStorage.clear();
+    this.userSubject.next(null);
     this.menuSubject.next([]);
     this.router.navigate(['/login']);
   }
@@ -55,17 +63,38 @@ export class AuthService {
   }
 
   public get currentUser(): User | null {
-    const user = localStorage.getItem(STORAGE_KEYS.USER);
-    return user ? (JSON.parse(user) as User) : null;
+    return this.userSubject.value;
+  }
+
+  public get currentUser$(): Observable<User | null> {
+    return this.userSubject.asObservable();
   }
 
   public get userMenu$(): Observable<MenuOption[]> {
     return this.menuSubject.asObservable();
   }
 
+  public updateProfile(data: Partial<{ firstName: string; lastName: string; phone: string; address: string }>): Observable<User> {
+    return this.http.patch<User>(`${this.apiUrl}/profile`, data).pipe(
+      tap((updatedUser) => {
+        const current = this.currentUser;
+        if (current) {
+          const merged = { ...current, ...updatedUser };
+          this.updateStoredUser(merged);
+        }
+      }),
+      catchError((error: HttpErrorResponse) => this.handleError(error)),
+    );
+  }
+
   private getMenuFromStorage(): MenuOption[] {
     const menu = localStorage.getItem(STORAGE_KEYS.MENU);
     return menu ? JSON.parse(menu) : [];
+  }
+
+  private getUserFromStorage(): User | null {
+    const user = localStorage.getItem(STORAGE_KEYS.USER);
+    return user ? (JSON.parse(user) as User) : null;
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {

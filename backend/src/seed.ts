@@ -157,7 +157,7 @@ async function deployInitialSuperAdmin(superAdminRoleId: number) {
     await User.create({
       firstName: "Super",
       lastName: "Admin",
-      documentTypeId: ccDocType ? ccDocType.id : 1,
+      documentTypeId: ccDocType ? ccDocType.id : 3,
       dni: "00000000",
       email: adminEmail,
       password: hashedPassword,

@@ -193,7 +193,6 @@ export class UserFormDialogComponent {
 
     return {
       ...cleanFields,
-      documentTypeId: rawForm.documentTypeId ?? 1,
       permissions: Array.from(this.selectedIds())
     };
   }

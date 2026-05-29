@@ -9,7 +9,7 @@ const usersService = new UsersService();
 const handleError = (error: any, res: Response, context: string) => {
   const statusCode = getHttpCode(error.message);
   if (statusCode === HTTP_STATUS.INTERNAL_SERVER_ERROR) {
-    console.error(`🔥 Error ${context}:`, error);
+    console.error(`Error ${context}:`, error);
   }
   return res.status(statusCode).json({ message: error.message });
 };

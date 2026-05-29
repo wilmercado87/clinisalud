@@ -6,6 +6,7 @@ import MenuOption from "../../models/MenuOption";
 import UserMenuOverride from "../../models/UserMenuOverride";
 import RoleMenuPermission from "../../models/RoleMenuPermission";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
+import { ERROR_MESSAGES } from "../../constants";
 import TipoDocumento from "../../models/TipoDocumento";
 import { buildMenuTree } from "../../utils/MenuTree.util";
 
@@ -93,14 +94,14 @@ export class UsersService {
       const targetRole = await Role.findByPk(data.roleId);
       const isTargetAdmin = targetRole?.code === "ADMIN" || targetRole?.code === "SUPER_ADMIN";
       if (isTargetAdmin && requestingUserRole !== "SUPER_ADMIN") {
-        throw ApiError.forbidden("No tienes permisos para crear usuarios administradores");
+        throw ApiError.forbidden(ERROR_MESSAGES.CREATE_ADMIN_FORBIDDEN);
       }
 
       const existingUser = await this.findExistingUser(data.email, data.dni);
       if (existingUser) this.throwDuplicateError(existingUser, data);
 
       const ccDocument = await TipoDocumento.findOne({ where: { code: "CC" } });
-      const defaultDocumentTypeId = ccDocument ? ccDocument.id : 1;
+      const defaultDocumentTypeId = ccDocument ? ccDocument.id : 3;
       const tempPassword = this.generateTempPassword();
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
@@ -123,8 +124,8 @@ export class UsersService {
   }
 
   private throwDuplicateError(existingUser: User, data: CreateUserData) {
-    if (existingUser.email === data.email) throw ApiError.emailExists("El correo electrónico ya existe");
-    if (existingUser.dni === data.dni) throw ApiError.conflict("El número de documento ya existe");
+    if (existingUser.email === data.email) throw ApiError.emailExists(ERROR_MESSAGES.EMAIL_EXISTS);
+    if (existingUser.dni === data.dni) throw ApiError.conflict(ERROR_MESSAGES.DNI_EXISTS);
   }
 
   private generateTempPassword(): string {
@@ -159,14 +160,14 @@ export class UsersService {
       include: [{ model: Role, as: "roleData" }],
     });
 
-    if (!targetUser) throw ApiError.notFound("Usuario no encontrado");
+    if (!targetUser) throw ApiError.notFound(ERROR_MESSAGES.USER_NOT_FOUND);
 
     const targetCode = targetUser.roleData?.code;
     if (targetCode === "SUPER_ADMIN") {
-      throw ApiError.forbidden("No se puede cambiar permisos del super administrador");
+      throw ApiError.forbidden(ERROR_MESSAGES.PERMISSIONS_SUPER_ADMIN_FORBIDDEN);
     }
     if (targetCode === "ADMIN" && requestingUserRole !== "SUPER_ADMIN") {
-      throw ApiError.forbidden("No se puede cambiar permisos de administrador");
+      throw ApiError.forbidden(ERROR_MESSAGES.PERMISSIONS_ADMIN_FORBIDDEN);
     }
 
     await UserMenuOverride.destroy({ where: { userId: targetUserId } });
@@ -185,14 +186,14 @@ export class UsersService {
       include: [{ model: Role, as: "roleData" }],
     });
 
-    if (!user) throw ApiError.notFound("Usuario no encontrado");
+    if (!user) throw ApiError.notFound(ERROR_MESSAGES.USER_NOT_FOUND);
 
     const targetCode = user.roleData?.code;
     if (targetCode === "SUPER_ADMIN") {
-      throw ApiError.forbidden("No se puede cambiar estado del super administrador");
+      throw ApiError.forbidden(ERROR_MESSAGES.STATUS_SUPER_ADMIN_FORBIDDEN);
     }
     if (targetCode === "ADMIN" && requestingUserRole !== "SUPER_ADMIN") {
-      throw ApiError.forbidden("No se puede cambiar estado de administrador");
+      throw ApiError.forbidden(ERROR_MESSAGES.STATUS_ADMIN_FORBIDDEN);
     }
 
     user.isActive = !user.isActive;
