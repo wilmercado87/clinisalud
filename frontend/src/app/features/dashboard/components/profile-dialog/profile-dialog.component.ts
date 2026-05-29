@@ -84,13 +84,13 @@ export class ProfileDialogComponent {
     if (!this.canSubmit()) return;
 
     const raw = this.profileForm.getRawValue();
-    const clean: Record<string, string | undefined> = {};
-    if (raw.firstName) clean['firstName'] = raw.firstName;
-    if (raw.lastName) clean['lastName'] = raw.lastName;
-    clean['phone'] = raw.phone ?? undefined;
-    clean['address'] = raw.address ?? undefined;
+    const normalizedFormProfile: Record<string, string | undefined> = {};
+    if (raw.firstName) normalizedFormProfile['firstName'] = raw.firstName;
+    if (raw.lastName) normalizedFormProfile['lastName'] = raw.lastName;
+    normalizedFormProfile['phone'] = raw.phone ?? undefined;
+    normalizedFormProfile['address'] = raw.address ?? undefined;
 
-    this.updateTrigger.set(clean);
+    this.updateTrigger.set(normalizedFormProfile);
   }
 
   public onCancel(): void {
