@@ -27,7 +27,6 @@ interface PermissionMenuNode extends MenuOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionsDialogComponent {
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly roleService = inject(RoleService);
   private readonly userService = inject(UserService);
   private readonly toast = inject(ToastService);
@@ -97,7 +96,6 @@ export class PermissionsDialogComponent {
       const menuGroups = this.permissionMenuGroups();
       if (menuGroups.length > 0) {
         this.loadExistingUserPermissions(menuGroups);
-        this.cdr.markForCheck();
       }
     });
 
