@@ -52,7 +52,7 @@ describe('UsersService', () => {
       jest.spyOn(RoleMenuPermission, 'findAll').mockResolvedValue([{ menuOptionId: 1 }, { menuOptionId: 2 }] as any);
       jest.spyOn(UserMenuOverride, 'bulkCreate').mockResolvedValue([]);
 
-      const result = await service.createUser(validData);
+      const result = await service.createUser(validData, 'SUPER_ADMIN');
 
       expect(result).toHaveProperty('user');
       expect(result).toHaveProperty('temporaryPassword');
@@ -64,7 +64,7 @@ describe('UsersService', () => {
         dni: 'different',
       } as any);
 
-      await expect(service.createUser(validData)).rejects.toThrow('correo');
+      await expect(service.createUser(validData, 'SUPER_ADMIN')).rejects.toThrow('correo');
     });
   });
 
@@ -76,7 +76,7 @@ describe('UsersService', () => {
 
       await service.updateUserPermissions(2, [
         { menuOptionId: 1, hasAccess: true },
-      ]);
+      ], 'SUPER_ADMIN');
 
       expect(UserMenuOverride.destroy).toHaveBeenCalled();
       expect(UserMenuOverride.bulkCreate).toHaveBeenCalled();
@@ -85,13 +85,29 @@ describe('UsersService', () => {
     it('should throw if user not found', async () => {
       jest.spyOn(User, 'findByPk').mockResolvedValue(null as any);
 
-      await expect(service.updateUserPermissions(999, [])).rejects.toThrow('no encontrado');
+      await expect(service.updateUserPermissions(999, [], 'SUPER_ADMIN')).rejects.toThrow('no encontrado');
     });
 
     it('should throw for admin user', async () => {
       jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
 
-      await expect(service.updateUserPermissions(1, [])).rejects.toThrow('403');
+      await expect(service.updateUserPermissions(1, [], 'ADMIN')).rejects.toThrow('403');
+    });
+
+    it('should allow SUPER_ADMIN to update ADMIN', async () => {
+      jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
+      jest.spyOn(UserMenuOverride, 'destroy').mockResolvedValue(1);
+      jest.spyOn(UserMenuOverride, 'bulkCreate').mockResolvedValue([]);
+
+      await expect(
+        service.updateUserPermissions(1, [{ menuOptionId: 1, hasAccess: true }], 'SUPER_ADMIN'),
+      ).resolves.not.toThrow();
+    });
+
+    it('should throw for super admin user (immutable)', async () => {
+      jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'SUPER_ADMIN' } } as any);
+
+      await expect(service.updateUserPermissions(1, [], 'SUPER_ADMIN')).rejects.toThrow('403');
     });
   });
 
@@ -105,7 +121,7 @@ describe('UsersService', () => {
       };
       jest.spyOn(User, 'findByPk').mockResolvedValue(mockUserObj as any);
 
-      const result = await service.toggleUserStatus(2);
+      const result = await service.toggleUserStatus(2, 'SUPER_ADMIN');
 
       expect(mockUserObj.save).toHaveBeenCalled();
       expect(result.isActive).toBe(true);
@@ -114,13 +130,31 @@ describe('UsersService', () => {
     it('should throw if user not found', async () => {
       jest.spyOn(User, 'findByPk').mockResolvedValue(null as any);
 
-      await expect(service.toggleUserStatus(999)).rejects.toThrow('no encontrado');
+      await expect(service.toggleUserStatus(999, 'SUPER_ADMIN')).rejects.toThrow('no encontrado');
     });
 
     it('should throw for admin', async () => {
       jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
 
-      await expect(service.toggleUserStatus(1)).rejects.toThrow('403');
+      await expect(service.toggleUserStatus(1, 'ADMIN')).rejects.toThrow('403');
+    });
+
+    it('should allow SUPER_ADMIN to toggle ADMIN', async () => {
+      const mockUserObj = {
+        id: 1,
+        isActive: false,
+        roleData: { code: 'ADMIN' },
+        save: jest.fn().mockResolvedValue(true),
+      };
+      jest.spyOn(User, 'findByPk').mockResolvedValue(mockUserObj as any);
+
+      await expect(service.toggleUserStatus(1, 'SUPER_ADMIN')).resolves.not.toThrow();
+    });
+
+    it('should throw for super admin (immutable)', async () => {
+      jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'SUPER_ADMIN' } } as any);
+
+      await expect(service.toggleUserStatus(1, 'SUPER_ADMIN')).rejects.toThrow('403');
     });
   });
 });

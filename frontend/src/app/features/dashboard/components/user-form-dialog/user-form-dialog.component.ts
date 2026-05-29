@@ -8,6 +8,7 @@ import { of } from 'rxjs';
 import { MaterialModule } from '../../../../shared/material/material.module';
 import { UserService } from '../../services/user.service';
 import { RoleService } from '../../../../core/services/roles.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 
 import { MenuOption } from '../../../../models/auth.model';
@@ -27,6 +28,7 @@ export class UserFormDialogComponent {
   private readonly fb = inject(FormBuilder);
   private readonly userService = inject(UserService);
   private readonly roleService = inject(RoleService);
+  private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly dialogRef = inject(MatDialogRef<UserFormDialogComponent>);
 
@@ -58,11 +60,30 @@ export class UserFormDialogComponent {
   public generatedPassword = signal('');
   public formStatus = signal('INVALID');
 
+  public currentUserRole = computed(() => this.authService.currentUser?.role ?? '');
+
+  public isCurrentUserSuperAdmin = computed(() => this.currentUserRole() === 'SUPER_ADMIN');
+
+  public availableRoles = computed(() => {
+    const roles = this.rolesResource.value() ?? [];
+    if (this.isCurrentUserSuperAdmin()) return roles;
+    return roles.filter(r => r.code !== 'SUPER_ADMIN');
+  });
+
   public isAdmin = computed(() => {
     const roleId = this.roleIdSignal();
     const roles = this.rolesResource.value() ?? [];
-    return roles.find(r => r.id === roleId)?.code === 'ADMIN';
+    const selectedRole = roles.find(r => r.id === roleId);
+    return selectedRole?.code === 'ADMIN' || selectedRole?.code === 'SUPER_ADMIN';
   });
+
+  public isSuperAdminRole = computed(() => {
+    const roleId = this.roleIdSignal();
+    const roles = this.rolesResource.value() ?? [];
+    return roles.find(r => r.id === roleId)?.code === 'SUPER_ADMIN';
+  });
+
+  public isPermissionsLocked = computed(() => this.isSuperAdminRole());
 
   public filteredMenuOptions = computed(() =>
     (this.menuResource.value() ?? []).filter(item => item.label === 'Panel Principal')

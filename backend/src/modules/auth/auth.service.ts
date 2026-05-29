@@ -39,7 +39,7 @@ export class AuthService {
 
   private async getAuthorizedMenu(userId: number, roleId: number) {
     const role = await Role.findByPk(roleId);
-    const isAdmin = role?.code === "ADMIN";
+    const isAdmin = role?.code === "ADMIN" || role?.code === "SUPER_ADMIN";
 
     const [rolePermissions, overrides] = await Promise.all([
       RoleMenuPermission.findAll({ where: { roleId } }),

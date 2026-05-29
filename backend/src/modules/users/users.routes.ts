@@ -14,18 +14,20 @@ const router = Router();
 router.get("/roles", authenticateToken, UsersController.getRoles);
 router.get('/roles/menus', authenticateToken, UsersController.getMenuOptions);
 
-router.get("/users", authenticateToken, requireRole('ADMIN'), UsersController.getManageableUsers);
+const adminOrSuperAdmin = requireRole('ADMIN', 'SUPER_ADMIN');
+
+router.get("/users", authenticateToken, adminOrSuperAdmin, UsersController.getManageableUsers);
 router.post(
   "/users",
   authenticateToken,
-  requireRole('ADMIN'),
+  adminOrSuperAdmin,
   validateBody(createUserValidation),
   UsersController.registerUser
 );
 router.patch(
   "/users/:id/permissions",
   authenticateToken,
-  requireRole('ADMIN'),
+  adminOrSuperAdmin,
   validateParams(idParamValidation),
   validateBody(updatePermissionsValidation),
   UsersController.updatePermissions
@@ -33,7 +35,7 @@ router.patch(
 router.patch(
   "/users/:id/toggle-status",
   authenticateToken,
-  requireRole('ADMIN'),
+  adminOrSuperAdmin,
   validateParams(toggleStatusValidation),
   UsersController.toggleStatus
 );

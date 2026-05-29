@@ -89,7 +89,13 @@ export class UsersService {
       .filter(p => p.hasAccess);
   }
 
-  public async createUser(data: CreateUserData) {
+  public async createUser(data: CreateUserData, requestingUserRole: string) {
+      const targetRole = await Role.findByPk(data.roleId);
+      const isTargetAdmin = targetRole?.code === "ADMIN" || targetRole?.code === "SUPER_ADMIN";
+      if (isTargetAdmin && requestingUserRole !== "SUPER_ADMIN") {
+        throw ApiError.forbidden("No tienes permisos para crear usuarios administradores");
+      }
+
       const existingUser = await this.findExistingUser(data.email, data.dni);
       if (existingUser) this.throwDuplicateError(existingUser, data);
 
@@ -144,13 +150,24 @@ export class UsersService {
     }
   }
 
-  public async updateUserPermissions(targetUserId: number, permissions: { menuOptionId: number; hasAccess: boolean }[]) {
+  public async updateUserPermissions(
+    targetUserId: number,
+    permissions: { menuOptionId: number; hasAccess: boolean }[],
+    requestingUserRole: string,
+  ) {
     const targetUser = await User.findByPk(targetUserId, {
       include: [{ model: Role, as: "roleData" }],
     });
 
     if (!targetUser) throw ApiError.notFound("Usuario no encontrado");
-    if (targetUser.roleData?.code === "ADMIN") throw ApiError.forbidden("No se puede cambiar permisos de administrador");
+
+    const targetCode = targetUser.roleData?.code;
+    if (targetCode === "SUPER_ADMIN") {
+      throw ApiError.forbidden("No se puede cambiar permisos del super administrador");
+    }
+    if (targetCode === "ADMIN" && requestingUserRole !== "SUPER_ADMIN") {
+      throw ApiError.forbidden("No se puede cambiar permisos de administrador");
+    }
 
     await UserMenuOverride.destroy({ where: { userId: targetUserId } });
 
@@ -163,13 +180,20 @@ export class UsersService {
     return await UserMenuOverride.bulkCreate(overrideData);
   }
 
-  public async toggleUserStatus(userId: number) {
+  public async toggleUserStatus(userId: number, requestingUserRole: string) {
     const user = await User.findByPk(userId, {
       include: [{ model: Role, as: "roleData" }],
     });
 
     if (!user) throw ApiError.notFound("Usuario no encontrado");
-    if (user.roleData?.code === "ADMIN") throw ApiError.forbidden("No se puede cambiar estado de administrador");
+
+    const targetCode = user.roleData?.code;
+    if (targetCode === "SUPER_ADMIN") {
+      throw ApiError.forbidden("No se puede cambiar estado del super administrador");
+    }
+    if (targetCode === "ADMIN" && requestingUserRole !== "SUPER_ADMIN") {
+      throw ApiError.forbidden("No se puede cambiar estado de administrador");
+    }
 
     user.isActive = !user.isActive;
     await user.save();

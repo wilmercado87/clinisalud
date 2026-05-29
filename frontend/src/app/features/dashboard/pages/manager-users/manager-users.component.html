@@ -85,12 +85,12 @@
 
           <mat-menu #userMenu="matMenu" class="user-manager__menu">
             <button mat-menu-item (click)="openPermissionsDialog(user)"
-              [disabled]="!user.isActive"]>
+              [disabled]="!user.isActive || isSuperAdmin(user)">
               <mat-icon color="primary">admin_panel_settings</mat-icon>
               <span>Gestionar Accesos</span>
             </button>
             <button mat-menu-item (click)="toggleUserStatus(user)"
-                    [disabled]="toggleStatusResource.isLoading()">
+                    [disabled]="toggleStatusResource.isLoading() || isSuperAdmin(user)">
               <mat-icon [color]="user.isActive ? 'warn' : 'accent'">
                 {{ user.isActive ? "person_off" : "person_check" }}
               </mat-icon>

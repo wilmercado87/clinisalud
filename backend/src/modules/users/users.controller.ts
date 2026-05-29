@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { UsersService } from "./users.service";
 import { getHttpCode } from "../../utils/StatusCodes";
 import { HTTP_STATUS } from "../../constants";
+import { AuthRequest } from "../../middlewares/AuthMiddleware";
 
 const usersService = new UsersService();
 
@@ -40,20 +41,20 @@ export const getManageableUsers = async (req: Request, res: Response) => {
   }
 };
 
-export const registerUser = async (req: Request, res: Response) => {
+export const registerUser = async (req: AuthRequest, res: Response) => {
   try {
-    const result = await usersService.createUser(req.body);
+    const result = await usersService.createUser(req.body, req.user!.role);
     res.status(HTTP_STATUS.CREATED).json(result);
   } catch (error: any) {
     return handleError(error, res, 'registerUser');
   }
 };
 
-export const updatePermissions = async (req: Request, res: Response) => {
+export const updatePermissions = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { permissions } = req.body;
-    const result = await usersService.updateUserPermissions(Number(id), permissions);
+    const result = await usersService.updateUserPermissions(Number(id), permissions, req.user!.role);
     res.status(HTTP_STATUS.OK).json({
       message: "Permisos actualizados correctamente",
       data: result,
@@ -63,10 +64,10 @@ export const updatePermissions = async (req: Request, res: Response) => {
   }
 };
 
-export const toggleStatus = async (req: Request, res: Response) => {
+export const toggleStatus = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const result = await usersService.toggleUserStatus(Number(id));
+    const result = await usersService.toggleUserStatus(Number(id), req.user!.role);
     res.status(HTTP_STATUS.OK).json(result);
   } catch (error: any) {
     return handleError(error, res, 'toggleStatus');

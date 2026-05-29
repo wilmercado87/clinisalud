@@ -20,7 +20,15 @@
       <span class="permissions-dialog__role-badge">{{ targetUserData.user.roleData?.name }}</span>
     </div>
 
-    @if (isNonAdminExceedingPrivileges()) {
+    @if (isEditRestricted()) {
+      <div class="permissions-dialog__warning permissions-dialog__warning--error">
+        <mat-icon>block</mat-icon>
+        <div class="permissions-dialog__warning-text">
+          <strong>Acción no permitida</strong>
+          <span>No tienes permisos para modificar los accesos de este administrador.</span>
+        </div>
+      </div>
+    } @else if (isNonAdminExceedingPrivileges()) {
       <div class="permissions-dialog__warning">
         <mat-icon>security</mat-icon>
         <div class="permissions-dialog__warning-text">
@@ -38,13 +46,14 @@
     } @else {
       <div class="permissions-dialog__permissions">
         @for (group of permissionMenuGroups(); track group.id) {
-          <div class="permissions-dialog__permission-item" [class.is-denied]="isNonAdminExceedingPrivileges()">
+          <div class="permissions-dialog__permission-item"
+               [class.is-denied]="isNonAdminExceedingPrivileges() || isEditRestricted()">
             
             <div class="permissions-dialog__permission-parent">
               <mat-checkbox
                 [checked]="assignedMenuOptionIds().has(+group.id)"
                 (change)="toggleMenuGroupSelection(group, $event.checked)"
-                [disabled]="updatePermissionsResource.isLoading() || group.isUserManager"
+                [disabled]="updatePermissionsResource.isLoading() || group.isUserManager || isEditRestricted()"
                 color="primary"
               >
                 <mat-icon class="permissions-dialog__group-icon">
@@ -61,7 +70,7 @@
                 <mat-checkbox
                   [checked]="assignedMenuOptionIds().has(+child.id)"
                   (change)="toggleSubMenuSelection(child.id, group)"
-                  [disabled]="updatePermissionsResource.isLoading() || group.isUserManager"
+                  [disabled]="updatePermissionsResource.isLoading() || group.isUserManager || isEditRestricted()"
                   class="permissions-dialog__child-checkbox"
                 >
                   {{ child.label }}

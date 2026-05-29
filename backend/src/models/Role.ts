@@ -20,7 +20,7 @@ Role.init(
       unique: true,
     },
     code: {
-      type: DataTypes.STRING(5),
+      type: DataTypes.STRING(20),
       allowNull: false,
       unique: true,
     },

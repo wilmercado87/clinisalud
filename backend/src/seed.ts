@@ -72,6 +72,7 @@ async function resetDatabaseTables() {
 
 async function seedSystemRoles() {
   const rolesData = [
+    { code: "SUPER_ADMIN", name: "Super Administrador" },
     { code: "ADMIN", name: "Administrador Sistema" },
     { code: "MEDICO", name: "Personal Médico" },
     { code: "FACTURADOR", name: "Personal de Facturación" }
@@ -122,45 +123,48 @@ async function assignAllRolePermissions(rolesMap: Record<string, Role>) {
   const allOptions = await MenuOption.findAll();
 
   for (const opt of allOptions) {
+    const isGestorUsuarios = opt.label.toUpperCase() === 'GESTOR USUARIOS';
+
+    // SUPER_ADMIN and ADMIN get ALL menu options
+    await RoleMenuPermission.findOrCreate({
+      where: { roleId: rolesMap["SUPER_ADMIN"].id, menuOptionId: opt.id },
+    });
     await RoleMenuPermission.findOrCreate({
       where: { roleId: rolesMap["ADMIN"].id, menuOptionId: opt.id },
     });
 
-    const isUserManager = opt.label.toUpperCase() === 'GESTOR USUARIOS';
-
-    if (!isUserManager) {
+    // MEDICO and FACTURADOR get all EXCEPT Gestor Usuarios
+    if (!isGestorUsuarios) {
       await RoleMenuPermission.findOrCreate({
         where: { roleId: rolesMap["MEDICO"].id, menuOptionId: opt.id },
       });
-
       await RoleMenuPermission.findOrCreate({
         where: { roleId: rolesMap["FACTURADOR"].id, menuOptionId: opt.id },
       });
     }
   }
-  console.log(`✅ Matriz de permisos inicializada (ADMIN total, MEDICO/FACTURADOR operativo).`);
+  console.log(`✅ Matriz de permisos inicializada (SUPER_ADMIN/ADMIN total, MEDICO/FACTURADOR operativo).`);
 }
 
-async function deployInitialAdmin(adminRoleId: number) {
+async function deployInitialSuperAdmin(superAdminRoleId: number) {
   const adminEmail = "admin@clinisalud.com";
   const adminExists = await User.findOne({ where: { email: adminEmail } });
 
-  // 🛡️ Solución S1854: Remoción de la asignación inútil a "adminUser"
   if (!adminExists) {
     const ccDocType = await TipoDocumento.findOne({ where: { code: "CC" } });
     const hashedPassword = await bcrypt.hash("Admin2026!", 10);
 
     await User.create({
-      firstName: "Admin",
-      lastName: "General",
+      firstName: "Super",
+      lastName: "Admin",
       documentTypeId: ccDocType ? ccDocType.id : 1,
       dni: "00000000",
       email: adminEmail,
       password: hashedPassword,
-      roleId: adminRoleId,
+      roleId: superAdminRoleId,
       isActive: true,
     });
-    console.log(`✅ Cuenta de Administrador desplegada: ${adminEmail} / Admin2026!`);
+    console.log(`✅ Cuenta de Super Administrador desplegada: ${adminEmail} / Admin2026!`);
   }
 }
 
@@ -225,7 +229,7 @@ export const runSeeder = async () => {
     }
 
     await assignAllRolePermissions(rolesMap);
-    await deployInitialAdmin(rolesMap["ADMIN"].id);
+    await deployInitialSuperAdmin(rolesMap["SUPER_ADMIN"].id);
 
     console.log("🎉 ¡Reset global, validación estructural e importación masiva exitosos!");
   } catch (error) {

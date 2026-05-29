@@ -27,6 +27,10 @@ export class ManagerUsersComponent implements AfterViewInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
 
+  public isSuperAdmin(user: User): boolean {
+    return user.roleData?.code === 'SUPER_ADMIN';
+  }
+
   public usersResource = rxResource({
     loader: () => this.userService.getManageableUsers()
   });

@@ -65,7 +65,7 @@
           >
             <mat-label>Asignar Rol</mat-label>
             <mat-select formControlName="roleId">
-              @for (role of (rolesResource.value() || []); track role.id) {
+              @for (role of (availableRoles()); track role.id) {
                 <mat-option [value]="role.id">{{ role.name }}</mat-option>
               }
             </mat-select>
@@ -89,6 +89,7 @@
                 <mat-checkbox
                   [checked]="selectedIds().has(group.id)"
                   (change)="toggleParent(group, $event.checked)"
+                  [disabled]="isPermissionsLocked()"
                   color="primary"
                 >
                   <mat-icon class="user-form__group-icon">grid_view</mat-icon>
@@ -103,6 +104,7 @@
                   <mat-checkbox
                     [checked]="selectedIds().has(child.id)"
                     (change)="toggleChild(child.id, group)"
+                    [disabled]="isPermissionsLocked()"
                     class="user-form__child-checkbox"
                   >
                     {{ child.label }}

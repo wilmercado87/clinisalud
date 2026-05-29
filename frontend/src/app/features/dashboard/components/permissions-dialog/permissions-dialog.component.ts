@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { MaterialModule } from '../../../../shared/material/material.module';
 import { RoleService } from '../../../../core/services/roles.service';
 import { UserService } from '../../services/user.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { MenuOption } from '../../../../models/auth.model';
 import { User, PermissionOverride } from '../../../../models/user-manager.model';
@@ -29,6 +30,7 @@ interface PermissionMenuNode extends MenuOption {
 export class PermissionsDialogComponent {
   private readonly roleService = inject(RoleService);
   private readonly userService = inject(UserService);
+  private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly dialogRef = inject(MatDialogRef<PermissionsDialogComponent>);
   public readonly targetUserData = inject<PermissionsDialogData>(MAT_DIALOG_DATA);
@@ -63,13 +65,20 @@ export class PermissionsDialogComponent {
     ),
   );
 
+  public currentUserRole = computed(() => this.authService.currentUser?.role ?? '');
+
   public isTargetUserAdmin = computed(() => this.targetUserData.user.roleData?.code === 'ADMIN');
 
+  public isTargetUserSuperAdmin = computed(() => this.targetUserData.user.roleData?.code === 'SUPER_ADMIN');
+
+  public isEditRestricted = computed(() => this.isTargetUserSuperAdmin());
+
   public isNonAdminExceedingPrivileges = computed(() => {
+    if (this.isEditRestricted()) return false;
     if (this.isTargetUserAdmin()) return false;
 
     const maxSelectableCountForNonAdmin = this.permissionMenuGroups().reduce((accumulatedCount, group) => {
-      if (group.isUserManager) return accumulatedCount; 
+      if (group.isUserManager) return accumulatedCount;
       return accumulatedCount + 1 + (group.children?.length || 0);
     }, 0);
 
@@ -81,6 +90,7 @@ export class PermissionsDialogComponent {
 
   public canSubmitPermissions = computed(
     () =>
+      !this.isEditRestricted() &&
       this.assignedMenuOptionIds().size > 0 &&
       !this.isNonAdminExceedingPrivileges() &&
       !this.updatePermissionsResource.isLoading() &&
@@ -136,6 +146,11 @@ export class PermissionsDialogComponent {
       }
     }
 
+    if (this.isTargetUserSuperAdmin()) {
+      this.assignedMenuOptionIds.set(resolvedIds);
+      return;
+    }
+
     const userManagerGroup = menuGroups.find((group) => group.isUserManager);
     if (userManagerGroup) {
       const groupKey = Number(userManagerGroup.id);
@@ -154,7 +169,7 @@ export class PermissionsDialogComponent {
   }
 
   public toggleMenuGroupSelection(menuGroup: PermissionMenuNode, isChecked: boolean): void {
-    if (menuGroup.isUserManager || this.updatePermissionsResource.isLoading()) return;
+    if (menuGroup.isUserManager || this.isEditRestricted() || this.updatePermissionsResource.isLoading()) return;
 
     const updatedIdsSet = new Set(this.assignedMenuOptionIds());
     const groupKey = Number(menuGroup.id);
@@ -171,7 +186,7 @@ export class PermissionsDialogComponent {
   }
 
   public toggleSubMenuSelection(subMenuId: number, parentMenuGroup: PermissionMenuNode): void {
-    if (parentMenuGroup.isUserManager || this.updatePermissionsResource.isLoading()) return;
+    if (parentMenuGroup.isUserManager || this.isEditRestricted() || this.updatePermissionsResource.isLoading()) return;
 
     const updatedIdsSet = new Set(this.assignedMenuOptionIds());
     const parentKey = Number(parentMenuGroup.id);
