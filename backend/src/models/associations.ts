@@ -3,6 +3,8 @@ import Role from "./Role";
 import MenuOption from "./MenuOption";
 import RoleMenuPermission from "./RoleMenuPermission";
 import UserMenuOverride from "./UserMenuOverride";
+import Notification from "./Notification";
+import NotificationRecipient from "./NotificationRecipient";
 
 import TipoDocumento from "./TipoDocumento";
 import TipoUsuario from "./TipoUsuario";
@@ -113,4 +115,9 @@ export function initAssociations() {
   ParagrafoAplicacion.belongsTo(Diagnostico, { foreignKey: "diagnosticCode", targetKey: "code", as: "diagnostic" });
   TriagePrioridad.belongsTo(TipoTriage, { foreignKey: "triageId", as: "triage" });
   Municipios.belongsTo(Departamentos, { foreignKey: "dptoId", as: "department" });
+
+  // === [MÓDULO 8: NOTIFICACIONES] ===
+  NotificationRecipient.belongsTo(Notification, { foreignKey: "notificationId", as: "notification" });
+  Notification.hasMany(NotificationRecipient, { foreignKey: "notificationId", as: "recipients" });
+  NotificationRecipient.belongsTo(User, { foreignKey: "userId", as: "user" });
 }

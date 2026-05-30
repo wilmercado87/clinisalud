@@ -9,6 +9,7 @@ import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import { ERROR_MESSAGES } from "../../constants";
 import TipoDocumento from "../../models/TipoDocumento";
 import { buildMenuTree } from "../../utils/MenuTree.util";
+import { NotificationsService } from "../notifications/notifications.service";
 
 interface CreateUserData {
   email: string;
@@ -23,6 +24,7 @@ interface CreateUserData {
 }
 
 export class UsersService {
+  private readonly notificationsService = new NotificationsService();
   public async findAllRoles(): Promise<Role[]> {
     return await Role.findAll({ order: [["name", "ASC"]] });
   }
@@ -90,7 +92,7 @@ export class UsersService {
       .filter(p => p.hasAccess);
   }
 
-  public async createUser(data: CreateUserData, requestingUserRole: string) {
+  public async createUser(data: CreateUserData, requestingUserRole: string, requestingUserId: number, requestingUserName: string) {
       const targetRole = await Role.findByPk(data.roleId);
       const isTargetAdmin = targetRole?.code === "ADMIN" || targetRole?.code === "SUPER_ADMIN";
       if (isTargetAdmin && requestingUserRole !== "SUPER_ADMIN") {
@@ -115,6 +117,17 @@ export class UsersService {
       await this.createPermissions(newUser.id, data.roleId, data.permissions);
       const userJson = newUser.toJSON();
       delete userJson.password;
+
+      this.notificationsService.createAndDispatch(
+        "USER_CREATED",
+        "Nuevo usuario registrado",
+        `${requestingUserName} (${requestingUserRole}) creó al usuario ${data.firstName} ${data.lastName} (${targetRole?.name || "Sin rol"})`,
+        requestingUserId,
+        requestingUserName,
+        requestingUserRole,
+        "/dashboard/users",
+        "Ver usuarios",
+      ).catch(() => {});
 
       return { user: userJson, temporaryPassword: tempPassword };
   }
@@ -181,7 +194,7 @@ export class UsersService {
     return await UserMenuOverride.bulkCreate(overrideData);
   }
 
-  public async toggleUserStatus(userId: number, requestingUserRole: string) {
+  public async toggleUserStatus(userId: number, requestingUserRole: string, requestingUserId: number, requestingUserName: string) {
     const user = await User.findByPk(userId, {
       include: [{ model: Role, as: "roleData" }],
     });
@@ -198,6 +211,18 @@ export class UsersService {
 
     user.isActive = !user.isActive;
     await user.save();
+
+    const action = user.isActive ? "activado" : "desactivado";
+    this.notificationsService.createAndDispatch(
+      "USER_TOGGLED",
+      `Usuario ${action}`,
+      `${requestingUserName} (${requestingUserRole}) ${action} al usuario ${user.firstName} ${user.lastName}`,
+      requestingUserId,
+      requestingUserName,
+      requestingUserRole,
+      "/dashboard/users",
+      "Ver usuarios",
+    ).catch(() => {});
 
     return {
       id: user.id,

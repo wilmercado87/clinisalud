@@ -17,13 +17,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatOptionModule } from '@angular/material/core';
+import { MatOptionModule, MatNativeDateModule } from '@angular/material/core';
 
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 
 const MaterialComponents = [
   MatSidenavModule,
@@ -47,6 +48,8 @@ const MaterialComponents = [
   MatProgressSpinnerModule,
   MatCardModule,
   MatCheckboxModule,
+  MatDatepickerModule,
+  MatNativeDateModule,
 ];
 
 @NgModule({

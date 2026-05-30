@@ -43,7 +43,7 @@ export const getManageableUsers = async (req: Request, res: Response) => {
 
 export const registerUser = async (req: AuthRequest, res: Response) => {
   try {
-    const result = await usersService.createUser(req.body, req.user!.role);
+    const result = await usersService.createUser(req.body, req.user!.role, req.user!.id, `${req.user!.email}`);
     res.status(HTTP_STATUS.CREATED).json(result);
   } catch (error: any) {
     return handleError(error, res, 'registerUser');
@@ -67,7 +67,7 @@ export const updatePermissions = async (req: AuthRequest, res: Response) => {
 export const toggleStatus = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const result = await usersService.toggleUserStatus(Number(id), req.user!.role);
+    const result = await usersService.toggleUserStatus(Number(id), req.user!.role, req.user!.id, `${req.user!.email}`);
     res.status(HTTP_STATUS.OK).json(result);
   } catch (error: any) {
     return handleError(error, res, 'toggleStatus');

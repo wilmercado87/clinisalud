@@ -29,6 +29,13 @@ export const routes: Routes = [
             (m) => m.ManagerUsersComponent,
           ),
       },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/dashboard/pages/notifications/notifications.component').then(
+            (m) => m.NotificationsComponent,
+          ),
+      },
       { path: '', redirectTo: 'home', pathMatch: 'full' },
     ],
   },

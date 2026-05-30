@@ -1,0 +1,128 @@
+<div class="filter-bar">
+  <mat-form-field appearance="outline" class="filter-search" subscriptSizing="dynamic">
+    <mat-label>Buscar en mensaje</mat-label>
+    <input matInput [(ngModel)]="searchQuery" placeholder="Buscar..." />
+    @if (searchQuery()) {
+      <button matSuffix mat-icon-button (click)="searchQuery.set('')">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+    <mat-icon matPrefix>search</mat-icon>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filter-select" subscriptSizing="dynamic">
+    <mat-label>Rol</mat-label>
+    <mat-select [(ngModel)]="filterRole">
+      <mat-option value="all">Todos los roles</mat-option>
+      @for (role of uniqueRoles(); track role) {
+        <mat-option [value]="role">{{ role }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filter-select" subscriptSizing="dynamic">
+    <mat-label>Estado</mat-label>
+    <mat-select [(ngModel)]="filterStatus">
+      <mat-option value="all">Todos</mat-option>
+      <mat-option value="unread">No leídas</mat-option>
+      <mat-option value="read">Leídas</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filter-select" subscriptSizing="dynamic">
+    <mat-label>Tipo</mat-label>
+    <mat-select [(ngModel)]="filterType">
+      <mat-option value="all">Todos los tipos</mat-option>
+      @for (t of uniqueTypes(); track t.type) {
+        <mat-option [value]="t.type">{{ t.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filter-date" subscriptSizing="dynamic">
+    <mat-label>Desde</mat-label>
+    <input matInput [matDatepicker]="pickerFrom" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" />
+    <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+    <mat-datepicker #pickerFrom></mat-datepicker>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filter-date" subscriptSizing="dynamic">
+    <mat-label>Hasta</mat-label>
+    <input matInput [matDatepicker]="pickerTo" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)"
+      [min]="dateFrom()" [disabled]="!dateFrom()" />
+    <mat-datepicker-toggle matIconSuffix [for]="pickerTo" [disabled]="!dateFrom()"></mat-datepicker-toggle>
+    <mat-datepicker #pickerTo></mat-datepicker>
+  </mat-form-field>
+
+  <div class="filter-actions">
+    <button mat-icon-button (click)="toggleSort()" [matTooltip]="sortOrder() === 'newest' ? 'Más recientes' : 'Más antiguas'">
+      <mat-icon>{{ sortOrder() === 'newest' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+    </button>
+    @if (hasActiveFilters()) {
+      <button mat-icon-button (click)="clearFilters()" matTooltip="Limpiar filtros">
+        <mat-icon>filter_list_off</mat-icon>
+      </button>
+    }
+  </div>
+</div>
+
+@if (data().isLoading) {
+  <div class="page-loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+} @else if (data().hasError) {
+  <div class="page-error">
+    <p>Error al cargar notificaciones</p>
+    <button mat-raised-button color="primary" (click)="event.emit({ type: 'reload' })">Reintentar</button>
+  </div>
+} @else if (data().notifications.length === 0) {
+  <div class="page-empty">
+    <mat-icon class="empty-icon">notifications_none</mat-icon>
+    <h2>Sin notificaciones</h2>
+    <p>No tienes notificaciones pendientes</p>
+  </div>
+} @else if (filteredNotifications().length === 0) {
+  <div class="page-empty">
+    <mat-icon class="empty-icon">search_off</mat-icon>
+    <h2>Sin resultados</h2>
+    <p>Ninguna notificación coincide con los filtros aplicados</p>
+    <button mat-button color="primary" (click)="clearFilters()">Limpiar filtros</button>
+  </div>
+} @else {
+  <div class="notifications-list">
+    @for (notif of filteredNotifications(); track notif.id) {
+      <div class="notif-card" [class.notif-card--unread]="notif.isUnread" (click)="onCardClick(notif)">
+        <div class="notif-card-indicator">
+          @if (notif.isUnread) {
+            <span class="notif-card-dot"></span>
+          }
+        </div>
+        <div class="notif-card-body">
+          <div class="notif-card-header">
+            <span class="notif-card-title">{{ notif.title }}</span>
+            <span class="notif-card-time" [matTooltip]="notif.formattedDate">{{ notif.timeAgo }}</span>
+          </div>
+          <p class="notif-card-message">{{ notif.message }}</p>
+          <div class="notif-card-meta">
+            <span class="notif-card-type-badge">{{ notif.typeLabel }}</span>
+            <span class="notif-card-actor">{{ notif.actorName }}</span>
+            <span class="notif-card-role" [class.role-admin]="notif.actorRole === 'ADMIN' || notif.actorRole === 'SUPER_ADMIN'">{{ notif.actorRole }}</span>
+            @if (notif.actionLabel) {
+              <span class="notif-card-action-label">{{ notif.actionLabel }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="page-pagination">
+    <button mat-button [disabled]="data().currentPage === 0" (click)="event.emit({ type: 'prevPage' })">
+      <mat-icon>chevron_left</mat-icon> Anterior
+    </button>
+    <span class="page-info">Página {{ data().currentPage + 1 }}</span>
+    <button mat-button [disabled]="data().notifications.length < data().pageSize" (click)="event.emit({ type: 'nextPage' })">
+      Siguiente <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+}

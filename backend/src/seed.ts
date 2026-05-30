@@ -7,6 +7,8 @@ import User from "./models/User";
 import RoleMenuPermission from "./models/RoleMenuPermission";
 import TipoDocumento from "./models/TipoDocumento";
 import UserMenuOverride from "./models/UserMenuOverride";
+import Notification from "./models/Notification";
+import NotificationRecipient from "./models/NotificationRecipient";
 import { initAssociations } from "./models/associations";
 
 // Helpers de automatización
@@ -54,7 +56,8 @@ async function resetDatabaseTables() {
   await sequelize.query("PRAGMA foreign_keys = OFF;");
   
   const allModels: any[] = [
-    RoleMenuPermission, UserMenuOverride, User, Role, MenuOption, TipoDocumento, 
+    RoleMenuPermission, UserMenuOverride, User, Role, MenuOption, TipoDocumento,
+    Notification, NotificationRecipient, 
     TipoUsuario, TipoGenero, TipoEstado, Camas, Tarifarios, NivelAtencion,
     TipoAutorizacion, TipoOrigen, TipoTriage, Especialidades, Departamentos,
     CentroCosto, Municipios, Diagnostico, TriagePrioridad, Convenios, Contratos,
@@ -169,6 +172,95 @@ async function deployInitialSuperAdmin(superAdminRoleId: number) {
 }
 
 // ----------------------------------------------------------------
+// SEMILLA DE NOTIFICACIONES DE SIMULACIÓN
+// ----------------------------------------------------------------
+
+async function seedSampleNotifications() {
+  const adminUser = await User.findOne({ where: { email: 'admin@clinisalud.com' } });
+  if (!adminUser) {
+    console.log("⚠️ No se encontró admin, se saltan notificaciones de simulación.");
+    return;
+  }
+
+  const now = new Date();
+
+  const notif1 = await Notification.create({
+    type: "ADMISSION_CREATED",
+    title: "Nueva admisión registrada",
+    message:
+      "Dr. Carlos Mendoza (Médico) admitió al paciente Juan Pérez (CC 12345678) en Urgencias con diagnóstico de dolor abdominal agudo.",
+    actorId: 9998,
+    actorName: "Dr. Carlos Mendoza",
+    actorRole: "MEDICO",
+    actionUrl: null,
+    actionLabel: null,
+    createdAt: new Date(now.getTime() - 5 * 60000),
+  });
+
+  const notif2 = await Notification.create({
+    type: "BILLING_COMPLETED",
+    title: "Facturación completada",
+    message:
+      "María López (Facturador) facturó la admisión #1245 del paciente Pedro Gómez por un total de $850,000 COP.",
+    actorId: 9997,
+    actorName: "María López",
+    actorRole: "FACTURADOR",
+    actionUrl: null,
+    actionLabel: null,
+    createdAt: new Date(now.getTime() - 15 * 60000),
+  });
+
+  const notif3 = await Notification.create({
+    type: "DIAGNOSIS_UPDATED",
+    title: "Diagnóstico actualizado",
+    message:
+      "Dra. Ana Martínez (Médico) actualizó el diagnóstico del paciente Luis Ramírez (CC 98765432) en la admisión #1240.",
+    actorId: 9996,
+    actorName: "Dra. Ana Martínez",
+    actorRole: "MEDICO",
+    actionUrl: null,
+    actionLabel: null,
+    createdAt: new Date(now.getTime() - 60 * 60000),
+  });
+
+  const notif4 = await Notification.create({
+    type: "BILLING_CANCELLED",
+    title: "Factura anulada",
+    message:
+      "María López (Facturador) anuló la factura #F-2024-089 del paciente Carlos Ruiz por error en convenio.",
+    actorId: 9997,
+    actorName: "María López",
+    actorRole: "FACTURADOR",
+    actionUrl: null,
+    actionLabel: null,
+    createdAt: new Date(now.getTime() - 120 * 60000),
+  });
+
+  const notif5 = await Notification.create({
+    type: "AUTHORIZATION_REQUESTED",
+    title: "Autorización solicitada",
+    message:
+      "Dr. Carlos Mendoza (Médico) solicitó autorización para procedimiento de Cirugía General en paciente María Torres.",
+    actorId: 9998,
+    actorName: "Dr. Carlos Mendoza",
+    actorRole: "MEDICO",
+    actionUrl: null,
+    actionLabel: null,
+    createdAt: new Date(now.getTime() - 180 * 60000),
+  });
+
+  await NotificationRecipient.bulkCreate([
+    { notificationId: notif1.id, userId: adminUser.id, isRead: false },
+    { notificationId: notif2.id, userId: adminUser.id, isRead: false },
+    { notificationId: notif3.id, userId: adminUser.id, isRead: true, readAt: new Date(now.getTime() - 30 * 60000) },
+    { notificationId: notif4.id, userId: adminUser.id, isRead: true, readAt: new Date(now.getTime() - 90 * 60000) },
+    { notificationId: notif5.id, userId: adminUser.id, isRead: false },
+  ]);
+
+  console.log(`✅ ${5} notificaciones de simulación insertadas (${3} sin leer, ${2} leídas).`);
+}
+
+// ----------------------------------------------------------------
 // FUNCIÓN PRINCIPAL DE EJECUCIÓN (Limpia y Lineal)
 // ----------------------------------------------------------------
 export const runSeeder = async () => {
@@ -230,6 +322,9 @@ export const runSeeder = async () => {
 
     await assignAllRolePermissions(rolesMap);
     await deployInitialSuperAdmin(rolesMap["SUPER_ADMIN"].id);
+
+    console.log("🔔 Sembrando notificaciones de simulación...");
+    await seedSampleNotifications();
 
     console.log("🎉 ¡Reset global, validación estructural e importación masiva exitosos!");
   } catch (error) {

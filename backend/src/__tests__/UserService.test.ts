@@ -2,6 +2,15 @@ jest.mock('bcryptjs', () => ({
   hash: jest.fn(() => Promise.resolve('hashed')),
 }));
 
+jest.mock('../modules/notifications/notifications.service', () => {
+  const mockCreateAndDispatch = jest.fn().mockResolvedValue(undefined);
+  return {
+    NotificationsService: jest.fn().mockImplementation(() => ({
+      createAndDispatch: mockCreateAndDispatch,
+    })),
+  };
+});
+
 import { UsersService } from '../modules/users/users.service';
 import User from '../models/User';
 import UserMenuOverride from '../models/UserMenuOverride';
@@ -52,7 +61,7 @@ describe('UsersService', () => {
       jest.spyOn(RoleMenuPermission, 'findAll').mockResolvedValue([{ menuOptionId: 1 }, { menuOptionId: 2 }] as any);
       jest.spyOn(UserMenuOverride, 'bulkCreate').mockResolvedValue([]);
 
-      const result = await service.createUser(validData, 'SUPER_ADMIN');
+      const result = await service.createUser(validData, 'SUPER_ADMIN', 1, 'admin@test.com');
 
       expect(result).toHaveProperty('user');
       expect(result).toHaveProperty('temporaryPassword');
@@ -64,7 +73,7 @@ describe('UsersService', () => {
         dni: 'different',
       } as any);
 
-      await expect(service.createUser(validData, 'SUPER_ADMIN')).rejects.toThrow('correo');
+      await expect(service.createUser(validData, 'SUPER_ADMIN', 1, 'admin@test.com')).rejects.toThrow('correo');
     });
   });
 
@@ -121,7 +130,7 @@ describe('UsersService', () => {
       };
       jest.spyOn(User, 'findByPk').mockResolvedValue(mockUserObj as any);
 
-      const result = await service.toggleUserStatus(2, 'SUPER_ADMIN');
+      const result = await service.toggleUserStatus(2, 'SUPER_ADMIN', 1, 'admin@test.com');
 
       expect(mockUserObj.save).toHaveBeenCalled();
       expect(result.isActive).toBe(true);
@@ -130,13 +139,13 @@ describe('UsersService', () => {
     it('should throw if user not found', async () => {
       jest.spyOn(User, 'findByPk').mockResolvedValue(null as any);
 
-      await expect(service.toggleUserStatus(999, 'SUPER_ADMIN')).rejects.toThrow('no encontrado');
+      await expect(service.toggleUserStatus(999, 'SUPER_ADMIN', 1, 'admin@test.com')).rejects.toThrow('no encontrado');
     });
 
     it('should throw for admin', async () => {
       jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
 
-      await expect(service.toggleUserStatus(1, 'ADMIN')).rejects.toThrow('403');
+      await expect(service.toggleUserStatus(1, 'ADMIN', 1, 'admin@test.com')).rejects.toThrow('403');
     });
 
     it('should allow SUPER_ADMIN to toggle ADMIN', async () => {
@@ -148,13 +157,13 @@ describe('UsersService', () => {
       };
       jest.spyOn(User, 'findByPk').mockResolvedValue(mockUserObj as any);
 
-      await expect(service.toggleUserStatus(1, 'SUPER_ADMIN')).resolves.not.toThrow();
+      await expect(service.toggleUserStatus(1, 'SUPER_ADMIN', 1, 'admin@test.com')).resolves.not.toThrow();
     });
 
     it('should throw for super admin (immutable)', async () => {
       jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'SUPER_ADMIN' } } as any);
 
-      await expect(service.toggleUserStatus(1, 'SUPER_ADMIN')).rejects.toThrow('403');
+      await expect(service.toggleUserStatus(1, 'SUPER_ADMIN', 1, 'admin@test.com')).rejects.toThrow('403');
     });
   });
 });

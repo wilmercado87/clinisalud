@@ -1,0 +1,19 @@
+<div class="notifications-page">
+  <div class="page-header">
+    <button mat-icon-button (click)="goBack()" matTooltip="Volver">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="page-title">Notificaciones</h1>
+    <span class="page-spacer"></span>
+    @if (hasUnread()) {
+      <button mat-stroked-button (click)="handleEvent({ type: 'markAllAsRead' })" class="mark-all-page-btn">
+        Marcar todas leídas
+      </button>
+    }
+  </div>
+
+  <app-notification-filtered-list
+    [data]="listData()"
+    (event)="handleEvent($event)"
+  />
+</div>

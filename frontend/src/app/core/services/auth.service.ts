@@ -6,6 +6,7 @@ import { AuthResponse, LoginCredentials, MenuOption } from '../../models/auth.mo
 import { environment } from '../../../environments/environment';
 import { User } from '../../models/user-manager.model';
 import { RoleService } from './roles.service';
+import { SocketService } from './socket.service';
 import { ERROR_MAPPING, HTTP_STATUS } from '../utils/status.codes';
 
 const STORAGE_KEYS = {
@@ -21,11 +22,19 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly roleService = inject(RoleService);
+  private readonly socketService = inject(SocketService);
 
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 
   private readonly userSubject = new BehaviorSubject<User | null>(this.getUserFromStorage());
   private readonly menuSubject = new BehaviorSubject<MenuOption[]>(this.getMenuFromStorage());
+
+  constructor() {
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    if (token) {
+      this.socketService.connect(token);
+    }
+  }
   public login(credentials: LoginCredentials): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(`${this.apiUrl}/login`, credentials)
@@ -42,6 +51,8 @@ export class AuthService {
 
     this.userSubject.next(res.user as unknown as User);
     this.menuSubject.next(res.menu);
+
+    this.socketService.connect(res.token);
   }
 
   public updateStoredUser(user: User): void {
@@ -50,6 +61,7 @@ export class AuthService {
   }
 
   public logout(): void {
+    this.socketService.disconnect();
     this.roleService.clearCache();
     this.roleService.clearMenuCache();
     localStorage.clear();

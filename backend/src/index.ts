@@ -1,7 +1,9 @@
 import app from "./app";
+import { createServer } from "http";
 import sequelize from "./config/database";
 import { runSeeder } from "./seed";
 import { logInfo, logError } from "./utils/Logger";
+import { initSocketGateway } from "./socket/socket.gateway";
 
 import "./models/associations";
 
@@ -17,7 +19,10 @@ async function main() {
     await runSeeder();
     console.log("✅ Datos base insertados.");
 
-    app.listen(3000, () => {
+    const httpServer = createServer(app);
+    initSocketGateway(httpServer);
+
+    httpServer.listen(PORT, () => {
       console.log("🚀 Servidor corriendo en http://localhost:3000");
     });
 

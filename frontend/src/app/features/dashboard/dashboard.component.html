@@ -41,7 +41,9 @@
         <mat-icon>{{ isSidebarExpanded() ? "menu_open" : "menu" }}</mat-icon>
       </button>
       <span class="shell__toolbar-spacer"></span>
-      <mat-icon class="shell__toolbar-icon" matTooltip="Notificaciones" matTooltipPosition="below">notifications</mat-icon>
+      @if (isAdmin()) {
+        <app-notification-bell />
+      }
       <mat-icon class="shell__toolbar-icon" matTooltip="Configuración" matTooltipPosition="below" (click)="openProfileDialog()">settings</mat-icon>
     </mat-toolbar>
 

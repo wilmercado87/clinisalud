@@ -1,0 +1,257 @@
+@use "variables" as v;
+
+:host {
+  display: contents;
+}
+
+// ==========================================================================
+// 📊 BARRA DE FILTROS (Estructura Fija de 3 Filas Asegurada con Coordenadas)
+// ==========================================================================
+.filter-bar {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr)); // Matriz de 12 columnas
+  gap: 16px; 
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.02);
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+// 📄 FILA 1: Forzamos tanto al buscador como a los botones a coexistir en la línea 1
+.filter-search {
+  grid-row: 1; // 👈 Anclado estricto a la Fila 1
+  grid-column: span 10; 
+}
+
+.filter-actions {
+  grid-row: 1; // 👈 Sube obligatoriamente a la Fila 1 al lado del buscador
+  grid-column: span 2; 
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  height: 100%;
+}
+
+// 🎛️ FILA 2: Los 3 selectores se distribuyen de forma secuencial en la línea 2
+.filter-select {
+  grid-row: 2; // 👈 Anclado estricto a la Fila 2
+  grid-column: span 4;
+}
+
+// 📅 FILA 3: Los 2 campos de fecha se distribuyen de forma secuencial en la línea 3
+.filter-date {
+  grid-row: 3; // 👈 Anclado estricto a la Fila 3
+  grid-column: span 6;
+}
+
+// 📱 Responsividad: En móviles liberamos las filas fijas para que se apilen verticalmente
+@media (max-width: 768px) {
+  .filter-search,
+  .filter-select,
+  .filter-date {
+    grid-row: auto; // Libera el candado de filas
+    grid-column: span 12;
+  }
+
+  .filter-actions {
+    grid-row: auto; // Libera el candado de filas
+    grid-column: span 12;
+    justify-content: flex-end;
+    border-top: 1px dashed rgba(0, 0, 0, 0.08);
+    padding-top: 12px;
+    margin-top: 4px;
+  }
+}
+
+// ==========================================================================
+// ⚙️ ESTADOS DE LA PÁGINA (Carga, Error, Vacío)
+// ==========================================================================
+.page-loading {
+  display: flex;
+  justify-content: center;
+  padding: 64px 0;
+}
+
+.page-error {
+  text-align: center;
+  padding: 64px 0;
+  color: rgba(0, 0, 0, 0.5);
+
+  p {
+    margin-bottom: 16px;
+  }
+}
+
+.page-empty {
+  text-align: center;
+  padding: 64px 0;
+  color: rgba(0, 0, 0, 0.4);
+
+  .empty-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+// ==========================================================================
+// ✉️ LISTADO Y TARJETAS DE NOTIFICACIÓN
+// ==========================================================================
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notif-card {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: rgba(v.$navy-500, 0.1);
+  }
+
+  &--unread {
+    background: rgba(v.$navy-500, 0.03);
+    border-color: rgba(v.$navy-500, 0.12);
+  }
+}
+
+.notif-card-indicator {
+  width: 12px;
+  flex-shrink: 0;
+  padding-top: 6px;
+  display: flex;
+  justify-content: center;
+}
+
+.notif-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: v.$navy-500;
+  display: block;
+}
+
+.notif-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.notif-card-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.notif-card-time {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: help;
+  border-bottom: 1px dotted rgba(0, 0, 0, 0.15);
+}
+
+.notif-card-message {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.notif-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.notif-card-type-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(v.$navy-500, 0.08);
+  color: v.$navy-500;
+}
+
+.notif-card-actor {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.notif-card-role {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+  color: v.$navy-500;
+
+  &.role-admin {
+    background: rgba(v.$navy-500, 0.1);
+    color: v.$navy-500;
+  }
+}
+
+.notif-card-action-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: v.$navy-500;
+  margin-left: auto;
+  opacity: 0.6;
+}
+
+// ==========================================================================
+// 📄 PAGINACIÓN
+// ==========================================================================
+.page-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 0;
+}
+
+.page-info {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.5);
+}

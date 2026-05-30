@@ -11,6 +11,7 @@ import { ConfigService } from '../../core/services/config.service';
 import { MaterialModule } from '../../shared/material/material.module';
 import { SidebarMenuComponent } from './components/sidebar-menu/sidebar-menu.component';
 import { ProfileDialogComponent } from './components/profile-dialog/profile-dialog.component';
+import { NotificationBellComponent } from './components/notification-bell/notification-bell.component';
 import { MenuOption } from '../../models/auth.model';
 
 export interface MenuOptionUI extends MenuOption {
@@ -19,7 +20,7 @@ export interface MenuOptionUI extends MenuOption {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterModule, MaterialModule, SidebarMenuComponent],
+  imports: [CommonModule, RouterModule, MaterialModule, SidebarMenuComponent, NotificationBellComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -49,6 +50,11 @@ export class DashboardComponent {
   );
 
   public isWelcomePage = computed(() => this.currentUrl() === '/dashboard/home');
+
+  public isAdmin = computed(() => {
+    const role = this.currentUser()?.role;
+    return role === 'SUPER_ADMIN' || role === 'ADMIN';
+  });
 
   public toggleSidebar(): void {
     this.isSidebarExpanded.update(val => !val);
