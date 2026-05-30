@@ -1,183 +1,184 @@
 @use "variables" as v;
 
-.bell-wrapper {
+.notification-bell {
   position: relative;
   display: inline-flex;
   align-items: center;
-}
 
-.bell-button {
-  position: relative;
-}
-
-.bell-icon {
-  color: v.$navy-500;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-
-  &:hover {
-    opacity: 1;
-  }
-}
-
-.bell-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  min-width: 16px;
-  height: 16px;
-  border-radius: 8px;
-  background: v.$color-red-500;
-  color: v.$color-alert-bg;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 16px;
-  text-align: center;
-  padding: 0 4px;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.notification-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  width: 360px;
-  max-height: 480px;
-  background: v.$navy-contrast;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  margin-top: 8px;
-}
-
-.dropdown-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.dropdown-title {
-  font-weight: 600;
-  font-size: 14px;
-  color: v.$navy-500;
-}
-
-.mark-all-btn {
-  font-size: 11px;
-  line-height: 28px;
-  min-height: 28px;
-  padding: 0 8px;
-  color: v.$navy-500;
-  opacity: 0.7;
-
-  &:hover {
-    opacity: 1;
-    background: rgba(v.$navy-500, 0.05);
-  }
-}
-
-.dropdown-body {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.dropdown-loading {
-  display: flex;
-  justify-content: center;
-  padding: 24px;
-}
-
-.dropdown-empty {
-  text-align: center;
-  padding: 32px 16px;
-  color: rgba(0, 0, 0, 0.4);
-  font-size: 13px;
-}
-
-.notification-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: background 0.15s;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-
-  &:hover {
-    background: rgba(v.$navy-500, 0.04);
+  &__button {
+    position: relative;
   }
 
-  &.unread {
-    background: rgba(v.$navy-500, 0.03);
+  &__icon {
+    color: v.$navy-500;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 1;
+    }
   }
-}
 
-.notif-content {
-  flex: 1;
-  min-width: 0;
-}
+  &__badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    background-color: v.$color-red-500;
+    color: v.$color-alert-bg;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    padding: 0 4px;
+    pointer-events: none;
+    z-index: 1;
+  }
 
-.notif-title {
-  font-weight: 600;
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.87);
-  margin-bottom: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  &__dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 360px;
+    max-height: 480px;
+    background-color: v.$navy-contrast;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(v.$black, 0.15);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-top: 8px;
+  }
 
-.notif-message {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.6);
-  margin-bottom: 4px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(v.$black, 0.08);
+  }
 
-.notif-meta {
-  display: flex;
-  gap: 8px;
-  font-size: 11px;
-  color: rgba(0, 0, 0, 0.4);
-}
+  &__title {
+    font-weight: 600;
+    font-size: 14px;
+    color: v.$navy-500;
+  }
 
-.notif-actor {
-  font-weight: 500;
-}
+  &__mark-all-btn {
+    font-size: 11px;
+    line-height: 28px;
+    min-height: 28px;
+    padding: 0 8px;
+    color: v.$navy-500;
+    opacity: 0.7;
 
-.notif-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: v.$navy-500;
-  flex-shrink: 0;
-  margin-top: 6px;
-}
+    &:hover {
+      opacity: 1;
+      background-color: rgba(v.$navy-500, 0.05);
+    }
+  }
 
-.notif-time {
-  flex-shrink: 0;
-}
+  &__body {
+    flex: 1;
+    overflow-y: auto;
+  }
 
-.dropdown-footer {
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 4px;
-  display: flex;
-  justify-content: center;
-}
+  &__loading {
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+  }
 
-.view-all-btn {
-  width: 100%;
-  color: v.$navy-500;
-  font-weight: 500;
-  font-size: 13px;
+  &__empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: v.$color-gray-500;
+    font-size: 13px;
+  }
+
+  &__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    border-bottom: 1px solid rgba(v.$black, 0.04);
+
+    &:hover {
+      background-color: rgba(v.$navy-500, 0.04);
+    }
+
+    // --- MODIFIER: Notificación no leída ---
+    &--unread {
+      background-color: rgba(v.$navy-500, 0.03);
+    }
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__item-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: v.$color-gray-800;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__item-message {
+    font-size: 12px;
+    color: v.$color-gray-600;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__item-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+    color: v.$color-gray-500;
+  }
+
+  &__item-actor {
+    font-weight: 500;
+  }
+
+  &__item-time {
+    flex-shrink: 0;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: v.$navy-500;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  &__footer {
+    border-top: 1px solid rgba(v.$black, 0.08);
+    padding: 4px;
+    display: flex;
+    justify-content: center;
+  }
+
+  &__view-all-btn {
+    width: 100%;
+    color: v.$navy-500;
+    font-weight: 500;
+    font-size: 13px;
+  }
 }

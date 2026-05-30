@@ -2,36 +2,9 @@ import { Component, input, output, signal, computed, ChangeDetectionStrategy, ef
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../shared/material/material.module';
-import { NotificationItem } from '../../../../models/notification.model';
+import { NotificationResponse, NotificationUI, NotificationDetailUI, NotificationsListData, NotificationsListEvent } from '../../../../models/notification.model';
 import { formatNotificationDate } from '../../../../core/utils/date-utils';
 import { getNotificationTypeLabel } from '../../../../core/utils/mapper-utils';
-
-export interface NotificationVM extends NotificationItem {
-  timeAgo: string;
-  isUnread: boolean;
-  createdAtDate: Date;
-}
-
-export interface NotificationUI extends NotificationVM {
-  typeLabel: string;
-  formattedDate: string;
-}
-
-export interface NotificationsListData {
-  notifications: NotificationVM[];
-  isLoading: boolean;
-  hasError: boolean;
-  hasUnread: boolean;
-  pageSize: number;
-  currentPage: number;
-}
-
-export type NotificationsListEvent =
-  | { type: 'markAsRead'; notification: NotificationItem }
-  | { type: 'markAllAsRead' }
-  | { type: 'reload' }
-  | { type: 'prevPage' }
-  | { type: 'nextPage' };
 
 @Component({
   selector: 'app-notification-filtered-list',
@@ -78,7 +51,7 @@ export class NotificationFilteredListComponent {
     }));
   });
 
-  public readonly filteredNotifications = computed<NotificationUI[]>(() => {
+  public readonly filteredNotifications = computed<NotificationDetailUI[]>(() => {
     const rawNotifications = this.data().notifications;
 
     const filtered = rawNotifications.filter(notification => 
@@ -103,7 +76,7 @@ export class NotificationFilteredListComponent {
     this.dateTo() !== null
   );
 
-  private evaluateNotificationCriteria(notification: NotificationVM): boolean {
+  private evaluateNotificationCriteria(notification: NotificationUI): boolean {
     const searchPhrase = this.searchQuery().toLowerCase().trim();
 
     const matchesSearch = !searchPhrase || notification.message.toLowerCase().includes(searchPhrase);
@@ -115,12 +88,12 @@ export class NotificationFilteredListComponent {
     return matchesSearch && matchesRole && matchesType && matchesStatus && matchesDates;
   }
 
-  private evaluateStatusCriteria(notification: NotificationVM, statusFilter: string): boolean {
+  private evaluateStatusCriteria(notification: NotificationUI, statusFilter: string): boolean {
     if (statusFilter === this.ALL_TEXT) return true;
     return statusFilter === 'unread' ? notification.isUnread : !notification.isUnread;
   }
 
-  private evaluateDateCriteria(notification: NotificationVM): boolean {
+  private evaluateDateCriteria(notification: NotificationUI): boolean {
     const startDateLimit = this.dateFrom();
     const endDateLimit = this.dateTo();
     const notificationTimestamp = notification.createdAtDate.getTime();
@@ -133,7 +106,7 @@ export class NotificationFilteredListComponent {
     return matchesStartDate && matchesEndDate;
   }
 
-  private sortNotifications(list: NotificationVM[], order: 'newest' | 'oldest'): NotificationVM[] {
+  private sortNotifications(list: NotificationUI[], order: 'newest' | 'oldest'): NotificationUI[] {
     return [...list].sort((a, b) => {
       const difference = a.createdAtDate.getTime() - b.createdAtDate.getTime();
       return order === 'newest' ? -difference : difference;
@@ -154,7 +127,7 @@ export class NotificationFilteredListComponent {
     this.sortOrder.update(current => (current === 'newest' ? 'oldest' : 'newest'));
   }
 
-  public onCardClick(targetNotification: NotificationItem): void {
+  public onCardClick(targetNotification: NotificationResponse): void {
     this.event.emit({ type: 'markAsRead', notification: targetNotification });
   }
 }

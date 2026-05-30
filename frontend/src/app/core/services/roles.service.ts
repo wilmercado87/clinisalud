@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Role } from '../../models/user-manager.model';
+import { RoleResponse } from '../../models/user-manager.model';
 import { MenuOption } from '../../models/auth.model';
 
 @Injectable({
@@ -12,12 +12,12 @@ export class RoleService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/roles`;
 
-  private rolesCache$?: Observable<Role[]>;
+  private rolesCache$?: Observable<RoleResponse[]>;
   private menuCache$?: Observable<MenuOption[]>;
 
-  getRoles(): Observable<Role[]> {
+  getRoles(): Observable<RoleResponse[]> {
     this.rolesCache$ ??= this.http
-        .get<Role[]>(this.apiUrl)
+        .get<RoleResponse[]>(this.apiUrl)
         .pipe(shareReplay(1));
 
     return this.rolesCache$;

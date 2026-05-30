@@ -1,4 +1,4 @@
-export interface User {
+export interface UserResponse {
   id: number;
   firstName: string;
   lastName: string;
@@ -9,13 +9,13 @@ export interface User {
   address?: string;
   isActive: boolean;
   roleId: number;
-  roleData?: Role;
+  roleData?: RoleResponse;
   documentTypeId: number;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface Role {
+export interface RoleResponse {
   id: number;
   name: string;
   code: string;
@@ -23,7 +23,7 @@ export interface Role {
 }
 
 export interface CreateUserResponse {
-  user: User;
+  user: UserResponse;
   temporaryPassword: string;
 }
 
@@ -32,7 +32,7 @@ export interface PermissionOverride {
   hasAccess: boolean;
 }
 
-export interface PermissionPayload {
+export interface PermissionsRequest {
   permissions: PermissionOverride[];
 }
 

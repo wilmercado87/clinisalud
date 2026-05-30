@@ -1,14 +1,14 @@
 import { Injectable, signal } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
-import { NotificationItem } from '../../models/notification.model';
+import { NotificationResponse } from '../../models/notification.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SocketService {
   private socket: Socket | null = null;
-  public readonly onNotification = signal<NotificationItem | null>(null);
+  public readonly onNotification = signal<NotificationResponse | null>(null);
 
   public connect(token: string): void {
     if (this.socket?.connected) return;
@@ -22,7 +22,7 @@ export class SocketService {
       console.log('[Socket] Conectado');
     });
 
-    this.socket.on('notification', (data: NotificationItem) => {
+    this.socket.on('notification', (data: NotificationResponse) => {
       this.onNotification.set(data);
     });
 

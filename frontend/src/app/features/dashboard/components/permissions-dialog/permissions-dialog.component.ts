@@ -10,10 +10,11 @@ import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { MenuOption } from '../../../../models/auth.model';
-import { User, PermissionOverride } from '../../../../models/user-manager.model';
+import { UserResponse, PermissionOverride } from '../../../../models/user-manager.model';
+import { ROLE_CODES } from '../../../../core/utils/role-constants';
 
 export interface PermissionsDialogData {
-  user: User;
+  user: UserResponse;
 }
 
 interface PermissionMenuNode extends MenuOption {
@@ -67,9 +68,9 @@ export class PermissionsDialogComponent {
 
   public currentUserRole = computed(() => this.authService.currentUser?.role ?? '');
 
-  public isTargetUserAdmin = computed(() => this.targetUserData.user.roleData?.code === 'ADMIN');
+  public isTargetUserAdmin = computed(() => this.targetUserData.user.roleData?.code === ROLE_CODES.ADMIN);
 
-  public isTargetUserSuperAdmin = computed(() => this.targetUserData.user.roleData?.code === 'SUPER_ADMIN');
+  public isTargetUserSuperAdmin = computed(() => this.targetUserData.user.roleData?.code === ROLE_CODES.SUPER_ADMIN);
 
   public isEditRestricted = computed(() => this.isTargetUserSuperAdmin());
 

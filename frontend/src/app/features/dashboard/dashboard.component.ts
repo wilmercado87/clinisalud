@@ -13,6 +13,7 @@ import { SidebarMenuComponent } from './components/sidebar-menu/sidebar-menu.com
 import { ProfileDialogComponent } from './components/profile-dialog/profile-dialog.component';
 import { NotificationBellComponent } from './components/notification-bell/notification-bell.component';
 import { MenuOption } from '../../models/auth.model';
+import { ROLE_CODES } from '../../core/utils/role-constants';
 
 export interface MenuOptionUI extends MenuOption {
   isOpen?: boolean;
@@ -53,7 +54,7 @@ export class DashboardComponent {
 
   public isAdmin = computed(() => {
     const role = this.currentUser()?.role;
-    return role === 'SUPER_ADMIN' || role === 'ADMIN';
+    return role === ROLE_CODES.SUPER_ADMIN || role === ROLE_CODES.ADMIN;
   });
 
   public toggleSidebar(): void {

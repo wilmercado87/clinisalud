@@ -13,9 +13,10 @@ import { ToastService } from '../../../../core/services/toast.service';
 
 import { MenuOption } from '../../../../models/auth.model';
 import { ERROR_MAPPING, HTTP_STATUS } from '../../../../core/utils/status.codes';
-import { User } from '../../../../models/user-manager.model';
+import { UserResponse } from '../../../../models/user-manager.model';
+import { ROLE_CODES } from '../../../../core/utils/role-constants';
 
-type CreateUserPayload = Partial<User> & { permissions: number[] };
+type CreateUserPayload = Partial<UserResponse> & { permissions: number[] };
 
 @Component({
   selector: 'app-user-form-dialog',
@@ -62,25 +63,25 @@ export class UserFormDialogComponent {
 
   public currentUserRole = computed(() => this.authService.currentUser?.role ?? '');
 
-  public isCurrentUserSuperAdmin = computed(() => this.currentUserRole() === 'SUPER_ADMIN');
+  public isCurrentUserSuperAdmin = computed(() => this.currentUserRole() === ROLE_CODES.SUPER_ADMIN);
 
   public availableRoles = computed(() => {
     const roles = this.rolesResource.value() ?? [];
     if (this.isCurrentUserSuperAdmin()) return roles;
-    return roles.filter(r => r.code !== 'SUPER_ADMIN');
+    return roles.filter(r => r.code !== ROLE_CODES.SUPER_ADMIN);
   });
 
   public isAdmin = computed(() => {
     const roleId = this.roleIdSignal();
     const roles = this.rolesResource.value() ?? [];
     const selectedRole = roles.find(r => r.id === roleId);
-    return selectedRole?.code === 'ADMIN' || selectedRole?.code === 'SUPER_ADMIN';
+    return selectedRole?.code === ROLE_CODES.ADMIN || selectedRole?.code === ROLE_CODES.SUPER_ADMIN;
   });
 
   public isSuperAdminRole = computed(() => {
     const roleId = this.roleIdSignal();
     const roles = this.rolesResource.value() ?? [];
-    return roles.find(r => r.id === roleId)?.code === 'SUPER_ADMIN';
+    return roles.find(r => r.id === roleId)?.code === ROLE_CODES.SUPER_ADMIN;
   });
 
   public isPermissionsLocked = computed(() => this.isSuperAdminRole());

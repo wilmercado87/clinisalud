@@ -12,7 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../../core/services/auth.service';
-import { LoginCredentials } from '../../../../models/auth.model';
+import { LoginRequest } from '../../../../models/auth.model';
 import { ConfigService } from '../../../../core/services/config.service';
 
 @Component({
@@ -28,7 +28,7 @@ export class LoginComponent {
   private readonly router = inject(Router);
   public readonly configService = inject(ConfigService);
 
-  private readonly loginTrigger = signal<LoginCredentials | null>(null);
+  private readonly loginTrigger = signal<LoginRequest | null>(null);
 
   public loginResource = rxResource({
     request: () => this.loginTrigger(),

@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { User, CreateUserResponse, PermissionPayload, ToggleStatusResponse } from '../../../models/user-manager.model';
+import { UserResponse, CreateUserResponse, PermissionsRequest, ToggleStatusResponse } from '../../../models/user-manager.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -11,17 +11,17 @@ export class UserService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/users`;
 
-  public getManageableUsers(): Observable<User[]> {
-    return this.http.get<User[]>(this.apiUrl);
+  public getManageableUsers(): Observable<UserResponse[]> {
+    return this.http.get<UserResponse[]>(this.apiUrl);
   }
 
-  public createUser(userData: Partial<User>): Observable<CreateUserResponse> {
+  public createUser(userData: Partial<UserResponse>): Observable<CreateUserResponse> {
     return this.http.post<CreateUserResponse>(this.apiUrl, userData);
   }
 
   public updatePermissions(
     userId: number,
-    permissions: PermissionPayload['permissions'],
+    permissions: PermissionsRequest['permissions'],
   ): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${userId}/permissions`, { permissions });
   }

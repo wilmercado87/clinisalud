@@ -8,12 +8,13 @@ import { MaterialModule } from '../../../../shared/material/material.module';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { formatRelativeTime } from '../../../../core/utils/date-utils';
+import { PAGINATION } from '../../../../core/utils/pagination-constants';
+import { NotificationFilteredListComponent } from '../../components/notification-filtered-list/notification-filtered-list.component';
 import {
-  NotificationFilteredListComponent,
   NotificationsListData,
   NotificationsListEvent,
-  NotificationVM,
-} from '../../components/notification-filtered-list/notification-filtered-list.component';
+  NotificationUI,
+} from '../../../../models/notification.model';
 
 @Component({
   selector: 'app-notifications',
@@ -27,7 +28,7 @@ export class NotificationsComponent {
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
-  public readonly pageSize = 20;
+  public readonly pageSize = PAGINATION.NOTIFICATIONS_PAGE_SIZE;
   public currentPage = signal(0);
   private readonly loadTrigger = signal(0);
 
@@ -39,7 +40,7 @@ export class NotificationsComponent {
     },
   });
 
-  public notifications = computed<NotificationVM[]>(() =>
+  public notifications = computed<NotificationUI[]>(() =>
     (this.notificationsResource.value() ?? []).map(n => ({
       ...n,
       timeAgo: formatRelativeTime(n.createdAt),

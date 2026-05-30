@@ -7,13 +7,8 @@ import { interval, of } from 'rxjs';
 import { MaterialModule } from '../../../../shared/material/material.module';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { SocketService } from '../../../../core/services/socket.service';
-import { NotificationItem } from '../../../../models/notification.model';
+import { NotificationResponse, NotificationUI } from '../../../../models/notification.model';
 import { formatRelativeTime } from '../../../../core/utils/date-utils';
-
-export interface NotificationVM extends NotificationItem {
-  timeAgo: string;
-  isUnread: boolean;
-}
 
 @Component({
   selector: 'app-notification-bell',
@@ -43,11 +38,12 @@ export class NotificationBellComponent {
     loader: () => this.notificationService.getNotifications(5, 0),
   });
 
-  public notifications = computed<NotificationVM[]>(() =>
+  public notifications = computed<NotificationUI[]>(() =>
     (this.recentResource.value() ?? []).map(n => ({
       ...n,
       timeAgo: formatRelativeTime(n.createdAt),
       isUnread: !n.isRead,
+      createdAtDate: new Date(n.createdAt),
     }))
   );
 
@@ -112,7 +108,7 @@ export class NotificationBellComponent {
     this.isDropdownOpen.set(false);
   }
 
-  public markAsRead(notification: NotificationItem): void {
+  public markAsRead(notification: NotificationResponse): void {
     if (notification.isRead || this.markReadResource.isLoading()) return;
 
     this.markReadTrigger.set(notification.recipientId);

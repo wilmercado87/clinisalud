@@ -8,7 +8,9 @@ import { rxResource } from '@angular/core/rxjs-interop';
 
 import { MaterialModule } from '../../../../shared/material/material.module';
 import { UserService } from '../../services/user.service';
-import { ToggleStatusResponse, User } from '../../../../models/user-manager.model';
+import { ToggleStatusResponse, UserResponse } from '../../../../models/user-manager.model';
+import { ROLE_CODES } from '../../../../core/utils/role-constants';
+import { PAGINATION } from '../../../../core/utils/pagination-constants';
 import { SharedModule } from '../../../../shared/shared.module';
 import { UserFormDialogComponent } from '../../components/user-form-dialog/user-form-dialog.component';
 import { PermissionsDialogComponent } from '../../components/permissions-dialog/permissions-dialog.component';
@@ -23,12 +25,13 @@ import { of } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ManagerUsersComponent implements AfterViewInit {
+  public readonly PAGE_SIZE_OPTIONS = PAGINATION.PAGE_SIZE_OPTIONS;
   private readonly userService = inject(UserService);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
 
-  public isSuperAdmin(user: User): boolean {
-    return user.roleData?.code === 'SUPER_ADMIN';
+  public isSuperAdmin(user: UserResponse): boolean {
+    return user.roleData?.code === ROLE_CODES.SUPER_ADMIN;
   }
 
   public usersResource = rxResource({
@@ -49,7 +52,7 @@ export class ManagerUsersComponent implements AfterViewInit {
   });
 
   public filterValue = signal('');
-  public dataSource = new MatTableDataSource<User>([]);
+  public dataSource = new MatTableDataSource<UserResponse>([]);
   public displayedColumns: string[] = ['name', 'dni', 'email', 'role', 'status', 'actions'];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -91,8 +94,8 @@ export class ManagerUsersComponent implements AfterViewInit {
     this.dataSource.sort = this.sort;
   }
 
-  private createFilterPredicate(): (data: User, filter: string) => boolean {
-    return (data: User, filter: string): boolean => {
+  private createFilterPredicate(): (data: UserResponse, filter: string) => boolean {
+    return (data: UserResponse, filter: string): boolean => {
       const searchTerms = [
         data.firstName, data.lastName, data.dni, data.email,
         data.roleData?.name, data.isActive ? 'activo' : 'inactivo'
@@ -108,7 +111,7 @@ export class ManagerUsersComponent implements AfterViewInit {
     this.paginator?.firstPage();
   }
 
-  public toggleUserStatus(user: User): void {
+  public toggleUserStatus(user: UserResponse): void {
     if (!this.toggleStatusResource.isLoading()) {
       this.toggleUserIdTrigger.set(user.id);
     }
@@ -120,7 +123,7 @@ export class ManagerUsersComponent implements AfterViewInit {
       .subscribe(result => result && this.usersResource.reload());
   }
 
-  public openPermissionsDialog(user: User): void {
+  public openPermissionsDialog(user: UserResponse): void {
     this.dialog.open(PermissionsDialogComponent, { width: '600px', disableClose: true, data: { user } })
       .afterClosed()
       .subscribe(result => result?.success && this.usersResource.reload());

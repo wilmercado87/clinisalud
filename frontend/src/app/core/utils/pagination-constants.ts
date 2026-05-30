@@ -1,0 +1,4 @@
+export const PAGINATION = {
+  NOTIFICATIONS_PAGE_SIZE: 20,
+  PAGE_SIZE_OPTIONS: [10, 25, 100],
+} as const;

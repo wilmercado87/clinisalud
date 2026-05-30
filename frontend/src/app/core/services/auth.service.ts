@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError, BehaviorSubject } from 'rxjs';
-import { AuthResponse, LoginCredentials, MenuOption } from '../../models/auth.model';
+import { AuthResponse, LoginRequest, MenuOption } from '../../models/auth.model';
 import { environment } from '../../../environments/environment';
-import { User } from '../../models/user-manager.model';
+import { UserResponse } from '../../models/user-manager.model';
 import { RoleService } from './roles.service';
 import { SocketService } from './socket.service';
 import { ERROR_MAPPING, HTTP_STATUS } from '../utils/status.codes';
@@ -26,7 +26,7 @@ export class AuthService {
 
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 
-  private readonly userSubject = new BehaviorSubject<User | null>(this.getUserFromStorage());
+  private readonly userSubject = new BehaviorSubject<UserResponse | null>(this.getUserFromStorage());
   private readonly menuSubject = new BehaviorSubject<MenuOption[]>(this.getMenuFromStorage());
 
   constructor() {
@@ -35,7 +35,7 @@ export class AuthService {
       this.socketService.connect(token);
     }
   }
-  public login(credentials: LoginCredentials): Observable<AuthResponse> {
+  public login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(`${this.apiUrl}/login`, credentials)
       .pipe(
@@ -49,13 +49,13 @@ export class AuthService {
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(res.user));
     localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(res.menu));
 
-    this.userSubject.next(res.user as unknown as User);
+    this.userSubject.next(res.user as unknown as UserResponse);
     this.menuSubject.next(res.menu);
 
     this.socketService.connect(res.token);
   }
 
-  public updateStoredUser(user: User): void {
+  public updateStoredUser(user: UserResponse): void {
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
     this.userSubject.next(user);
   }
@@ -74,11 +74,11 @@ export class AuthService {
     return !!localStorage.getItem(STORAGE_KEYS.TOKEN);
   }
 
-  public get currentUser(): User | null {
+  public get currentUser(): UserResponse | null {
     return this.userSubject.value;
   }
 
-  public get currentUser$(): Observable<User | null> {
+  public get currentUser$(): Observable<UserResponse | null> {
     return this.userSubject.asObservable();
   }
 
@@ -86,8 +86,8 @@ export class AuthService {
     return this.menuSubject.asObservable();
   }
 
-  public updateProfile(data: Partial<{ firstName: string; lastName: string; phone: string; address: string }>): Observable<User> {
-    return this.http.patch<User>(`${this.apiUrl}/profile`, data).pipe(
+  public updateProfile(data: Partial<{ firstName: string; lastName: string; phone: string; address: string }>): Observable<UserResponse> {
+    return this.http.patch<UserResponse>(`${this.apiUrl}/profile`, data).pipe(
       tap((updatedUser) => {
         const current = this.currentUser;
         if (current) {
@@ -104,9 +104,9 @@ export class AuthService {
     return menu ? JSON.parse(menu) : [];
   }
 
-  private getUserFromStorage(): User | null {
+  private getUserFromStorage(): UserResponse | null {
     const user = localStorage.getItem(STORAGE_KEYS.USER);
-    return user ? (JSON.parse(user) as User) : null;
+    return user ? (JSON.parse(user) as UserResponse) : null;
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {

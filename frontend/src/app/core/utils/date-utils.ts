@@ -8,7 +8,7 @@ export function formatRelativeTime(dateStr: string): string {
   const hours = Math.floor(mins / MINUTES_PER_HOUR);
   if (hours < HOURS_PER_DAY) return `Hace ${hours}h`;
   const days = Math.floor(hours / HOURS_PER_DAY);
-  if (days < 7) return `Hace ${days}d`;
+  if (days < DAYS_PER_WEEK) return `Hace ${days}d`;
   return new Date(dateStr).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
 }
 
@@ -22,7 +22,7 @@ export function formatNotificationDate(dateSource: string | Date): string {
   });
 }
 
-export const MILESECONDS_PER_DAY = 86400000;
+export const MILLISECONDS_PER_DAY = 86400000;
 export const MILLISECONDS_PER_MINUTE = 60000;
 export  const MINUTES_NOW = 1;
 export const DAYS_PER_WEEK = 7;
