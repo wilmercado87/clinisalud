@@ -15,10 +15,6 @@ import { NotificationBellComponent } from './components/notification-bell/notifi
 import { MenuOption } from '../../models/auth.model';
 import { ROLE_CODES } from '../../core/utils/role-constants';
 
-export interface MenuOptionUI extends MenuOption {
-  isOpen?: boolean;
-}
-
 @Component({
   selector: 'app-dashboard',
   imports: [CommonModule, RouterModule, MaterialModule, SidebarMenuComponent, NotificationBellComponent],
@@ -38,8 +34,8 @@ export class DashboardComponent {
 
   private readonly rawMenu = toSignal(this.authService.userMenu$, { initialValue: [] as MenuOption[] });
 
-  public menuItems = computed<MenuOptionUI[]>(() =>
-    this.rawMenu().map(group => ({ ...group, isOpen: false }))
+  public menuItems = computed<MenuOption[]>(() =>
+    this.rawMenu().map(group => ({ ...group }))
   );
 
   private readonly currentUrl = toSignal(
@@ -70,9 +66,5 @@ export class DashboardComponent {
       width: '550px',
       disableClose: true,
     });
-  }
-
-  public toggleMainPanel(group: MenuOptionUI): void {
-    group.isOpen = !group.isOpen;
   }
 }

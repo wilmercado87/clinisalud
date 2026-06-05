@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } 
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
@@ -14,6 +14,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LoginRequest } from '../../../../models/auth.model';
 import { ConfigService } from '../../../../core/services/config.service';
+import { ApiError } from '../../../../core/utils/status.codes';
 
 @Component({
   selector: 'app-login',
@@ -38,26 +39,23 @@ export class LoginComponent {
     }
   });
 
-  public formStatus = signal('INVALID');
-
   public loginForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]]
   });
+
+  public formStatus = toSignal(this.loginForm.statusChanges, { initialValue: this.loginForm.status });
 
   public canSubmit = computed(() =>
     this.formStatus() === 'VALID' && !this.loginResource.isLoading()
   );
 
   public errorMessage = computed(() => {
-    const err = this.loginResource.error() as any;
+    const err = this.loginResource.error() as ApiError;
     return err;
   });
 
-
   constructor() {
-    this.loginForm.statusChanges.subscribe(status => this.formStatus.set(status));
-
     this.registerEffects();
   }
 

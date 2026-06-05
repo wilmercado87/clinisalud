@@ -7,8 +7,9 @@ import { of } from 'rxjs';
 import { MaterialModule } from '../../../../shared/material/material.module';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { formatRelativeTime } from '../../../../core/utils/date-utils';
+import { toNotificationUI } from '../../../../core/utils/mapper-utils';
 import { PAGINATION } from '../../../../core/utils/pagination-constants';
+import { ApiError } from '../../../../core/utils/status.codes';
 import { NotificationFilteredListComponent } from '../../components/notification-filtered-list/notification-filtered-list.component';
 import {
   NotificationsListData,
@@ -41,12 +42,7 @@ export class NotificationsComponent {
   });
 
   public notifications = computed<NotificationUI[]>(() =>
-    (this.notificationsResource.value() ?? []).map(n => ({
-      ...n,
-      timeAgo: formatRelativeTime(n.createdAt),
-      isUnread: !n.isRead,
-      createdAtDate: new Date(n.createdAt),
-    }))
+    (this.notificationsResource.value() ?? []).map(toNotificationUI)
   );
 
   public unreadCountResource = rxResource({
@@ -102,7 +98,7 @@ export class NotificationsComponent {
     });
 
     effect(() => {
-      const err = this.markReadResource.error() as any;
+      const err = this.markReadResource.error() as ApiError;
       if (err) {
         this.toast.error('Error al marcar notificación');
         this.markReadTrigger.set(null);

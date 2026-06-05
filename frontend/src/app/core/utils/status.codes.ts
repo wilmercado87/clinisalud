@@ -19,3 +19,11 @@ export const ERROR_MAPPING: Record<number, string> = {
   [HTTP_STATUS.VALIDATION_ERROR]: 'Error de validación',
   [HTTP_STATUS.INTERNAL_SERVER_ERROR]: 'Error interno del servidor',
 };
+
+export interface ApiError {
+  error?: {
+    message?: string;
+    errors?: Array<{ message: string }>;
+  };
+  message?: string;
+}

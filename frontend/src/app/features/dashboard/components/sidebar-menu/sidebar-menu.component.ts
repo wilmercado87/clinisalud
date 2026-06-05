@@ -7,7 +7,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MaterialModule } from '../../../../shared/material/material.module';
-import { MenuOptionUI } from '../../dashboard.component';
+import { MenuOption } from '../../../../models/auth.model';
 
 @Component({
   selector: 'app-sidebar-menu',
@@ -17,7 +17,7 @@ import { MenuOptionUI } from '../../dashboard.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarMenuComponent {
-  public menuItems = input<MenuOptionUI[] | null>([]);
+  public menuItems = input<MenuOption[] | null>([]);
 
   private readonly openGroupIds = signal<Set<number>>(new Set());
 

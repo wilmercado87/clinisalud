@@ -1,3 +1,6 @@
+import { NotificationResponse, NotificationUI } from '../../models/notification.model';
+import { formatRelativeTime } from './date-utils';
+
 export const NOTIFICATION_TYPES = {
   USER_CREATED: 'USER_CREATED',
   USER_TOGGLED: 'USER_TOGGLED',
@@ -21,4 +24,13 @@ export function getNotificationTypeLabel(type: string): string {
     [NOTIFICATION_TYPES.AUTHORIZATION_REQUESTED]: 'Autorización',
   };
   return dictionaryLabels[type] || type;
+}
+
+export function toNotificationUI(item: NotificationResponse): NotificationUI {
+  return {
+    ...item,
+    timeAgo: formatRelativeTime(item.createdAt),
+    isUnread: !item.isRead,
+    createdAtDate: new Date(item.createdAt),
+  };
 }

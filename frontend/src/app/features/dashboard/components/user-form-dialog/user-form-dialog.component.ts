@@ -12,7 +12,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 
 import { MenuOption } from '../../../../models/auth.model';
-import { ERROR_MAPPING, HTTP_STATUS } from '../../../../core/utils/status.codes';
+import { ERROR_MAPPING, HTTP_STATUS, ApiError } from '../../../../core/utils/status.codes';
 import { UserResponse } from '../../../../models/user-manager.model';
 import { ROLE_CODES } from '../../../../core/utils/role-constants';
 
@@ -59,7 +59,7 @@ export class UserFormDialogComponent {
 
   public selectedIds = signal<Set<number>>(new Set());
   public generatedPassword = signal('');
-  public formStatus = signal('INVALID');
+  public formStatus = toSignal(this.userForm.statusChanges, { initialValue: this.userForm.status });
 
   public currentUserRole = computed(() => this.authService.currentUser?.role ?? '');
 
@@ -109,8 +109,6 @@ export class UserFormDialogComponent {
 
   constructor() {
     this.registerEffects();
-    this.formStatus.set(this.userForm.status);
-    this.userForm.statusChanges.subscribe(status => this.formStatus.set(status));
   }
 
   private registerEffects(): void {
@@ -126,7 +124,7 @@ export class UserFormDialogComponent {
     });
 
     effect(() => {
-      const res = this.saveResource.value() as any;
+      const res = this.saveResource.value();
       if (res?.temporaryPassword) {
         this.generatedPassword.set(res.temporaryPassword);
         this.toast.success('¡Usuario registrado con éxito!');
@@ -134,7 +132,7 @@ export class UserFormDialogComponent {
     });
 
     effect(() => {
-      const error = this.saveResource.error() as any;
+      const error = this.saveResource.error() as ApiError;
       if (error) this.handleCreationError(error);
     });
   }
@@ -184,7 +182,7 @@ export class UserFormDialogComponent {
     this.createTrigger.set(payload);
   }
 
-  private buildPayload(rawForm: any): CreateUserPayload {
+  private buildPayload(rawForm: Record<string, unknown>): CreateUserPayload {
     const cleanFields = Object.fromEntries(
       Object.entries(rawForm).map(([key, value]) => [
         key, 
@@ -198,8 +196,9 @@ export class UserFormDialogComponent {
     };
   }
 
-  private handleCreationError(err: any): void {
-    const statusCode = Number(err.error?.message?.split(':')[0]) || HTTP_STATUS.INTERNAL_SERVER_ERROR;
+  private handleCreationError(err: unknown): void {
+    const apiErr = err as ApiError;
+    const statusCode = Number(apiErr.error?.message?.split(':')[0]) || HTTP_STATUS.INTERNAL_SERVER_ERROR;
     const fieldMapping: Record<number, string> = {
       [HTTP_STATUS.EMAIL_ALREADY_EXISTS]: 'email',
       [HTTP_STATUS.DNI_ALREADY_EXISTS]: 'dni'

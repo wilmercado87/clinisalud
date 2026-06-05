@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, effect, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -12,6 +12,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { MenuOption } from '../../../../models/auth.model';
 import { UserResponse, PermissionOverride } from '../../../../models/user-manager.model';
 import { ROLE_CODES } from '../../../../core/utils/role-constants';
+import { ApiError } from '../../../../core/utils/status.codes';
 
 export interface PermissionsDialogData {
   user: UserResponse;
@@ -124,15 +125,24 @@ export class PermissionsDialogComponent {
   }
 
   private loadExistingUserPermissions(menuGroups: PermissionMenuNode[]): void {
-    const resolvedIds = new Set<number>();
+    const resolvedIds = this.resolveRoleBasePermissions();
+    this.syncParentWithChildren(menuGroups, resolvedIds);
+    this.applyAdminOverrides(menuGroups, resolvedIds);
+    this.assignedMenuOptionIds.set(resolvedIds);
+  }
 
+  private resolveRoleBasePermissions(): Set<number> {
+    const resolvedIds = new Set<number>();
     const roleBasePermissions = this.targetUserData.user?.roleData?.permissions || [];
     roleBasePermissions.forEach((permission) => {
       if (permission.hasAccess) {
         resolvedIds.add(Number(permission.menuOptionId));
       }
     });
+    return resolvedIds;
+  }
 
+  private syncParentWithChildren(menuGroups: PermissionMenuNode[], resolvedIds: Set<number>): void {
     for (const menuGroup of menuGroups) {
       const groupKey = Number(menuGroup.id);
       const subMenuIds = menuGroup.children?.map((child) => Number(child.id)) || [];
@@ -146,7 +156,9 @@ export class PermissionsDialogComponent {
         }
       }
     }
+  }
 
+  private applyAdminOverrides(menuGroups: PermissionMenuNode[], resolvedIds: Set<number>): void {
     if (this.isTargetUserSuperAdmin()) {
       this.assignedMenuOptionIds.set(resolvedIds);
       return;
@@ -165,8 +177,6 @@ export class PermissionsDialogComponent {
         subMenuIds.forEach((id) => resolvedIds.delete(id));
       }
     }
-
-    this.assignedMenuOptionIds.set(resolvedIds);
   }
 
   public toggleMenuGroupSelection(menuGroup: PermissionMenuNode, isChecked: boolean): void {
@@ -232,8 +242,9 @@ export class PermissionsDialogComponent {
     this.submitPermissionsTrigger.set(generatedOverrides);
   }
 
-  private handlePermissionSyncError(error: any): void {
-    const feedbackMessage = error.error?.message?.split(':')[1] || 'Ocurrió un error en la operación';
+  private handlePermissionSyncError(error: unknown): void {
+    const apiErr = error as ApiError;
+    const feedbackMessage = apiErr.error?.message?.split(':')[1] || 'Ocurrió un error en la operación';
     this.toast.error(feedbackMessage);
     this.submitPermissionsTrigger.set(null);
   }

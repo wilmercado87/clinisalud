@@ -11,6 +11,7 @@ import { UserService } from '../../services/user.service';
 import { ToggleStatusResponse, UserResponse } from '../../../../models/user-manager.model';
 import { ROLE_CODES } from '../../../../core/utils/role-constants';
 import { PAGINATION } from '../../../../core/utils/pagination-constants';
+import { ApiError } from '../../../../core/utils/status.codes';
 import { SharedModule } from '../../../../shared/shared.module';
 import { UserFormDialogComponent } from '../../components/user-form-dialog/user-form-dialog.component';
 import { PermissionsDialogComponent } from '../../components/permissions-dialog/permissions-dialog.component';
@@ -81,7 +82,7 @@ export class ManagerUsersComponent implements AfterViewInit {
         this.toast.error('Error al sincronizar datos del servidor');
       }
 
-      const toggleErr = this.toggleStatusResource.error() as any;
+      const toggleErr = this.toggleStatusResource.error() as ApiError;
       if (toggleErr) {
         this.toast.error(toggleErr.error?.message?.split(':')[1] || 'Error al cambiar estado');
         this.toggleUserIdTrigger.set(null);
@@ -100,7 +101,11 @@ export class ManagerUsersComponent implements AfterViewInit {
         data.firstName, data.lastName, data.dni, data.email,
         data.roleData?.name, data.isActive ? 'activo' : 'inactivo'
       ].join(' ').toLowerCase();
-      return searchTerms.includes(filter.trim().toLowerCase());
+
+      return filter
+        .trim()
+        .split(/\s+/) // 🛡️ Soporta múltiples espacios accidentales
+        .every(term => searchTerms.includes(term.toLowerCase()));
     };
   }
 

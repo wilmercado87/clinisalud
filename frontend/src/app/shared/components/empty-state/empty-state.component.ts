@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
@@ -6,9 +6,9 @@ import { MatIconModule } from '@angular/material/icon';
     imports: [MatIconModule],
     template: `
     <div class="empty-state-container">
-      <mat-icon class="empty-icon">{{ icono }}</mat-icon>
-      <h3 class="empty-title">{{ titulo }}</h3>
-      <p class="empty-message">{{ mensaje }}</p>
+      <mat-icon class="empty-icon">{{ icon() }}</mat-icon>
+      <h3 class="empty-title">{{ title() }}</h3>
+      <p class="empty-message">{{ message() }}</p>
     </div>
   `,
     styleUrl: './empty-state.component.scss',
@@ -16,7 +16,7 @@ import { MatIconModule } from '@angular/material/icon';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmptyStateComponent {
-  @Input() titulo: string = 'No se encontraron resultados';
-  @Input() mensaje: string = 'Intenta ajustar los filtros de búsqueda.';
-  @Input() icono: string = 'search_off';
+  public readonly title = input('No se encontraron resultados');
+  public readonly message = input('Intenta ajustar los filtros de búsqueda.');
+  public readonly icon = input('search_off');
 }

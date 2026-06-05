@@ -109,15 +109,15 @@
 
             @if (filterValue().length > 0) {
               <app-empty-state
-                [titulo]="'Búsqueda sin coincidencias'"
-                [mensaje]="'No encontramos resultados para \'' + filterValue() + '\''"
-                [icono]="'person_search'">
+                [title]="'Búsqueda sin coincidencias'"
+                [message]="'No encontramos resultados para \'' + filterValue() + '\''"
+                [icon]="'person_search'">
               </app-empty-state>
             } @else if (!usersResource.isLoading()) {
               <app-empty-state
-                [titulo]="'No hay personal registrado'"
-                [mensaje]="'Comienza registrando un nuevo empleado en el sistema.'"
-                [icono]="'group_add'">
+                [title]="'No hay personal registrado'"
+                [message]="'Comienza registrando un nuevo empleado en el sistema.'"
+                [icon]="'group_add'">
               </app-empty-state>
             }
 

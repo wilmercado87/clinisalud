@@ -1,7 +1,7 @@
 <div class="filter-bar">
   <mat-form-field appearance="outline" class="filter-bar__search" subscriptSizing="dynamic">
     <mat-label>Buscar en mensaje</mat-label>
-    <input matInput [(ngModel)]="searchQuery" placeholder="Buscar..." />
+    <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Buscar..." />
     @if (searchQuery()) {
       <button matSuffix mat-icon-button (click)="searchQuery.set('')">
         <mat-icon>close</mat-icon>
@@ -23,7 +23,7 @@
 
   <mat-form-field appearance="outline" class="filter-bar__select" subscriptSizing="dynamic">
     <mat-label>Rol</mat-label>
-    <mat-select [(ngModel)]="filterRole">
+    <mat-select [ngModel]="filterRole()" (ngModelChange)="filterRole.set($event)">
       <mat-option value="all">Todos los roles</mat-option>
       @for (role of uniqueRoles(); track role) {
         <mat-option [value]="role">{{ role }}</mat-option>
@@ -33,7 +33,7 @@
 
   <mat-form-field appearance="outline" class="filter-bar__select" subscriptSizing="dynamic">
     <mat-label>Estado</mat-label>
-    <mat-select [(ngModel)]="filterStatus">
+    <mat-select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)">
       <mat-option value="all">Todos</mat-option>
       <mat-option value="unread">No leídas</mat-option>
       <mat-option value="read">Leídas</mat-option>
@@ -42,7 +42,7 @@
 
   <mat-form-field appearance="outline" class="filter-bar__select" subscriptSizing="dynamic">
     <mat-label>Tipo</mat-label>
-    <mat-select [(ngModel)]="filterType">
+    <mat-select [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">
       <mat-option value="all">Todos los tipos</mat-option>
       @for (t of uniqueTypes(); track t.type) {
         <mat-option [value]="t.type">{{ t.label }}</mat-option>
@@ -52,14 +52,14 @@
 
   <mat-form-field appearance="outline" class="filter-bar__date" subscriptSizing="dynamic">
     <mat-label>Desde</mat-label>
-    <input matInput [matDatepicker]="pickerFrom" [(ngModel)]="dateFrom" />
+    <input matInput [matDatepicker]="pickerFrom" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" />
     <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
     <mat-datepicker #pickerFrom></mat-datepicker>
   </mat-form-field>
 
   <mat-form-field appearance="outline" class="filter-bar__date" subscriptSizing="dynamic">
     <mat-label>Hasta</mat-label>
-    <input matInput [matDatepicker]="pickerTo" [(ngModel)]="dateTo" [min]="dateFrom()" [disabled]="!dateFrom()" />
+    <input matInput [matDatepicker]="pickerTo" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" [min]="dateFrom()" [disabled]="!dateFrom()" />
     <mat-datepicker-toggle matIconSuffix [for]="pickerTo" [disabled]="!dateFrom()"></mat-datepicker-toggle>
     <mat-datepicker #pickerTo></mat-datepicker>
   </mat-form-field>

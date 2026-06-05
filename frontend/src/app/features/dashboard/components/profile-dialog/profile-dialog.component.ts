@@ -62,14 +62,14 @@ export class ProfileDialogComponent {
       address: user?.address || '',
     };
     this.initialFormValue = vals;
-    this.profileForm.patchValue(vals as any);
+    this.profileForm.patchValue(vals);
   }
 
   public hasChanges = computed(() => {
-    const cur = this.formValueSignal() as Record<string, string | null | undefined> | null;
+    const cur = this.formValueSignal();
     if (!cur) return false;
     const keys = Object.keys(this.initialFormValue);
-    return keys.some(k => cur[k] !== this.initialFormValue[k]);
+    return keys.some(k => (cur as Record<string, string | null | undefined>)[k] !== this.initialFormValue[k]);
   });
 
   public canSubmit = computed(() =>

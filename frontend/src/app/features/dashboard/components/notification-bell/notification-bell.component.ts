@@ -8,7 +8,7 @@ import { MaterialModule } from '../../../../shared/material/material.module';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { SocketService } from '../../../../core/services/socket.service';
 import { NotificationResponse, NotificationUI } from '../../../../models/notification.model';
-import { formatRelativeTime } from '../../../../core/utils/date-utils';
+import { toNotificationUI } from '../../../../core/utils/mapper-utils';
 
 @Component({
   selector: 'app-notification-bell',
@@ -39,12 +39,7 @@ export class NotificationBellComponent {
   });
 
   public notifications = computed<NotificationUI[]>(() =>
-    (this.recentResource.value() ?? []).map(n => ({
-      ...n,
-      timeAgo: formatRelativeTime(n.createdAt),
-      isUnread: !n.isRead,
-      createdAtDate: new Date(n.createdAt),
-    }))
+    (this.recentResource.value() ?? []).map(toNotificationUI)
   );
 
   public unreadCount = computed(() => this.unreadResource.value()?.count ?? 0);
