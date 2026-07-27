@@ -1,9 +1,9 @@
 <div class="filter-bar">
   <mat-form-field appearance="outline" class="filter-bar__search" subscriptSizing="dynamic">
     <mat-label>Buscar en mensaje</mat-label>
-    <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Buscar..." />
-    @if (searchQuery()) {
-      <button matSuffix mat-icon-button (click)="searchQuery.set('')">
+    <input matInput [ngModel]="filter.searchQuery()" (ngModelChange)="filter.searchQuery.set($event)" placeholder="Buscar..." />
+    @if (filter.searchQuery()) {
+      <button matSuffix mat-icon-button (click)="filter.searchQuery.set('')">
         <mat-icon>close</mat-icon>
       </button>
     }
@@ -11,11 +11,11 @@
   </mat-form-field>
 
   <div class="filter-bar__actions">
-    <button mat-icon-button (click)="toggleSort()" [matTooltip]="sortOrder() === 'newest' ? 'Más recientes' : 'Más antiguas'">
-      <mat-icon>{{ sortOrder() === 'newest' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+    <button mat-icon-button (click)="filter.toggleSort()" [matTooltip]="filter.sortOrder() === 'newest' ? 'Más recientes' : 'Más antiguas'">
+      <mat-icon>{{ filter.sortOrder() === 'newest' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
     </button>
-    @if (hasActiveFilters()) {
-      <button mat-icon-button (click)="clearFilters()" matTooltip="Limpiar filtros">
+    @if (filter.hasActiveFilters()) {
+      <button mat-icon-button (click)="filter.clearFilters()" matTooltip="Limpiar filtros">
         <mat-icon>filter_list_off</mat-icon>
       </button>
     }
@@ -23,9 +23,9 @@
 
   <mat-form-field appearance="outline" class="filter-bar__select" subscriptSizing="dynamic">
     <mat-label>Rol</mat-label>
-    <mat-select [ngModel]="filterRole()" (ngModelChange)="filterRole.set($event)">
+    <mat-select [ngModel]="filter.filterRole()" (ngModelChange)="filter.filterRole.set($event)">
       <mat-option value="all">Todos los roles</mat-option>
-      @for (role of uniqueRoles(); track role) {
+      @for (role of filter.uniqueRoles(); track role) {
         <mat-option [value]="role">{{ role }}</mat-option>
       }
     </mat-select>
@@ -33,7 +33,7 @@
 
   <mat-form-field appearance="outline" class="filter-bar__select" subscriptSizing="dynamic">
     <mat-label>Estado</mat-label>
-    <mat-select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)">
+    <mat-select [ngModel]="filter.filterStatus()" (ngModelChange)="filter.filterStatus.set($event)">
       <mat-option value="all">Todos</mat-option>
       <mat-option value="unread">No leídas</mat-option>
       <mat-option value="read">Leídas</mat-option>
@@ -42,9 +42,9 @@
 
   <mat-form-field appearance="outline" class="filter-bar__select" subscriptSizing="dynamic">
     <mat-label>Tipo</mat-label>
-    <mat-select [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">
+    <mat-select [ngModel]="filter.filterType()" (ngModelChange)="filter.filterType.set($event)">
       <mat-option value="all">Todos los tipos</mat-option>
-      @for (t of uniqueTypes(); track t.type) {
+      @for (t of filter.uniqueTypes(); track t.type) {
         <mat-option [value]="t.type">{{ t.label }}</mat-option>
       }
     </mat-select>
@@ -52,15 +52,15 @@
 
   <mat-form-field appearance="outline" class="filter-bar__date" subscriptSizing="dynamic">
     <mat-label>Desde</mat-label>
-    <input matInput [matDatepicker]="pickerFrom" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" />
+    <input matInput [matDatepicker]="pickerFrom" [ngModel]="filter.dateFrom()" (ngModelChange)="filter.dateFrom.set($event)" />
     <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
     <mat-datepicker #pickerFrom></mat-datepicker>
   </mat-form-field>
 
   <mat-form-field appearance="outline" class="filter-bar__date" subscriptSizing="dynamic">
     <mat-label>Hasta</mat-label>
-    <input matInput [matDatepicker]="pickerTo" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" [min]="dateFrom()" [disabled]="!dateFrom()" />
-    <mat-datepicker-toggle matIconSuffix [for]="pickerTo" [disabled]="!dateFrom()"></mat-datepicker-toggle>
+    <input matInput [matDatepicker]="pickerTo" [ngModel]="filter.dateTo()" (ngModelChange)="filter.dateTo.set($event)" [min]="filter.dateFrom()" [disabled]="!filter.dateFrom()" />
+    <mat-datepicker-toggle matIconSuffix [for]="pickerTo" [disabled]="!filter.dateFrom()"></mat-datepicker-toggle>
     <mat-datepicker #pickerTo></mat-datepicker>
   </mat-form-field>
 </div>
@@ -80,16 +80,16 @@
     <h2 class="page-empty__title">Sin notificaciones</h2>
     <p class="page-empty__text">No tienes notificaciones pendientes</p>
   </div>
-} @else if (filteredNotifications().length === 0) {
+} @else if (filter.filteredNotifications().length === 0) {
   <div class="page-empty">
     <mat-icon class="page-empty__icon">search_off</mat-icon>
     <h2 class="page-empty__title">Sin resultados</h2>
     <p class="page-empty__text">Ninguna notificación coincide con los filtros aplicados</p>
-    <button mat-button color="primary" (click)="clearFilters()">Limpiar filtros</button>
+    <button mat-button color="primary" (click)="filter.clearFilters()">Limpiar filtros</button>
   </div>
 } @else {
   <div class="notifications-list">
-    @for (notif of filteredNotifications(); track notif.id) {
+    @for (notif of filter.filteredNotifications(); track notif.id) {
       <div class="notif-card" [class.notif-card--unread]="notif.isUnread" (click)="onCardClick(notif)">
         <div class="notif-card__indicator">
           @if (notif.isUnread) {

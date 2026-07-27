@@ -1,7 +1,7 @@
 <div class="profile-dialog">
   <header class="profile-dialog__header">
     <h2 class="profile-dialog__title" mat-dialog-title>Mi Perfil</h2>
-    @if (!updateResource.isLoading()) {
+    @if (!isUpdatingProfile()) {
       <button class="profile-dialog__close-btn" mat-icon-button (click)="onCancel()">
         <mat-icon>close</mat-icon>
       </button>
@@ -58,14 +58,14 @@
       </div>
     </form>
 
-    @if (updateResource.error()) {
+    @if (updateError()) {
       <div class="profile-dialog__error">
         <mat-icon>error</mat-icon>
         <span>Error al actualizar el perfil. Intenta de nuevo.</span>
       </div>
     }
 
-    @if (updateResource.value()) {
+    @if (updateResult()) {
       <div class="profile-dialog__success">
         <mat-icon>check_circle</mat-icon>
         <span>Perfil actualizado correctamente.</span>
@@ -74,7 +74,7 @@
   </mat-dialog-content>
 
   <mat-dialog-actions class="profile-dialog__actions" align="end">
-    <button mat-button (click)="onCancel()" [disabled]="updateResource.isLoading()">
+    <button mat-button (click)="onCancel()" [disabled]="isUpdatingProfile()">
       CANCELAR
     </button>
     <button
@@ -84,7 +84,7 @@
       [disabled]="!canSubmit()"
       (click)="onSubmit()"
     >
-      @if (updateResource.isLoading()) {
+      @if (isUpdatingProfile()) {
         <mat-spinner diameter="20"></mat-spinner>
       } @else {
         <div class="profile-dialog__btn-content">

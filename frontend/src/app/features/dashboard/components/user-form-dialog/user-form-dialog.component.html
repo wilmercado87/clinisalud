@@ -4,7 +4,7 @@
       {{ generatedPassword() ? "Usuario Registrado" : "Registrar Nuevo Empleado" }}
     </h2>
 
-    @if (!generatedPassword() && !saveResource.isLoading()) {
+    @if (!generatedPassword() && !isCreating()) {
       <button
         class="user-form__close-btn"
         mat-icon-button
@@ -137,7 +137,7 @@
 
   @if (!generatedPassword()) {
     <mat-dialog-actions class="user-form__actions" align="end">
-      <button mat-button (click)="close()" [disabled]="saveResource.isLoading()">
+      <button mat-button (click)="close()" [disabled]="isCreating()">
         CANCELAR
       </button>
 
@@ -148,7 +148,7 @@
         [disabled]="!canSubmit()"
         (click)="onSubmit()"
       >
-        @if (saveResource.isLoading()) {
+        @if (isCreating()) {
           <mat-spinner diameter="20"></mat-spinner>
         } @else {
           <ng-container>

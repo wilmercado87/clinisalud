@@ -7,8 +7,8 @@ import { HTTP_STATUS } from "../../constants";
 const notificationsService = new NotificationsService();
 
 const handleError = (error: any, res: Response) => {
-  const statusCode = getHttpCode(error.message);
-  return res.status(statusCode).json({ message: error.message });
+  const statusCode = getHttpCode(error);
+  return res.status(statusCode).json({ message: error.message, ...(error.code && { code: error.code }) });
 };
 
 export const getNotifications = async (req: AuthRequest, res: Response) => {

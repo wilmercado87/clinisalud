@@ -1,18 +1,16 @@
 import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
 
 import { MaterialModule } from '../../../../shared/material/material.module';
-import { RoleService } from '../../../../core/services/roles.service';
-import { UserService } from '../../services/user.service';
-import { AuthService } from '../../../../core/services/auth.service';
+import { RoleStore } from '../../../../core/stores/role-store/role.store';
+import { UserStore } from '../../store/user-store/user.store';
+import { AuthStore } from '../../../../core/stores/auth-store/auth.store';
 import { ToastService } from '../../../../core/services/toast.service';
-import { MenuOption } from '../../../../models/auth.model';
-import { UserResponse, PermissionOverride } from '../../../../models/user-manager.model';
-import { ROLE_CODES } from '../../../../core/utils/role-constants';
-import { ApiError } from '../../../../core/utils/status.codes';
+import { MenuOption } from '../../../../core/models/auth.model';
+import { UserResponse, PermissionOverride } from '../../../../core/models/user-manager.model';
+import { ROLE_CODES } from '../../../../shared/utils/role-constants';
+import { ApiError } from '../../../../shared/utils/status.codes';
 
 export interface PermissionsDialogData {
   user: UserResponse;
@@ -30,19 +28,22 @@ interface PermissionMenuNode extends MenuOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionsDialogComponent {
-  private readonly roleService = inject(RoleService);
-  private readonly userService = inject(UserService);
-  private readonly authService = inject(AuthService);
+  private readonly roleStore = inject(RoleStore);
+  private readonly userStore = inject(UserStore);
+  private readonly authStore = inject(AuthStore);
   private readonly toast = inject(ToastService);
   private readonly dialogRef = inject(MatDialogRef<PermissionsDialogComponent>);
   public readonly targetUserData = inject<PermissionsDialogData>(MAT_DIALOG_DATA);
 
-  public systemMenusResource = rxResource({
-    loader: () => this.roleService.getMenuOptions(),
-  });
+  public readonly menuOptions = this.roleStore.menuOptions;
+  public readonly isLoadingMenuOptions = this.roleStore.isLoadingMenuOptions;
+
+  public readonly isUpdatingPermissions = this.userStore.isUpdatingPermissions;
+  public readonly updatePermissionsResult = this.userStore.updatePermissionsResult;
+  public readonly updatePermissionsError = this.userStore.updatePermissionsError;
 
   public permissionMenuGroups = computed<PermissionMenuNode[]>(() => {
-    const rawMenus = this.systemMenusResource.value() ?? [];
+    const rawMenus = this.menuOptions() ?? [];
     return rawMenus.map((menuGroup) => ({
       ...menuGroup,
       isUserManager: menuGroup.label.toUpperCase() === 'GESTOR USUARIOS',
@@ -50,15 +51,6 @@ export class PermissionsDialogComponent {
   });
 
   public assignedMenuOptionIds = signal<Set<number>>(new Set());
-  public submitPermissionsTrigger = signal<PermissionOverride[] | null>(null);
-
-  public updatePermissionsResource = rxResource({
-    request: () => this.submitPermissionsTrigger(),
-    loader: ({ request: activeOverrides }) => {
-      if (!activeOverrides) return of(undefined);
-      return this.userService.updatePermissions(this.targetUserData.user.id, activeOverrides);
-    },
-  });
 
   public totalMenuOptionsCount = computed(() =>
     this.permissionMenuGroups().reduce(
@@ -67,7 +59,7 @@ export class PermissionsDialogComponent {
     ),
   );
 
-  public currentUserRole = computed(() => this.authService.currentUser?.role ?? '');
+  public currentUserRole = computed(() => this.authStore.currentUser()?.role ?? '');
 
   public isTargetUserAdmin = computed(() => this.targetUserData.user.roleData?.code === ROLE_CODES.ADMIN);
 
@@ -95,8 +87,8 @@ export class PermissionsDialogComponent {
       !this.isEditRestricted() &&
       this.assignedMenuOptionIds().size > 0 &&
       !this.isNonAdminExceedingPrivileges() &&
-      !this.updatePermissionsResource.isLoading() &&
-      !this.systemMenusResource.isLoading(),
+      !this.isUpdatingPermissions() &&
+      !this.isLoadingMenuOptions(),
   );
 
   constructor() {
@@ -112,14 +104,14 @@ export class PermissionsDialogComponent {
     });
 
     effect(() => {
-      if (this.updatePermissionsResource.value()) {
+      if (this.updatePermissionsResult()) {
         this.toast.success('Permisos actualizados correctamente');
         this.dialogRef.close({ success: true });
       }
     });
 
     effect(() => {
-      const synchronizationError = this.systemMenusResource.error() || this.updatePermissionsResource.error();
+      const synchronizationError = this.updatePermissionsError();
       if (synchronizationError) this.handlePermissionSyncError(synchronizationError);
     });
   }
@@ -180,7 +172,7 @@ export class PermissionsDialogComponent {
   }
 
   public toggleMenuGroupSelection(menuGroup: PermissionMenuNode, isChecked: boolean): void {
-    if (menuGroup.isUserManager || this.isEditRestricted() || this.updatePermissionsResource.isLoading()) return;
+    if (menuGroup.isUserManager || this.isEditRestricted() || this.isUpdatingPermissions()) return;
 
     const updatedIdsSet = new Set(this.assignedMenuOptionIds());
     const groupKey = Number(menuGroup.id);
@@ -197,7 +189,7 @@ export class PermissionsDialogComponent {
   }
 
   public toggleSubMenuSelection(subMenuId: number, parentMenuGroup: PermissionMenuNode): void {
-    if (parentMenuGroup.isUserManager || this.isEditRestricted() || this.updatePermissionsResource.isLoading()) return;
+    if (parentMenuGroup.isUserManager || this.isEditRestricted() || this.isUpdatingPermissions()) return;
 
     const updatedIdsSet = new Set(this.assignedMenuOptionIds());
     const parentKey = Number(parentMenuGroup.id);
@@ -239,14 +231,13 @@ export class PermissionsDialogComponent {
       },
     );
 
-    this.submitPermissionsTrigger.set(generatedOverrides);
+    this.userStore.updatePermissions(this.targetUserData.user.id, generatedOverrides);
   }
 
   private handlePermissionSyncError(error: unknown): void {
     const apiErr = error as ApiError;
-    const feedbackMessage = apiErr.error?.message?.split(':')[1] || 'Ocurrió un error en la operación';
+    const feedbackMessage = apiErr.error?.message || 'Ocurrió un error en la operación';
     this.toast.error(feedbackMessage);
-    this.submitPermissionsTrigger.set(null);
   }
 
   public onCancel(): void {

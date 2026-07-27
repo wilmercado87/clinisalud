@@ -7,11 +7,11 @@ import { AuthRequest } from "../../middlewares/AuthMiddleware";
 const usersService = new UsersService();
 
 const handleError = (error: any, res: Response, context: string) => {
-  const statusCode = getHttpCode(error.message);
+  const statusCode = getHttpCode(error);
   if (statusCode === HTTP_STATUS.INTERNAL_SERVER_ERROR) {
     console.error(`Error ${context}:`, error);
   }
-  return res.status(statusCode).json({ message: error.message });
+  return res.status(statusCode).json({ message: error.message, ...(error.code && { code: error.code }) });
 };
 
 export const getRoles = async (req: Request, res: Response) => {

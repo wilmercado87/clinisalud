@@ -2,12 +2,12 @@
   <mat-sidenav mode="side" [opened]="isSidebarExpanded()" class="shell__sidebar">
 
     <div class="shell__brand">
-      @if (configService.config().clientLogo) {
-        <img alt="clienteLogo" [src]="configService.config().clientLogo" class="shell__brand-img-small">
+      @if (configStore.config().clientLogo) {
+        <img alt="clienteLogo" [src]="configStore.config().clientLogo" class="shell__brand-img-small">
       } @else {
         <mat-icon class="shell__brand-icon">medical_information</mat-icon>
       }
-      <span class="shell__brand-name">{{ configService.config().clientName }}</span>
+      <span class="shell__brand-name">{{ configStore.config().clientName }}</span>
     </div>
 
     @if (currentUser()) {
@@ -53,16 +53,16 @@
       @if (isWelcomePage()) {
         <div class="welcome-state">
           <div class="welcome-state__content">
-            @if (configService.config().clientLogo) {
-              <img alt="clienteLogo" [src]="configService.config().clientLogo" class="welcome-state__logo-img">
+            @if (configStore.config().clientLogo) {
+              <img alt="clienteLogo" [src]="configStore.config().clientLogo" class="welcome-state__logo-img">
             } @else {
               <svg viewBox="0 0 24 24" class="welcome-state__logo-svg">
                 <path d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.41,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.59,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z"/>
                 <path fill="none" stroke-width="1.5" d="M3,10 H7 L9,6 L12,14 L15,8 L17,10 H21"/>
               </svg>
             }
-            <h1 class="welcome-state__title">{{ configService.config().clientName }}</h1>
-            <p class="welcome-state__subtitle">{{ configService.config().welcomeMessage || 'El Corazón de la Salud' }}</p>
+            <h1 class="welcome-state__title">{{ configStore.config().clientName }}</h1>
+            <p class="welcome-state__subtitle">{{ configStore.config().welcomeMessage || 'El Corazón de la Salud' }}</p>
           </div>
         </div>
       }

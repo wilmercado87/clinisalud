@@ -1,10 +1,10 @@
-import { Component, input, output, signal, computed, ChangeDetectionStrategy, effect } from '@angular/core';
+import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../shared/material/material.module';
-import { NotificationResponse, NotificationUI, NotificationDetailUI, NotificationsListData, NotificationsListEvent } from '../../../../models/notification.model';
-import { formatNotificationDate } from '../../../../core/utils/date-utils';
-import { getNotificationTypeLabel } from '../../../../core/utils/mapper-utils';
+import { NotificationResponse } from '../../../../core/models/notification-dto.model';
+import { NotificationUI, NotificationsListData, NotificationsListEvent } from '../../../../features/dashboard/models/notification.model';
+import { createNotificationFilter } from '../../../../shared/utils/notification-filter-utils';
 
 @Component({
   selector: 'app-notification-filtered-list',
@@ -14,118 +14,10 @@ import { getNotificationTypeLabel } from '../../../../core/utils/mapper-utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificationFilteredListComponent {
-  public readonly ALL_TEXT = 'all';
   public readonly data = input.required<NotificationsListData>();
   public readonly event = output<NotificationsListEvent>();
 
-  public readonly searchQuery = signal('');
-  public readonly filterRole = signal<string>(this.ALL_TEXT);
-  public readonly filterStatus = signal<string>(this.ALL_TEXT);
-  public readonly filterType = signal<string>(this.ALL_TEXT);
-  public readonly dateFrom = signal<Date | null>(null);
-  public readonly dateTo = signal<Date | null>(null);
-  public readonly sortOrder = signal<'newest' | 'oldest'>('newest');
-
-  constructor() {
-    effect(() => {
-      const from = this.dateFrom();
-      const to = this.dateTo();
-      if (from && to && to < from) {
-        this.dateTo.set(null);
-      }
-    });
-  }
-
-  public readonly uniqueRoles = computed<string[]>(() => {
-    const rawRoles = this.data().notifications.map(n => n.actorRole);
-    return Array.from(new Set(rawRoles)).sort(
-      (firstRole, secondRole) => firstRole.localeCompare(secondRole)
-    );
-  });
-
-  public readonly uniqueTypes = computed<{ type: string; label: string }[]>(() => {
-    const rawTypes = this.data().notifications.map(n => n.type);
-    return Array.from(new Set(rawTypes)).map(type => ({
-      type,
-      label: getNotificationTypeLabel(type)
-    }));
-  });
-
-  public readonly filteredNotifications = computed<NotificationDetailUI[]>(() => {
-    const rawNotifications = this.data().notifications;
-
-    const filtered = rawNotifications.filter(notification => 
-      this.evaluateNotificationCriteria(notification)
-    );
-
-    const sorted = this.sortNotifications(filtered, this.sortOrder());
-
-    return sorted.map(notification => ({
-      ...notification,
-      typeLabel: getNotificationTypeLabel(notification.type),
-      formattedDate: formatNotificationDate(notification.createdAt)
-    }));
-  });
-
-  public readonly hasActiveFilters = computed<boolean>(() =>
-    this.searchQuery() !== '' ||
-    this.filterRole() !== this.ALL_TEXT ||
-    this.filterStatus() !== this.ALL_TEXT ||
-    this.filterType() !== this.ALL_TEXT ||
-    this.dateFrom() !== null ||
-    this.dateTo() !== null
-  );
-
-  private evaluateNotificationCriteria(notification: NotificationUI): boolean {
-    const searchPhrase = this.searchQuery().toLowerCase().trim();
-
-    const matchesSearch = !searchPhrase || notification.message.toLowerCase().includes(searchPhrase);
-    const matchesRole = this.filterRole() === this.ALL_TEXT || notification.actorRole === this.filterRole();
-    const matchesType = this.filterType() === this.ALL_TEXT || notification.type === this.filterType();
-    const matchesStatus = this.evaluateStatusCriteria(notification, this.filterStatus());
-    const matchesDates = this.evaluateDateCriteria(notification);
-
-    return matchesSearch && matchesRole && matchesType && matchesStatus && matchesDates;
-  }
-
-  private evaluateStatusCriteria(notification: NotificationUI, statusFilter: string): boolean {
-    if (statusFilter === this.ALL_TEXT) return true;
-    return statusFilter === 'unread' ? notification.isUnread : !notification.isUnread;
-  }
-
-  private evaluateDateCriteria(notification: NotificationUI): boolean {
-    const startDateLimit = this.dateFrom();
-    const endDateLimit = this.dateTo();
-    const notificationTimestamp = notification.createdAtDate.getTime();
-
-    const matchesStartDate = !startDateLimit ||
-      notificationTimestamp >= startDateLimit.getTime();
-    const matchesEndDate = !endDateLimit || 
-      notificationTimestamp <= (endDateLimit.getTime() + 86400000);
-
-    return matchesStartDate && matchesEndDate;
-  }
-
-  private sortNotifications(list: NotificationUI[], order: 'newest' | 'oldest'): NotificationUI[] {
-    return [...list].sort((a, b) => {
-      const difference = a.createdAtDate.getTime() - b.createdAtDate.getTime();
-      return order === 'newest' ? -difference : difference;
-    });
-  }
-
-  public clearFilters(): void {
-    this.searchQuery.set('');
-    this.filterRole.set(this.ALL_TEXT);
-    this.filterStatus.set(this.ALL_TEXT);
-    this.filterType.set(this.ALL_TEXT);
-    this.dateFrom.set(null);
-    this.dateTo.set(null);
-    this.sortOrder.set('newest');
-  }
-
-  public toggleSort(): void {
-    this.sortOrder.update(current => (current === 'newest' ? 'oldest' : 'newest'));
-  }
+  public readonly filter = createNotificationFilter(computed(() => this.data().notifications));
 
   public onCardClick(targetNotification: NotificationResponse): void {
     this.event.emit({ type: 'markAsRead', notification: targetNotification });

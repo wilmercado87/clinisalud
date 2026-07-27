@@ -2,21 +2,17 @@ import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } 
 import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { MaterialModule } from '../../../../shared/material/material.module';
-import { UserService } from '../../services/user.service';
-import { RoleService } from '../../../../core/services/roles.service';
-import { AuthService } from '../../../../core/services/auth.service';
+import { UserStore } from '../../store/user-store/user.store';
+import { RoleStore } from '../../../../core/stores/role-store/role.store';
+import { AuthStore } from '../../../../core/stores/auth-store/auth.store';
 import { ToastService } from '../../../../core/services/toast.service';
 
-import { MenuOption } from '../../../../models/auth.model';
-import { ERROR_MAPPING, HTTP_STATUS, ApiError } from '../../../../core/utils/status.codes';
-import { UserResponse } from '../../../../models/user-manager.model';
-import { ROLE_CODES } from '../../../../core/utils/role-constants';
-
-type CreateUserPayload = Partial<UserResponse> & { permissions: number[] };
+import { MenuOption } from '../../../../core/models/auth.model';
+import { ERROR_MAPPING, HTTP_STATUS, ApiError } from '../../../../shared/utils/status.codes';
+import { ROLE_CODES } from '../../../../shared/utils/role-constants';
 
 @Component({
   selector: 'app-user-form-dialog',
@@ -27,9 +23,9 @@ type CreateUserPayload = Partial<UserResponse> & { permissions: number[] };
 })
 export class UserFormDialogComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly userService = inject(UserService);
-  private readonly roleService = inject(RoleService);
-  private readonly authService = inject(AuthService);
+  private readonly userStore = inject(UserStore);
+  private readonly roleStore = inject(RoleStore);
+  private readonly authStore = inject(AuthStore);
   private readonly toast = inject(ToastService);
   private readonly dialogRef = inject(MatDialogRef<UserFormDialogComponent>);
 
@@ -43,14 +39,14 @@ export class UserFormDialogComponent {
     roleId: [null as number | null, Validators.required],
   });
 
-  public rolesResource = rxResource({ loader: () => this.roleService.getRoles() });
-  public menuResource = rxResource({ loader: () => this.roleService.getMenuOptions() });
+  public readonly roles = this.roleStore.roles;
+  public readonly isLoadingRoles = this.roleStore.isLoadingRoles;
+  public readonly menuOptions = this.roleStore.menuOptions;
+  public readonly isLoadingMenuOptions = this.roleStore.isLoadingMenuOptions;
 
-  public createTrigger = signal<CreateUserPayload | null>(null);
-  public saveResource = rxResource({
-    request: () => this.createTrigger(),
-    loader: ({ request: data }) => data ? this.userService.createUser(data) : of(null)
-  });
+  public readonly isCreating = this.userStore.isCreating;
+  public readonly createResult = this.userStore.createResult;
+  public readonly createError = this.userStore.createError;
 
   private readonly roleIdSignal = toSignal(
     this.userForm.controls.roleId.valueChanges,
@@ -61,33 +57,33 @@ export class UserFormDialogComponent {
   public generatedPassword = signal('');
   public formStatus = toSignal(this.userForm.statusChanges, { initialValue: this.userForm.status });
 
-  public currentUserRole = computed(() => this.authService.currentUser?.role ?? '');
+  public currentUserRole = computed(() => this.authStore.currentUser()?.role ?? '');
 
   public isCurrentUserSuperAdmin = computed(() => this.currentUserRole() === ROLE_CODES.SUPER_ADMIN);
 
   public availableRoles = computed(() => {
-    const roles = this.rolesResource.value() ?? [];
-    if (this.isCurrentUserSuperAdmin()) return roles;
-    return roles.filter(r => r.code !== ROLE_CODES.SUPER_ADMIN);
+    const items = this.roles() ?? [];
+    if (this.isCurrentUserSuperAdmin()) return items;
+    return items.filter(r => r.code !== ROLE_CODES.SUPER_ADMIN);
   });
 
   public isAdmin = computed(() => {
     const roleId = this.roleIdSignal();
-    const roles = this.rolesResource.value() ?? [];
-    const selectedRole = roles.find(r => r.id === roleId);
+    const items = this.roles() ?? [];
+    const selectedRole = items.find(r => r.id === roleId);
     return selectedRole?.code === ROLE_CODES.ADMIN || selectedRole?.code === ROLE_CODES.SUPER_ADMIN;
   });
 
   public isSuperAdminRole = computed(() => {
     const roleId = this.roleIdSignal();
-    const roles = this.rolesResource.value() ?? [];
-    return roles.find(r => r.id === roleId)?.code === ROLE_CODES.SUPER_ADMIN;
+    const items = this.roles() ?? [];
+    return items.find(r => r.id === roleId)?.code === ROLE_CODES.SUPER_ADMIN;
   });
 
   public isPermissionsLocked = computed(() => this.isSuperAdminRole());
 
   public filteredMenuOptions = computed(() =>
-    (this.menuResource.value() ?? []).filter(item => item.label === 'Panel Principal')
+    (this.menuOptions() ?? []).filter(item => item.label === 'Panel Principal')
   );
 
   public totalOptionsCount = computed(() =>
@@ -104,7 +100,7 @@ export class UserFormDialogComponent {
     this.formStatus() === 'VALID' &&
     this.selectedIds().size > 0 &&
     !this.isFullAccessDenied() &&
-    !this.saveResource.isLoading()
+    !this.isCreating()
   );
 
   constructor() {
@@ -124,7 +120,7 @@ export class UserFormDialogComponent {
     });
 
     effect(() => {
-      const res = this.saveResource.value();
+      const res = this.createResult();
       if (res?.temporaryPassword) {
         this.generatedPassword.set(res.temporaryPassword);
         this.toast.success('¡Usuario registrado con éxito!');
@@ -132,7 +128,7 @@ export class UserFormDialogComponent {
     });
 
     effect(() => {
-      const error = this.saveResource.error() as ApiError;
+      const error = this.createError() as ApiError;
       if (error) this.handleCreationError(error);
     });
   }
@@ -178,11 +174,13 @@ export class UserFormDialogComponent {
   public onSubmit(): void {
     if (!this.canSubmit()) return;
 
-    const payload = this.buildPayload(this.userForm.getRawValue());
-    this.createTrigger.set(payload);
+    this.userStore.createUser(this.buildPayload(this.userForm.getRawValue()));
   }
 
-  private buildPayload(rawForm: Record<string, unknown>): CreateUserPayload {
+  private buildPayload(rawForm: Record<string, unknown>): {
+    firstName: string; lastName: string; dni: string; email: string;
+    phone?: string; address?: string; roleId: number; permissions: number[];
+  } {
     const cleanFields = Object.fromEntries(
       Object.entries(rawForm).map(([key, value]) => [
         key, 
@@ -191,27 +189,36 @@ export class UserFormDialogComponent {
     );
 
     return {
-      ...cleanFields,
+      ...cleanFields as { firstName: string; lastName: string; dni: string; email: string; phone?: string; address?: string; roleId: number; },
       permissions: Array.from(this.selectedIds())
     };
   }
 
   private handleCreationError(err: unknown): void {
-    const apiErr = err as ApiError;
-    const statusCode = Number(apiErr.error?.message?.split(':')[0]) || HTTP_STATUS.INTERNAL_SERVER_ERROR;
-    const fieldMapping: Record<number, string> = {
-      [HTTP_STATUS.EMAIL_ALREADY_EXISTS]: 'email',
-      [HTTP_STATUS.DNI_ALREADY_EXISTS]: 'dni'
+    const httpErr = err as any;
+    const errorCode = httpErr.error?.code as string | undefined;
+    const statusCode = httpErr.status || HTTP_STATUS.INTERNAL_SERVER_ERROR;
+
+    const codeToField: Record<string, string> = {
+      EMAIL_EXISTS: 'email',
+      DNI_EXISTS: 'dni',
     };
 
-    const field = fieldMapping[statusCode];
+    const codeToMessageKey: Record<string, number> = {
+      EMAIL_EXISTS: HTTP_STATUS.EMAIL_ALREADY_EXISTS,
+      DNI_EXISTS: HTTP_STATUS.DNI_ALREADY_EXISTS,
+    };
+
+    const field = errorCode ? codeToField[errorCode] : undefined;
     if (field) {
       this.userForm.get(field)?.setErrors({ alreadyExists: true });
     }
 
-    const errorMessage = ERROR_MAPPING[statusCode] || ERROR_MAPPING[HTTP_STATUS.INTERNAL_SERVER_ERROR];
+    const messageKey = errorCode ? codeToMessageKey[errorCode] : undefined;
+    const errorMessage = (messageKey && ERROR_MAPPING[messageKey])
+      || ERROR_MAPPING[statusCode]
+      || ERROR_MAPPING[HTTP_STATUS.INTERNAL_SERVER_ERROR];
     this.toast.error(errorMessage);
-    this.createTrigger.set(null);
   }
 
   public close(refresh = false): void {

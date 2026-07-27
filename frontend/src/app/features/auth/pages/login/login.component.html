@@ -2,11 +2,11 @@
   <mat-card class="login__card">
     <div class="login__header">
       <div class="login__logo">
-        @if (configService.config().clientLogo) {
+        @if (configStore.config().clientLogo) {
           <img
-            [src]="configService.config().clientLogo"
+            [src]="configStore.config().clientLogo"
             class="login__logo-img"
-            [alt]="configService.config().clientName"
+            [alt]="configStore.config().clientName"
           >
         } @else {
           <svg viewBox="0 0 24 24" class="login__logo-default">
@@ -17,9 +17,9 @@
         }
       </div>
 
-      <h1 class="login__title">{{ configService.config().clientName }}</h1>
+      <h1 class="login__title">{{ configStore.config().clientName }}</h1>
       <p class="login__subtitle">
-        Acceso al Sistema {{ configService.config().clientName === 'Clinisalud' ? 'Médico' : configService.config().clientName }}
+        Acceso al Sistema {{ configStore.config().clientName === 'Clinisalud' ? 'Médico' : configStore.config().clientName }}
       </p>
     </div>
 
@@ -49,7 +49,7 @@
           type="submit"
           [disabled]="!canSubmit()"
         >
-          @if (loginResource.isLoading()) {
+          @if (isLoggingIn()) {
             <mat-spinner diameter="20"></mat-spinner>
           } @else {
             <span>INICIAR SESIÓN</span>

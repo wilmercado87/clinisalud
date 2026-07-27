@@ -1,5 +1,5 @@
 import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
-import { AuthService } from '../../../../core/services/auth.service';
+import { AuthStore } from '../../../../core/stores/auth-store/auth.store';
 
 @Component({
     selector: 'app-home',
@@ -8,9 +8,9 @@ import { AuthService } from '../../../../core/services/auth.service';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent {
-  private readonly authService = inject(AuthService);
+  private readonly authStore = inject(AuthStore);
 
   public userName = computed(() =>
-    this.authService.currentUser?.email.split('@')[0] || 'Usuario'
+    this.authStore.currentUser()?.email.split('@')[0] || 'Usuario'
   );
 }

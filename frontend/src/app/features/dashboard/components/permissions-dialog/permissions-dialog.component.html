@@ -4,7 +4,7 @@
       Gestionar Accesos
     </h2>
 
-    @if (!updatePermissionsResource.isLoading()) {
+    @if (!isUpdatingPermissions()) {
       <button class="permissions-dialog__close-btn" mat-icon-button (click)="onCancel()">
         <mat-icon>close</mat-icon>
       </button>
@@ -38,7 +38,7 @@
       </div>
     }
 
-    @if (systemMenusResource.isLoading()) {
+    @if (isLoadingMenuOptions()) {
       <div class="permissions-dialog__loading">
         <mat-spinner diameter="30"></mat-spinner>
         <span>Cargando opciones...</span>
@@ -53,7 +53,7 @@
               <mat-checkbox
                 [checked]="assignedMenuOptionIds().has(+group.id)"
                 (change)="toggleMenuGroupSelection(group, $event.checked)"
-                [disabled]="updatePermissionsResource.isLoading() || group.isUserManager || isEditRestricted()"
+                [disabled]="isUpdatingPermissions() || group.isUserManager || isEditRestricted()"
                 color="primary"
               >
                 <mat-icon class="permissions-dialog__group-icon">
@@ -70,7 +70,7 @@
                 <mat-checkbox
                   [checked]="assignedMenuOptionIds().has(+child.id)"
                   (change)="toggleSubMenuSelection(child.id, group)"
-                  [disabled]="updatePermissionsResource.isLoading() || group.isUserManager || isEditRestricted()"
+                  [disabled]="isUpdatingPermissions() || group.isUserManager || isEditRestricted()"
                   class="permissions-dialog__child-checkbox"
                 >
                   {{ child.label }}
@@ -85,7 +85,7 @@
   </mat-dialog-content>
 
   <mat-dialog-actions class="permissions-dialog__actions" align="end">
-    <button mat-button (click)="onCancel()" [disabled]="updatePermissionsResource.isLoading()">
+    <button mat-button (click)="onCancel()" [disabled]="isUpdatingPermissions()">
       CANCELAR
     </button>
 
@@ -96,7 +96,7 @@
       [disabled]="!canSubmitPermissions()"
       (click)="submitPermissionOverrides()"
     >
-      @if (updatePermissionsResource.isLoading()) {
+      @if (isUpdatingPermissions()) {
         <mat-spinner diameter="20"></mat-spinner>
       } @else {
         <div class="permissions-dialog__btn-content">

@@ -1,4 +1,5 @@
-import { NotificationResponse, NotificationUI } from '../../models/notification.model';
+import { NotificationResponse } from '../../core/models/notification-dto.model';
+import { NotificationUI } from '../../features/dashboard/models/notification.model';
 import { formatRelativeTime } from './date-utils';
 
 export const NOTIFICATION_TYPES = {

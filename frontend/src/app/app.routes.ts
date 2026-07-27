@@ -1,43 +1,19 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './features/auth/pages/login/login.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: 'login',
-    component: LoginComponent,
+    loadChildren: () => import('./features/auth/auth.routes').then(m => m.authRoutes),
   },
   {
     path: 'dashboard',
     loadComponent: () =>
-      import('./features/dashboard/dashboard.component').then(
-        (m) => m.DashboardComponent,
+      import('./layout/main-layout/main-layout.component').then(
+        (m) => m.MainLayoutComponent,
       ),
     canActivate: [authGuard],
-    children: [
-      {
-        path: 'home',
-        loadComponent: () =>
-          import('./features/dashboard/pages/home/home.component').then(
-            (m) => m.HomeComponent,
-          ),
-      },
-      {
-        path: 'users',
-        loadComponent: () =>
-          import('./features/dashboard/pages/manager-users/manager-users.component').then(
-            (m) => m.ManagerUsersComponent,
-          ),
-      },
-      {
-        path: 'notifications',
-        loadComponent: () =>
-          import('./features/dashboard/pages/notifications/notifications.component').then(
-            (m) => m.NotificationsComponent,
-          ),
-      },
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
-    ],
+    loadChildren: () => import('./features/dashboard/dashboard.routes').then(m => m.dashboardRoutes),
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: 'login' },

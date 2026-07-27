@@ -1,21 +1,18 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
 
 import { MaterialModule } from '../../../../shared/material/material.module';
-import { NotificationService } from '../../../../core/services/notification.service';
+import { NotificationStore } from '../../../../core/stores/notification-store/notification.store';
 import { ToastService } from '../../../../core/services/toast.service';
-import { toNotificationUI } from '../../../../core/utils/mapper-utils';
-import { PAGINATION } from '../../../../core/utils/pagination-constants';
-import { ApiError } from '../../../../core/utils/status.codes';
+import { toNotificationUI } from '../../../../shared/utils/mapper-utils';
+import { PAGINATION } from '../../../../shared/utils/pagination-constants';
 import { NotificationFilteredListComponent } from '../../components/notification-filtered-list/notification-filtered-list.component';
 import {
   NotificationsListData,
   NotificationsListEvent,
   NotificationUI,
-} from '../../../../models/notification.model';
+} from '../../../dashboard/models/notification.model';
 
 @Component({
   selector: 'app-notifications',
@@ -25,88 +22,58 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificationsComponent {
-  private readonly notificationService = inject(NotificationService);
+  private readonly notificationStore = inject(NotificationStore);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
   public readonly pageSize = PAGINATION.NOTIFICATIONS_PAGE_SIZE;
   public currentPage = signal(0);
-  private readonly loadTrigger = signal(0);
 
-  public notificationsResource = rxResource({
-    request: () => ({ page: this.currentPage(), tick: this.loadTrigger() }),
-    loader: ({ request }) => {
-      const offset = request.page * this.pageSize;
-      return this.notificationService.getNotifications(this.pageSize, offset);
-    },
-  });
+  public unreadCount = this.notificationStore.unreadCount;
 
   public notifications = computed<NotificationUI[]>(() =>
-    (this.notificationsResource.value() ?? []).map(toNotificationUI)
+    (this.notificationStore.notifications() ?? []).map(toNotificationUI)
   );
 
-  public unreadCountResource = rxResource({
-    loader: () => this.notificationService.getUnreadCount(),
-  });
+  public isLoadingNotifications = this.notificationStore.isLoadingNotifications;
 
-  public hasUnread = computed(() => (this.unreadCountResource.value()?.count ?? 0) > 0);
+  public hasUnread = computed(() => this.unreadCount() > 0);
 
   public listData = computed<NotificationsListData>(() => ({
     notifications: this.notifications(),
-    isLoading: this.notificationsResource.isLoading(),
-    hasError: !!this.notificationsResource.error(),
+    isLoading: this.isLoadingNotifications(),
+    hasError: false,
     hasUnread: this.hasUnread(),
     pageSize: this.pageSize,
     currentPage: this.currentPage(),
   }));
 
-  public markReadTrigger = signal<number | null>(null);
-
-  public markReadResource = rxResource({
-    request: () => this.markReadTrigger(),
-    loader: ({ request: id }) => {
-      if (id === null) return of(undefined);
-      return this.notificationService.markAsRead(id);
-    },
-  });
-
-  private readonly markAllTrigger = signal(0);
-
-  public markAllResource = rxResource({
-    request: () => this.markAllTrigger(),
-    loader: ({ request: t }) => {
-      if (t === 0) return of(undefined);
-      return this.notificationService.markAllAsRead();
-    },
-  });
-
   constructor() {
+    this.loadPage(0);
+
     effect(() => {
-      if (this.markReadResource.value() !== undefined) {
-        this.notificationsResource.reload();
-        this.unreadCountResource.reload();
-        this.markReadTrigger.set(null);
+      if (this.notificationStore.markReadResult() !== undefined) {
+        this.notificationStore.loadUnreadCount();
+        this.loadPage(this.currentPage());
       }
     });
 
     effect(() => {
-      if (this.markAllResource.value() !== undefined) {
+      if (this.notificationStore.markAllResult() !== undefined) {
         this.toast.success('Notificaciones marcadas como leídas');
-        this.notificationsResource.reload();
-        this.unreadCountResource.reload();
+        this.notificationStore.loadUnreadCount();
+        this.loadPage(this.currentPage());
       }
     });
 
     effect(() => {
-      const err = this.markReadResource.error() as ApiError;
-      if (err) {
+      if (this.notificationStore.markReadError()) {
         this.toast.error('Error al marcar notificación');
-        this.markReadTrigger.set(null);
       }
     });
 
     effect(() => {
-      if (this.markAllResource.error()) {
+      if (this.notificationStore.markAllError()) {
         this.toast.error('Error al marcar notificaciones');
       }
     });
@@ -115,29 +82,35 @@ export class NotificationsComponent {
   public handleEvent(e: NotificationsListEvent): void {
     switch (e.type) {
       case 'markAsRead':
-        if (!e.notification.isRead && !this.markReadResource.isLoading()) {
-          this.markReadTrigger.set(e.notification.recipientId);
-          if (e.notification.actionUrl) {
-            this.router.navigateByUrl(e.notification.actionUrl);
-          }
+        if (e.notification.isRead && !this.notificationStore.isMarkingRead()) break;
+        this.notificationStore.markAsRead(e.notification.recipientId);
+        if (e.notification.actionUrl) {
+          this.router.navigateByUrl(e.notification.actionUrl);
         }
         break;
       case 'markAllAsRead':
-        if (!this.markAllResource.isLoading()) {
-          this.markAllTrigger.update(n => n + 1);
+        if (!this.notificationStore.isMarkingAll()) {
+          this.notificationStore.markAllAsRead();
         }
         break;
       case 'reload':
-        this.notificationsResource.reload();
-        this.unreadCountResource.reload();
+        this.notificationStore.loadUnreadCount();
+        this.loadPage(this.currentPage());
         break;
       case 'prevPage':
         this.currentPage.update(p => Math.max(0, p - 1));
+        this.loadPage(this.currentPage());
         break;
       case 'nextPage':
         this.currentPage.update(p => p + 1);
+        this.loadPage(this.currentPage());
         break;
     }
+  }
+
+  private loadPage(page: number): void {
+    const offset = page * this.pageSize;
+    this.notificationStore.loadNotifications(this.pageSize, offset);
   }
 
   public goBack(): void {

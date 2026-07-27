@@ -14,18 +14,6 @@ export const HTTP_STATUS = {
   INTERNAL_SERVER_ERROR: 500,
 } as const;
 
-export const ERROR_CODES = {
-  USER_NOT_FOUND: '401',
-  INVALID_PASSWORD: '402',
-  USER_INACTIVE: '403',
-  EMAIL_EXISTS: '405',
-  DNI_EXISTS: '406',
-  RESOURCE_NOT_FOUND: '404',
-  FORBIDDEN: '403',
-  VALIDATION_ERROR: '422',
-  INTERNAL_ERROR: '500',
-} as const;
-
 export const ERROR_MESSAGES = {
   USER_NOT_FOUND: 'Usuario no encontrado',
   INVALID_PASSWORD: 'Credenciales inválidas',

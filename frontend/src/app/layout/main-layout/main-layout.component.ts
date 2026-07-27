@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -6,33 +6,37 @@ import { filter, map } from 'rxjs';
 
 import { MatDialog } from '@angular/material/dialog';
 
-import { AuthService } from '../../core/services/auth.service';
-import { ConfigService } from '../../core/services/config.service';
+import { ConfigStore } from '../../core/stores/config-store/config.store';
 import { MaterialModule } from '../../shared/material/material.module';
-import { SidebarMenuComponent } from './components/sidebar-menu/sidebar-menu.component';
-import { ProfileDialogComponent } from './components/profile-dialog/profile-dialog.component';
-import { NotificationBellComponent } from './components/notification-bell/notification-bell.component';
-import { MenuOption } from '../../models/auth.model';
-import { ROLE_CODES } from '../../core/utils/role-constants';
+import { SidebarMenuComponent } from '../sidebar/sidebar-menu.component';
+import { ProfileDialogComponent } from '../header/profile-dialog/profile-dialog.component';
+import { NotificationBellComponent } from '../header/notification-bell/notification-bell.component';
+import { MenuOption } from '../../core/models/auth.model';
+import { ROLE_CODES } from '../../shared/utils/role-constants';
+import { AuthStore } from '../../core/stores/auth-store/auth.store';
+import { UiStore } from '../../core/stores/ui-store/ui.store';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-main-layout',
   imports: [CommonModule, RouterModule, MaterialModule, SidebarMenuComponent, NotificationBellComponent],
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss'],
+  templateUrl: './main-layout.component.html',
+  styleUrls: ['./main-layout.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent {
+export class MainLayoutComponent {
   private readonly router = inject(Router);
-  private readonly authService = inject(AuthService);
+  private readonly authStore = inject(AuthStore);
+  private readonly uiStore = inject(UiStore);
   private readonly dialog = inject(MatDialog);
-  public readonly configService = inject(ConfigService);
+  public readonly configStore = inject(ConfigStore);
 
-  public isSidebarExpanded = signal(true);
+  public readonly config = this.configStore.config;
 
-  public currentUser = signal(this.authService.currentUser);
+  public readonly isSidebarExpanded = this.uiStore.isSidebarExpanded;
 
-  private readonly rawMenu = toSignal(this.authService.userMenu$, { initialValue: [] as MenuOption[] });
+  public readonly currentUser = this.authStore.currentUser;
+
+  private readonly rawMenu = toSignal(this.authStore.userMenu$, { initialValue: [] as MenuOption[] });
 
   public menuItems = computed<MenuOption[]>(() =>
     this.rawMenu().map(group => ({ ...group }))
@@ -54,11 +58,11 @@ export class DashboardComponent {
   });
 
   public toggleSidebar(): void {
-    this.isSidebarExpanded.update(val => !val);
+    this.uiStore.toggleSidebar();
   }
 
   public handleLogout(): void {
-    this.authService.logout();
+    this.authStore.logout();
   }
 
   public openProfileDialog(): void {

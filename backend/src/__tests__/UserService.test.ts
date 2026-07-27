@@ -100,7 +100,7 @@ describe('UsersService', () => {
     it('should throw for admin user', async () => {
       jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
 
-      await expect(service.updateUserPermissions(1, [], 'ADMIN')).rejects.toThrow('403');
+      await expect(service.updateUserPermissions(1, [], 'ADMIN')).rejects.toThrow('No se puede cambiar permisos de administrador');
     });
 
     it('should allow SUPER_ADMIN to update ADMIN', async () => {
@@ -116,7 +116,7 @@ describe('UsersService', () => {
     it('should throw for super admin user (immutable)', async () => {
       jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'SUPER_ADMIN' } } as any);
 
-      await expect(service.updateUserPermissions(1, [], 'SUPER_ADMIN')).rejects.toThrow('403');
+      await expect(service.updateUserPermissions(1, [], 'SUPER_ADMIN')).rejects.toThrow('No se puede cambiar permisos del super administrador');
     });
   });
 
@@ -145,7 +145,7 @@ describe('UsersService', () => {
     it('should throw for admin', async () => {
       jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
 
-      await expect(service.toggleUserStatus(1, 'ADMIN', 1, 'admin@test.com')).rejects.toThrow('403');
+      await expect(service.toggleUserStatus(1, 'ADMIN', 1, 'admin@test.com')).rejects.toThrow('No se puede cambiar estado de administrador');
     });
 
     it('should allow SUPER_ADMIN to toggle ADMIN', async () => {
@@ -163,7 +163,7 @@ describe('UsersService', () => {
     it('should throw for super admin (immutable)', async () => {
       jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'SUPER_ADMIN' } } as any);
 
-      await expect(service.toggleUserStatus(1, 'SUPER_ADMIN', 1, 'admin@test.com')).rejects.toThrow('403');
+      await expect(service.toggleUserStatus(1, 'SUPER_ADMIN', 1, 'admin@test.com')).rejects.toThrow('No se puede cambiar estado del super administrador');
     });
   });
 });

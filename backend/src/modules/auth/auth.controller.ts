@@ -39,8 +39,9 @@ export async function login(req: Request, res: Response) {
     });
   } catch (error: any) {
     logError(`Login failed for email: ${req.body.email}`, { error: error.message });
-    const statusCode = getHttpCode(error.message);
-    return res.status(statusCode).json({ message: error.message });
+    const statusCode = getHttpCode(error);
+    const message = error.message;
+    return res.status(statusCode).json({ message, ...(error.code && { code: error.code }) });
   }
 }
 
@@ -53,7 +54,8 @@ export async function updateProfile(req: AuthRequest, res: Response) {
     return res.status(HTTP_STATUS.OK).json(result);
   } catch (error: any) {
     logError(`Profile update failed`, { error: error.message });
-    const statusCode = getHttpCode(error.message);
-    return res.status(statusCode).json({ message: error.message });
+    const statusCode = getHttpCode(error);
+    const message = error.message;
+    return res.status(statusCode).json({ message, ...(error.code && { code: error.code }) });
   }
 }

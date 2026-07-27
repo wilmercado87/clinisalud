@@ -20,19 +20,17 @@
       </div>
 
       <div class="notification-bell__body">
-        @if (recentResource.isLoading()) {
+        @if (isLoadingNotifications()) {
           <div class="notification-bell__loading">
             <mat-spinner diameter="24"></mat-spinner>
           </div>
-        } @else if (recentResource.error()) {
-          <div class="notification-bell__empty">Error al cargar</div>
         } @else if (notifications().length === 0) {
           <div class="notification-bell__empty">Sin notificaciones</div>
         } @else {
           @for (notif of notifications(); track notif.id) {
             <div class="notification-bell__item"
               [class.notification-bell__item--unread]="notif.isUnread"
-              (click)="markAsRead(notif)">
+              (click)="markAsRead(notif.recipientId, notif.actionUrl ?? undefined)">
               <div class="notification-bell__content">
                 <div class="notification-bell__item-title">{{ notif.title }}</div>
                 <div class="notification-bell__item-message">{{ notif.message }}</div>

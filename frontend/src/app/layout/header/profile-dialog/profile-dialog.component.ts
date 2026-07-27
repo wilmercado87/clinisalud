@@ -2,11 +2,10 @@ import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@a
 import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 
-import { MaterialModule } from '../../../../shared/material/material.module';
-import { AuthService } from '../../../../core/services/auth.service';
+import { MaterialModule } from '../../../shared/material/material.module';
+import { AuthStore } from '../../../core/stores/auth-store/auth.store';
 
 @Component({
   selector: 'app-profile-dialog',
@@ -17,26 +16,19 @@ import { AuthService } from '../../../../core/services/auth.service';
 })
 export class ProfileDialogComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
+  private readonly authStore = inject(AuthStore);
   private readonly dialogRef = inject(MatDialogRef<ProfileDialogComponent>);
 
-  public readonly currentUser = computed(() => this.authService.currentUser);
+  public readonly currentUser = this.authStore.currentUser;
+  public readonly isUpdatingProfile = this.authStore.isUpdatingProfile;
+  public readonly updateResult = this.authStore.updateResult;
+  public readonly updateError = this.authStore.updateError;
 
   public profileForm = this.fb.group({
     firstName: ['', [Validators.required, Validators.maxLength(100)]],
     lastName: ['', [Validators.required, Validators.maxLength(100)]],
     phone: ['', [Validators.pattern('^[0-9]{7,15}$')]],
     address: ['', [Validators.maxLength(255)]],
-  });
-
-  public updateTrigger = signal<Partial<{ firstName: string; lastName: string; phone: string; address: string }> | null>(null);
-
-  public updateResource = rxResource({
-    request: () => this.updateTrigger(),
-    loader: ({ request: data }) => {
-      if (!data) return of(undefined);
-      return this.authService.updateProfile(data);
-    },
   });
 
   public isValid = computed(() => this.formStatusSignal() === 'VALID');
@@ -75,20 +67,20 @@ export class ProfileDialogComponent {
   public canSubmit = computed(() =>
     this.isValid() &&
     this.hasChanges() &&
-    !this.updateResource.isLoading()
+    !this.isUpdatingProfile()
   );
 
   public onSubmit(): void {
     if (!this.canSubmit()) return;
 
     const raw = this.profileForm.getRawValue();
-    const normalizedFormProfile: Record<string, string | undefined> = {};
-    if (raw.firstName) normalizedFormProfile['firstName'] = raw.firstName;
-    if (raw.lastName) normalizedFormProfile['lastName'] = raw.lastName;
-    normalizedFormProfile['phone'] = raw.phone ?? undefined;
-    normalizedFormProfile['address'] = raw.address ?? undefined;
+    const normalized: Record<string, string | undefined> = {};
+    if (raw.firstName) normalized['firstName'] = raw.firstName;
+    if (raw.lastName) normalized['lastName'] = raw.lastName;
+    normalized['phone'] = raw.phone ?? undefined;
+    normalized['address'] = raw.address ?? undefined;
 
-    this.updateTrigger.set(normalizedFormProfile);
+    this.authStore.updateProfile(normalized);
   }
 
   public onCancel(): void {

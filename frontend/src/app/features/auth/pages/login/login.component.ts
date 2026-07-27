@@ -1,9 +1,8 @@
-import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,10 +10,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { AuthService } from '../../../../core/services/auth.service';
-import { LoginRequest } from '../../../../models/auth.model';
-import { ConfigService } from '../../../../core/services/config.service';
-import { ApiError } from '../../../../core/utils/status.codes';
+import { AuthStore } from '../../../../core/stores/auth-store/auth.store';
+import { ConfigStore } from '../../../../core/stores/config-store/config.store';
+import { ApiError } from '../../../../shared/utils/status.codes';
 
 @Component({
   selector: 'app-login',
@@ -25,19 +23,11 @@ import { ApiError } from '../../../../core/utils/status.codes';
 })
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
+  private readonly authStore = inject(AuthStore);
   private readonly router = inject(Router);
-  public readonly configService = inject(ConfigService);
+  public readonly configStore = inject(ConfigStore);
 
-  private readonly loginTrigger = signal<LoginRequest | null>(null);
-
-  public loginResource = rxResource({
-    request: () => this.loginTrigger(),
-    loader: ({ request: credentials }) => {
-      if (!credentials) return of(null);
-      return this.authService.login(credentials);
-    }
-  });
+  public readonly isLoggingIn = this.authStore.isLoggingIn;
 
   public loginForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -47,21 +37,17 @@ export class LoginComponent {
   public formStatus = toSignal(this.loginForm.statusChanges, { initialValue: this.loginForm.status });
 
   public canSubmit = computed(() =>
-    this.formStatus() === 'VALID' && !this.loginResource.isLoading()
+    this.formStatus() === 'VALID' && !this.isLoggingIn()
   );
 
   public errorMessage = computed(() => {
-    const err = this.loginResource.error() as ApiError;
+    const err = this.authStore.loginError() as ApiError;
     return err;
   });
 
   constructor() {
-    this.registerEffects();
-  }
-
-  private registerEffects(): void {
     effect(() => {
-      if (this.loginResource.value()) {
+      if (this.authStore.loginResult()) {
         this.router.navigate(['/dashboard']);
       }
     });
@@ -70,6 +56,6 @@ export class LoginComponent {
   public onLogin(): void {
     if (this.loginForm.invalid) return;
 
-    this.loginTrigger.set(this.loginForm.getRawValue());
+    this.authStore.login(this.loginForm.getRawValue());
   }
 }

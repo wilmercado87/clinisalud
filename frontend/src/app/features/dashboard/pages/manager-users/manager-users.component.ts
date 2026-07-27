@@ -1,22 +1,20 @@
 import { Component, inject, ViewChild, signal, effect, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
-import { rxResource } from '@angular/core/rxjs-interop';
 
 import { MaterialModule } from '../../../../shared/material/material.module';
-import { UserService } from '../../services/user.service';
-import { ToggleStatusResponse, UserResponse } from '../../../../models/user-manager.model';
-import { ROLE_CODES } from '../../../../core/utils/role-constants';
-import { PAGINATION } from '../../../../core/utils/pagination-constants';
-import { ApiError } from '../../../../core/utils/status.codes';
+import { UserStore } from '../../store/user-store/user.store';
+import { UserResponse } from '../../../../core/models/user-manager.model';
+import { ROLE_CODES } from '../../../../shared/utils/role-constants';
+import { PAGINATION } from '../../../../shared/utils/pagination-constants';
+import { ApiError } from '../../../../shared/utils/status.codes';
 import { SharedModule } from '../../../../shared/shared.module';
 import { UserFormDialogComponent } from '../../components/user-form-dialog/user-form-dialog.component';
 import { PermissionsDialogComponent } from '../../components/permissions-dialog/permissions-dialog.component';
 import { ToastService } from '../../../../core/services/toast.service';
-import { of } from 'rxjs';
+import { createTableUtils } from '../../../../shared/utils/table-utils';
 
 @Component({
   selector: 'app-manager-users',
@@ -27,110 +25,90 @@ import { of } from 'rxjs';
 })
 export class ManagerUsersComponent implements AfterViewInit {
   public readonly PAGE_SIZE_OPTIONS = PAGINATION.PAGE_SIZE_OPTIONS;
-  private readonly userService = inject(UserService);
+  private readonly userStore = inject(UserStore);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
+
+  private readonly filterPredicate = (data: UserResponse, filter: string): boolean => {
+  const searchTerms = [
+    data.firstName, 
+    data.lastName, 
+    data.dni, 
+    data.email,
+    data.roleData?.name, 
+    data.isActive ? 'activo' : 'inactivo'
+  ].join(' ').toLowerCase();
+
+  return filter
+    .trim()
+    .split(/\s+/)
+    .every(term => searchTerms.includes(term.toLowerCase()));
+};
+
+  public readonly usersTable = createTableUtils<UserResponse>(this.filterPredicate);
+
+  public readonly displayedColumns: string[] = ['name', 'dni', 'email', 'role', 'status', 'actions'];
+
+  public readonly isLoadingUsers = this.userStore.isLoadingUsers;
+  public readonly isToggling = this.userStore.isToggling;
+
+  public togglingUserId = signal<number | null>(null);
+
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
 
   public isSuperAdmin(user: UserResponse): boolean {
     return user.roleData?.code === ROLE_CODES.SUPER_ADMIN;
   }
 
-  public usersResource = rxResource({
-    loader: () => this.userService.getManageableUsers()
-  });
-
-  public toggleUserIdTrigger = signal<number | null>(null);
-
-  public toggleStatusResource = rxResource<ToggleStatusResponse | undefined, number | null>({
-    request: () => this.toggleUserIdTrigger(),
-    loader: ({ request: id }) => {
-      if (id === null) {
-        return of(undefined);
-      }
-
-      return this.userService.toggleStatus(id);
-    }
-  });
-
-  public filterValue = signal('');
-  public dataSource = new MatTableDataSource<UserResponse>([]);
-  public displayedColumns: string[] = ['name', 'dni', 'email', 'role', 'status', 'actions'];
-
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
-
   constructor() {
     effect(() => {
-      const users = this.usersResource.value();
-      if (users) {
-        this.dataSource.data = users;
-        this.dataSource.filterPredicate = this.createFilterPredicate();
-      }
+      const users = this.userStore.users();
+      if (users) this.usersTable.setData(users);
     });
 
     effect(() => {
-      const result = this.toggleStatusResource.value();
+      const result = this.userStore.toggleResult();
       if (result && 'message' in result) {
         this.toast.success(result.message);
-        this.usersResource.reload();
-        this.toggleUserIdTrigger.set(null);
+        this.userStore.loadUsers();
+        this.togglingUserId.set(null);
       }
     });
 
     effect(() => {
-      if (this.usersResource.error()) {
+      if (this.userStore.usersError()) {
         this.toast.error('Error al sincronizar datos del servidor');
       }
 
-      const toggleErr = this.toggleStatusResource.error() as ApiError;
+      const toggleErr = this.userStore.toggleError() as ApiError;
       if (toggleErr) {
-        this.toast.error(toggleErr.error?.message?.split(':')[1] || 'Error al cambiar estado');
-        this.toggleUserIdTrigger.set(null);
+        this.toast.error(toggleErr.error?.message || 'Error al cambiar estado');
+        this.togglingUserId.set(null);
       }
     });
   }
 
   ngAfterViewInit(): void {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
-  }
-
-  private createFilterPredicate(): (data: UserResponse, filter: string) => boolean {
-    return (data: UserResponse, filter: string): boolean => {
-      const searchTerms = [
-        data.firstName, data.lastName, data.dni, data.email,
-        data.roleData?.name, data.isActive ? 'activo' : 'inactivo'
-      ].join(' ').toLowerCase();
-
-      return filter
-        .trim()
-        .split(/\s+/) // 🛡️ Soporta múltiples espacios accidentales
-        .every(term => searchTerms.includes(term.toLowerCase()));
-    };
-  }
-
-  public applyFilter(event: Event): void {
-    const val = (event.target as HTMLInputElement).value;
-    this.filterValue.set(val);
-    this.dataSource.filter = val;
-    this.paginator?.firstPage();
+    this.usersTable.connectPaginatorSort(this.paginator, this.sort);
   }
 
   public toggleUserStatus(user: UserResponse): void {
-    if (!this.toggleStatusResource.isLoading()) {
-      this.toggleUserIdTrigger.set(user.id);
+    if (!this.isToggling()) {
+      this.togglingUserId.set(user.id);
+      this.userStore.toggleStatus(user.id);
     }
   }
 
   public openCreateDialog(): void {
     this.dialog.open(UserFormDialogComponent, { width: '700px', disableClose: true })
       .afterClosed()
-      .subscribe(result => result && this.usersResource.reload());
+      .subscribe(result => result && this.userStore.loadUsers());
   }
 
   public openPermissionsDialog(user: UserResponse): void {
     this.dialog.open(PermissionsDialogComponent, { width: '600px', disableClose: true, data: { user } })
       .afterClosed()
-      .subscribe(result => result?.success && this.usersResource.reload());
+      .subscribe(result => result?.success && this.userStore.loadUsers());
   }
 }

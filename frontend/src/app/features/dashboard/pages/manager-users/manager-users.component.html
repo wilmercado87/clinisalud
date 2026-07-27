@@ -16,7 +16,7 @@
       <mat-label>Buscador global</mat-label>
       <input
         matInput
-        (keyup)="applyFilter($event)"
+        (keyup)="usersTable.applyFilter($event)"
         placeholder="Nombre, correo o DNI..."
         #input
       />
@@ -25,13 +25,13 @@
   </section>
 
   <div class="user-manager__table-container mat-elevation-z2">
-    @if (usersResource.isLoading()) {
+    @if (isLoadingUsers()) {
       <div class="user-manager__loader">
         <mat-spinner diameter="40"></mat-spinner>
       </div>
     }
 
-    <table mat-table [dataSource]="dataSource" matSort class="user-manager__table">
+    <table mat-table [dataSource]="usersTable.dataSource" matSort class="user-manager__table">
 
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Empleado</th>
@@ -76,7 +76,7 @@
           <button mat-icon-button [matMenuTriggerFor]="userMenu"
           (click)="$event.stopPropagation()">
 
-            @if (toggleStatusResource.isLoading() && toggleUserIdTrigger() === user.id) {
+            @if (isToggling() && togglingUserId() === user.id) {
               <mat-spinner diameter="20"></mat-spinner>
             } @else {
               <mat-icon>more_horiz</mat-icon>
@@ -90,7 +90,7 @@
               <span>Gestionar Accesos</span>
             </button>
             <button mat-menu-item (click)="toggleUserStatus(user)"
-                    [disabled]="toggleStatusResource.isLoading() || isSuperAdmin(user)">
+                    [disabled]="isToggling() || isSuperAdmin(user)">
               <mat-icon [color]="user.isActive ? 'warn' : 'accent'">
                 {{ user.isActive ? "person_off" : "person_check" }}
               </mat-icon>
@@ -107,13 +107,13 @@
         <td class="mat-cell" colspan="6">
           <div class="user-manager__empty-state">
 
-            @if (filterValue().length > 0) {
+            @if (usersTable.filterValue().length > 0) {
               <app-empty-state
                 [title]="'Búsqueda sin coincidencias'"
-                [message]="'No encontramos resultados para \'' + filterValue() + '\''"
+                [message]="'No encontramos resultados para \'' + usersTable.filterValue() + '\''"
                 [icon]="'person_search'">
               </app-empty-state>
-            } @else if (!usersResource.isLoading()) {
+            } @else if (!isLoadingUsers()) {
               <app-empty-state
                 [title]="'No hay personal registrado'"
                 [message]="'Comienza registrando un nuevo empleado en el sistema.'"
