@@ -1,8 +1,8 @@
 import { Injectable, inject, signal, effect, computed } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { NotificationService } from '../../services/notification.service';
-import { SocketService } from '../../services/socket.service';
+import { NotificationService } from '@core/services/notification.service';
+import { SocketService } from '@core/services/socket.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationStore {

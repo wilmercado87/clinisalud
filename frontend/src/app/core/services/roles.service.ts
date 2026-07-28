@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, shareReplay } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { RoleResponse } from '../models/user-manager.model';
-import { MenuOption } from '../models/auth.model';
+import { environment } from '@env/environment';
+import { RoleResponse } from '@core/models/user-manager.model';
+import { MenuOption } from '@core/models/auth.model';
 
 @Injectable({
   providedIn: 'root',

@@ -1,21 +1,8 @@
+import { UserResponse } from '@core/models/user-manager.model';
+
 export interface LoginRequest {
   email: string;
   password: string;
-}
-
-export interface UserSession {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  dni: string;
-  phone?: string;
-  address?: string;
-  role: string;
-  roleId: number;
-  isActive: boolean;
-  documentTypeId: number;
-  roleData?: { id: number; name: string; code: string };
 }
 
 export interface MenuOption {
@@ -31,6 +18,6 @@ export interface MenuOption {
 
 export interface AuthResponse {
   token: string;
-  user: UserSession;
+  user: UserResponse;
   menu: MenuOption[];
 }

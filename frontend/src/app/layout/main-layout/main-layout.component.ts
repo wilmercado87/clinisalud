@@ -3,25 +3,29 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
-
 import { MatDialog } from '@angular/material/dialog';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatListModule } from '@angular/material/list';
 
-import { ConfigStore } from '../../core/stores/config-store/config.store';
-import { MaterialModule } from '../../shared/material/material.module';
-import { SidebarMenuComponent } from '../sidebar/sidebar-menu.component';
-import { ProfileDialogComponent } from '../header/profile-dialog/profile-dialog.component';
-import { NotificationBellComponent } from '../header/notification-bell/notification-bell.component';
-import { MenuOption } from '../../core/models/auth.model';
-import { ROLE_CODES } from '../../shared/utils/role-constants';
-import { AuthStore } from '../../core/stores/auth-store/auth.store';
-import { UiStore } from '../../core/stores/ui-store/ui.store';
+import { ConfigStore } from '@core/stores/config-store/config.store';
+import { SidebarMenuComponent } from '@layout/sidebar/sidebar-menu.component';
+import { ProfileDialogComponent } from '@layout/header/profile-dialog/profile-dialog.component';
+import { NotificationBellComponent } from '@layout/header/notification-bell/notification-bell.component';
+import { MenuOption } from '@core/models/auth.model';
+import { ROLE_CODES } from '@shared/utils/role-constants';
+import { AuthStore } from '@core/stores/auth-store/auth.store';
+import { UiStore } from '@core/stores/ui-store/ui.store';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [CommonModule, RouterModule, MaterialModule, SidebarMenuComponent, NotificationBellComponent],
+  imports: [CommonModule, RouterModule, MatSidenavModule, MatToolbarModule, MatIconModule, MatButtonModule, MatTooltipModule, MatListModule, SidebarMenuComponent, NotificationBellComponent],
   templateUrl: './main-layout.component.html',
-  styleUrls: ['./main-layout.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrl: './main-layout.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MainLayoutComponent {
   private readonly router = inject(Router);

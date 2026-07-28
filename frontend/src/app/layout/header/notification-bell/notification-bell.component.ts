@@ -1,17 +1,21 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatMenuModule } from '@angular/material/menu';
 
-import { MaterialModule } from '../../../shared/material/material.module';
-import { NotificationStore } from '../../../core/stores/notification-store/notification.store';
-import { NotificationUI } from '../../../features/dashboard/models/notification.model';
-import { toNotificationUI } from '../../../shared/utils/mapper-utils';
+import { NotificationStore } from '@core/stores/notification-store/notification.store';
+import { NotificationUI } from '@features/dashboard/models/notification.model';
+import { toNotificationUI } from '@shared/utils/mapper-utils';
 
 @Component({
   selector: 'app-notification-bell',
-  imports: [CommonModule, MaterialModule],
+  imports: [CommonModule, MatIconModule, MatButtonModule, MatTooltipModule, MatProgressSpinnerModule, MatMenuModule],
   templateUrl: './notification-bell.component.html',
-  styleUrls: ['./notification-bell.component.scss'],
+  styleUrl: './notification-bell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificationBellComponent {

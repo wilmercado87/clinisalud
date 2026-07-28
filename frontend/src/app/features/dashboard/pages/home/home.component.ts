@@ -1,11 +1,12 @@
 import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
-import { AuthStore } from '../../../../core/stores/auth-store/auth.store';
+import { AuthStore } from '@core/stores/auth-store/auth.store';
 
 @Component({
-    selector: 'app-home',
-    templateUrl: './home.component.html',
-    styleUrl: './home.component.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-home',
+  imports: [],
+  templateUrl: './home.component.html',
+  styleUrl: './home.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent {
   private readonly authStore = inject(AuthStore);

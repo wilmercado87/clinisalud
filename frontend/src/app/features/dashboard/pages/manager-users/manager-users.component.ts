@@ -3,63 +3,50 @@ import { CommonModule } from '@angular/common';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { MaterialModule } from '../../../../shared/material/material.module';
-import { UserStore } from '../../store/user-store/user.store';
-import { UserResponse } from '../../../../core/models/user-manager.model';
-import { ROLE_CODES } from '../../../../shared/utils/role-constants';
-import { PAGINATION } from '../../../../shared/utils/pagination-constants';
-import { ApiError } from '../../../../shared/utils/status.codes';
-import { SharedModule } from '../../../../shared/shared.module';
-import { UserFormDialogComponent } from '../../components/user-form-dialog/user-form-dialog.component';
-import { PermissionsDialogComponent } from '../../components/permissions-dialog/permissions-dialog.component';
-import { ToastService } from '../../../../core/services/toast.service';
-import { createTableUtils } from '../../../../shared/utils/table-utils';
+import { UserStore } from '@features/dashboard/store/user-store/user.store';
+import { UserResponse } from '@core/models/user-manager.model';
+import { ROLE_CODES } from '@shared/utils/role-constants';
+import { PAGINATION } from '@shared/utils/pagination-constants';
+import { ApiError } from '@shared/utils/status.codes';
+import { UserFormDialogComponent } from '@features/dashboard/components/user-form-dialog/user-form-dialog.component';
+import { PermissionsDialogComponent } from '@features/dashboard/components/permissions-dialog/permissions-dialog.component';
+import { ToastService } from '@core/services/toast.service';
+import { createTableUtils } from '@shared/utils/table-utils';
+import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-manager-users',
-  imports: [CommonModule, MaterialModule, SharedModule],
+  imports: [CommonModule, MatPaginatorModule, MatSortModule, MatTableModule, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatMenuModule, MatProgressSpinnerModule, MatTooltipModule, EmptyStateComponent],
   templateUrl: './manager-users.component.html',
-  styleUrls: ['./manager-users.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrl: './manager-users.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ManagerUsersComponent implements AfterViewInit {
-  public readonly PAGE_SIZE_OPTIONS = PAGINATION.PAGE_SIZE_OPTIONS;
   private readonly userStore = inject(UserStore);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
 
-  private readonly filterPredicate = (data: UserResponse, filter: string): boolean => {
-  const searchTerms = [
-    data.firstName, 
-    data.lastName, 
-    data.dni, 
-    data.email,
-    data.roleData?.name, 
-    data.isActive ? 'activo' : 'inactivo'
-  ].join(' ').toLowerCase();
-
-  return filter
-    .trim()
-    .split(/\s+/)
-    .every(term => searchTerms.includes(term.toLowerCase()));
-};
-
-  public readonly usersTable = createTableUtils<UserResponse>(this.filterPredicate);
-
+  public readonly PAGE_SIZE_OPTIONS = PAGINATION.PAGE_SIZE_OPTIONS;
   public readonly displayedColumns: string[] = ['name', 'dni', 'email', 'role', 'status', 'actions'];
-
   public readonly isLoadingUsers = this.userStore.isLoadingUsers;
   public readonly isToggling = this.userStore.isToggling;
 
+  public readonly usersTable = createTableUtils<UserResponse>(this.filterPredicate);
   public togglingUserId = signal<number | null>(null);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-
-  public isSuperAdmin(user: UserResponse): boolean {
-    return user.roleData?.code === ROLE_CODES.SUPER_ADMIN;
-  }
 
   constructor() {
     effect(() => {
@@ -93,6 +80,10 @@ export class ManagerUsersComponent implements AfterViewInit {
     this.usersTable.connectPaginatorSort(this.paginator, this.sort);
   }
 
+  public isSuperAdmin(user: UserResponse): boolean {
+    return user.roleData?.code === ROLE_CODES.SUPER_ADMIN;
+  }
+
   public toggleUserStatus(user: UserResponse): void {
     if (!this.isToggling()) {
       this.togglingUserId.set(user.id);
@@ -110,5 +101,21 @@ export class ManagerUsersComponent implements AfterViewInit {
     this.dialog.open(PermissionsDialogComponent, { width: '600px', disableClose: true, data: { user } })
       .afterClosed()
       .subscribe(result => result?.success && this.userStore.loadUsers());
+  }
+
+  private filterPredicate(data: UserResponse, filter: string): boolean {
+    const searchTerms = [
+      data.firstName,
+      data.lastName,
+      data.dni,
+      data.email,
+      data.roleData?.name,
+      data.isActive ? 'activo' : 'inactivo',
+    ].join(' ').toLowerCase();
+
+    return filter
+      .trim()
+      .split(/\s+/)
+      .every(term => searchTerms.includes(term.toLowerCase()));
   }
 }

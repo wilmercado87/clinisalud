@@ -1,4 +1,4 @@
-import { NotificationResponse } from '../../../core/models/notification-dto.model';
+import { NotificationResponse } from '@core/models/notification-dto.model';
 
 export interface NotificationUI extends NotificationResponse {
   timeAgo: string;

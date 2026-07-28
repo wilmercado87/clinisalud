@@ -10,16 +10,16 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { AuthStore } from '../../../../core/stores/auth-store/auth.store';
-import { ConfigStore } from '../../../../core/stores/config-store/config.store';
-import { ApiError } from '../../../../shared/utils/status.codes';
+import { AuthStore } from '@core/stores/auth-store/auth.store';
+import { ConfigStore } from '@core/stores/config-store/config.store';
+import { ApiError } from '@shared/utils/status.codes';
 
 @Component({
   selector: 'app-login',
   imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
@@ -31,7 +31,7 @@ export class LoginComponent {
 
   public loginForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]]
+    password: ['', [Validators.required]],
   });
 
   public formStatus = toSignal(this.loginForm.statusChanges, { initialValue: this.loginForm.status });

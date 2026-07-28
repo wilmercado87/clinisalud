@@ -1,7 +1,7 @@
 import { signal, computed, effect, Signal } from '@angular/core';
-import { NotificationUI, NotificationDetailUI } from '../../features/dashboard/models/notification.model';
-import { getNotificationTypeLabel } from './mapper-utils';
-import { formatNotificationDate } from './date-utils';
+import { NotificationUI, NotificationDetailUI } from '@features/dashboard/models/notification.model';
+import { getNotificationTypeLabel } from '@shared/utils/mapper-utils';
+import { formatNotificationDate } from '@shared/utils/date-utils';
 
 const ALL_TEXT = 'all';
 

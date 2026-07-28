@@ -6,14 +6,16 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { MaterialModule } from '../../shared/material/material.module';
-import { MenuOption } from '../../core/models/auth.model';
+import { MatListModule } from '@angular/material/list';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MenuOption } from '@core/models/auth.model';
 
 @Component({
   selector: 'app-sidebar-menu',
-  imports: [CommonModule, RouterModule, MaterialModule],
+  imports: [CommonModule, RouterModule, MatListModule, MatIconModule, MatButtonModule],
   templateUrl: './sidebar-menu.component.html',
-  styleUrls: ['./sidebar-menu.component.scss'],
+  styleUrl: './sidebar-menu.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarMenuComponent {

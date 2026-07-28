@@ -1,8 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { UserService } from '../../services/user.service';
-import { UserResponse, ToggleStatusResponse, PermissionOverride } from '../../../../core/models/user-manager.model';
+import { UserService } from '@features/dashboard/services/user.service';
+import { UserResponse, ToggleStatusResponse, PermissionOverride } from '@core/models/user-manager.model';
 
 interface CreatePayload {
   firstName: string;

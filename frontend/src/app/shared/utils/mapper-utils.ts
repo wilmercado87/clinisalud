@@ -1,6 +1,6 @@
-import { NotificationResponse } from '../../core/models/notification-dto.model';
-import { NotificationUI } from '../../features/dashboard/models/notification.model';
-import { formatRelativeTime } from './date-utils';
+import { NotificationResponse } from '@core/models/notification-dto.model';
+import { NotificationUI } from '@features/dashboard/models/notification.model';
+import { formatRelativeTime } from '@shared/utils/date-utils';
 
 export const NOTIFICATION_TYPES = {
   USER_CREATED: 'USER_CREATED',

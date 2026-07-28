@@ -3,23 +3,30 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatOptionModule } from '@angular/material/core';
 
-import { MaterialModule } from '../../../../shared/material/material.module';
-import { UserStore } from '../../store/user-store/user.store';
-import { RoleStore } from '../../../../core/stores/role-store/role.store';
-import { AuthStore } from '../../../../core/stores/auth-store/auth.store';
-import { ToastService } from '../../../../core/services/toast.service';
-
-import { MenuOption } from '../../../../core/models/auth.model';
-import { ERROR_MAPPING, HTTP_STATUS, ApiError } from '../../../../shared/utils/status.codes';
-import { ROLE_CODES } from '../../../../shared/utils/role-constants';
+import { UserStore } from '@features/dashboard/store/user-store/user.store';
+import { RoleStore } from '@core/stores/role-store/role.store';
+import { AuthStore } from '@core/stores/auth-store/auth.store';
+import { ToastService } from '@core/services/toast.service';
+import { MenuOption } from '@core/models/auth.model';
+import { ERROR_MAPPING, HTTP_STATUS, ApiError } from '@shared/utils/status.codes';
+import { ROLE_CODES } from '@shared/utils/role-constants';
 
 @Component({
   selector: 'app-user-form-dialog',
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatCheckboxModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
   templateUrl: './user-form-dialog.component.html',
-  styleUrls: ['./user-form-dialog.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrl: './user-form-dialog.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserFormDialogComponent {
   private readonly fb = inject(FormBuilder);
@@ -28,6 +35,14 @@ export class UserFormDialogComponent {
   private readonly authStore = inject(AuthStore);
   private readonly toast = inject(ToastService);
   private readonly dialogRef = inject(MatDialogRef<UserFormDialogComponent>);
+
+  public readonly roles = this.roleStore.roles;
+  public readonly isLoadingRoles = this.roleStore.isLoadingRoles;
+  public readonly menuOptions = this.roleStore.menuOptions;
+  public readonly isLoadingMenuOptions = this.roleStore.isLoadingMenuOptions;
+  public readonly isCreating = this.userStore.isCreating;
+  public readonly createResult = this.userStore.createResult;
+  public readonly createError = this.userStore.createError;
 
   public userForm = this.fb.group({
     firstName: ['', [Validators.required]],
@@ -39,15 +54,6 @@ export class UserFormDialogComponent {
     roleId: [null as number | null, Validators.required],
   });
 
-  public readonly roles = this.roleStore.roles;
-  public readonly isLoadingRoles = this.roleStore.isLoadingRoles;
-  public readonly menuOptions = this.roleStore.menuOptions;
-  public readonly isLoadingMenuOptions = this.roleStore.isLoadingMenuOptions;
-
-  public readonly isCreating = this.userStore.isCreating;
-  public readonly createResult = this.userStore.createResult;
-  public readonly createError = this.userStore.createError;
-
   private readonly roleIdSignal = toSignal(
     this.userForm.controls.roleId.valueChanges,
     { initialValue: this.userForm.controls.roleId.value }
@@ -58,7 +64,6 @@ export class UserFormDialogComponent {
   public formStatus = toSignal(this.userForm.statusChanges, { initialValue: this.userForm.status });
 
   public currentUserRole = computed(() => this.authStore.currentUser()?.role ?? '');
-
   public isCurrentUserSuperAdmin = computed(() => this.currentUserRole() === ROLE_CODES.SUPER_ADMIN);
 
   public availableRoles = computed(() => {
@@ -183,14 +188,14 @@ export class UserFormDialogComponent {
   } {
     const cleanFields = Object.fromEntries(
       Object.entries(rawForm).map(([key, value]) => [
-        key, 
-        value === null ? undefined : value
+        key,
+        value === null ? undefined : value,
       ])
     );
 
     return {
       ...cleanFields as { firstName: string; lastName: string; dni: string; email: string; phone?: string; address?: string; roleId: number; },
-      permissions: Array.from(this.selectedIds())
+      permissions: Array.from(this.selectedIds()),
     };
   }
 

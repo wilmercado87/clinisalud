@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
-import { AuthResponse, LoginRequest } from '../models/auth.model';
-import { environment } from '../../../environments/environment';
-import { UserResponse } from '../models/user-manager.model';
-import { ERROR_MAPPING, HTTP_STATUS } from '../../shared/utils/status.codes';
+import { AuthResponse, LoginRequest } from '@core/models/auth.model';
+import { environment } from '@env/environment';
+import { UserResponse } from '@core/models/user-manager.model';
+import { ERROR_MAPPING, HTTP_STATUS } from '@shared/utils/status.codes';
 
 @Injectable({ providedIn: 'root' })
 export class AuthApiService {

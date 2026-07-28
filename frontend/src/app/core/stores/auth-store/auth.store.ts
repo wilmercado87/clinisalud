@@ -3,11 +3,11 @@ import { Router } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of, tap } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { UserResponse } from '../../models/user-manager.model';
-import { MenuOption, AuthResponse, LoginRequest } from '../../models/auth.model';
-import { AuthApiService } from '../../services/auth-api.service';
-import { RoleService } from '../../services/roles.service';
-import { SocketService } from '../../services/socket.service';
+import { UserResponse } from '@core/models/user-manager.model';
+import { MenuOption, AuthResponse, LoginRequest } from '@core/models/auth.model';
+import { AuthApiService } from '@core/services/auth-api.service';
+import { RoleService } from '@core/services/roles.service';
+import { SocketService } from '@core/services/socket.service';
 
 const STORAGE_KEYS = {
   TOKEN: 'token',
@@ -138,7 +138,7 @@ export class AuthStore {
 
   private saveSession(res: AuthResponse): void {
     this.setToken(res.token);
-    this.setUser(res.user as unknown as UserResponse);
+    this.setUser(res.user);
     this.setMenu(res.menu);
     this.socketService.connect(res.token);
   }

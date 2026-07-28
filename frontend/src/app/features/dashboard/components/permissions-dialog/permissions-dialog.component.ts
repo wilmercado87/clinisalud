@@ -1,16 +1,20 @@
 import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-import { MaterialModule } from '../../../../shared/material/material.module';
-import { RoleStore } from '../../../../core/stores/role-store/role.store';
-import { UserStore } from '../../store/user-store/user.store';
-import { AuthStore } from '../../../../core/stores/auth-store/auth.store';
-import { ToastService } from '../../../../core/services/toast.service';
-import { MenuOption } from '../../../../core/models/auth.model';
-import { UserResponse, PermissionOverride } from '../../../../core/models/user-manager.model';
-import { ROLE_CODES } from '../../../../shared/utils/role-constants';
-import { ApiError } from '../../../../shared/utils/status.codes';
+import { RoleStore } from '@core/stores/role-store/role.store';
+import { UserStore } from '@features/dashboard/store/user-store/user.store';
+import { AuthStore } from '@core/stores/auth-store/auth.store';
+import { ToastService } from '@core/services/toast.service';
+import { MenuOption } from '@core/models/auth.model';
+import { UserResponse, PermissionOverride } from '@core/models/user-manager.model';
+import { ROLE_CODES } from '@shared/utils/role-constants';
+import { ApiError } from '@shared/utils/status.codes';
 
 export interface PermissionsDialogData {
   user: UserResponse;
@@ -22,9 +26,9 @@ interface PermissionMenuNode extends MenuOption {
 
 @Component({
   selector: 'app-permissions-dialog',
-  imports: [CommonModule, MaterialModule],
+  imports: [CommonModule, MatDialogModule, MatIconModule, MatCheckboxModule, MatButtonModule, MatProgressSpinnerModule],
   templateUrl: './permissions-dialog.component.html',
-  styleUrls: ['./permissions-dialog.component.scss'],
+  styleUrl: './permissions-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionsDialogComponent {
@@ -33,14 +37,16 @@ export class PermissionsDialogComponent {
   private readonly authStore = inject(AuthStore);
   private readonly toast = inject(ToastService);
   private readonly dialogRef = inject(MatDialogRef<PermissionsDialogComponent>);
+
   public readonly targetUserData = inject<PermissionsDialogData>(MAT_DIALOG_DATA);
 
   public readonly menuOptions = this.roleStore.menuOptions;
   public readonly isLoadingMenuOptions = this.roleStore.isLoadingMenuOptions;
-
   public readonly isUpdatingPermissions = this.userStore.isUpdatingPermissions;
   public readonly updatePermissionsResult = this.userStore.updatePermissionsResult;
   public readonly updatePermissionsError = this.userStore.updatePermissionsError;
+
+  public assignedMenuOptionIds = signal<Set<number>>(new Set());
 
   public permissionMenuGroups = computed<PermissionMenuNode[]>(() => {
     const rawMenus = this.menuOptions() ?? [];
@@ -49,8 +55,6 @@ export class PermissionsDialogComponent {
       isUserManager: menuGroup.label.toUpperCase() === 'GESTOR USUARIOS',
     }));
   });
-
-  public assignedMenuOptionIds = signal<Set<number>>(new Set());
 
   public totalMenuOptionsCount = computed(() =>
     this.permissionMenuGroups().reduce(

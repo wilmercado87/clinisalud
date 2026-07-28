@@ -1,16 +1,29 @@
 import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MaterialModule } from '../../../../shared/material/material.module';
-import { NotificationResponse } from '../../../../core/models/notification-dto.model';
-import { NotificationUI, NotificationsListData, NotificationsListEvent } from '../../../../features/dashboard/models/notification.model';
-import { createNotificationFilter } from '../../../../shared/utils/notification-filter-utils';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatOptionModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { NotificationResponse } from '@core/models/notification-dto.model';
+import {
+  NotificationUI,
+  NotificationsListData,
+  NotificationsListEvent,
+} from '@features/dashboard/models/notification.model';
+import { createNotificationFilter } from '@shared/utils/notification-filter-utils';
 
 @Component({
   selector: 'app-notification-filtered-list',
-  imports: [CommonModule, MaterialModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatDatepickerModule, MatNativeDateModule, MatIconModule, MatButtonModule, MatTooltipModule, MatProgressSpinnerModule],
   templateUrl: './notification-filtered-list.component.html',
-  styleUrls: ['./notification-filtered-list.component.scss'],
+  styleUrl: './notification-filtered-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificationFilteredListComponent {

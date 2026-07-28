@@ -1,8 +1,8 @@
 import { Injectable, inject, computed } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { RoleService } from '../../services/roles.service';
-import { MenuOption } from '../../models/auth.model';
-import { RoleResponse } from '../../models/user-manager.model';
+import { RoleService } from '@core/services/roles.service';
+import { MenuOption } from '@core/models/auth.model';
+import { RoleResponse } from '@core/models/user-manager.model';
 
 @Injectable({ providedIn: 'root' })
 export class RoleStore {

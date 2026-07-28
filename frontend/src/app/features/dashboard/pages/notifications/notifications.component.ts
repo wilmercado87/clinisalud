@@ -1,24 +1,26 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { MaterialModule } from '../../../../shared/material/material.module';
-import { NotificationStore } from '../../../../core/stores/notification-store/notification.store';
-import { ToastService } from '../../../../core/services/toast.service';
-import { toNotificationUI } from '../../../../shared/utils/mapper-utils';
-import { PAGINATION } from '../../../../shared/utils/pagination-constants';
-import { NotificationFilteredListComponent } from '../../components/notification-filtered-list/notification-filtered-list.component';
+import { NotificationStore } from '@core/stores/notification-store/notification.store';
+import { ToastService } from '@core/services/toast.service';
+import { toNotificationUI } from '@shared/utils/mapper-utils';
+import { PAGINATION } from '@shared/utils/pagination-constants';
+import { NotificationFilteredListComponent } from '@features/dashboard/components/notification-filtered-list/notification-filtered-list.component';
 import {
   NotificationsListData,
   NotificationsListEvent,
   NotificationUI,
-} from '../../../dashboard/models/notification.model';
+} from '@features/dashboard/models/notification.model';
 
 @Component({
   selector: 'app-notifications',
-  imports: [CommonModule, MaterialModule, NotificationFilteredListComponent],
+  imports: [CommonModule, MatIconModule, MatButtonModule, MatTooltipModule, NotificationFilteredListComponent],
   templateUrl: './notifications.component.html',
-  styleUrls: ['./notifications.component.scss'],
+  styleUrl: './notifications.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificationsComponent {
