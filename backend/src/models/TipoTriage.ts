@@ -10,10 +10,10 @@ class TipoTriage extends Model {
 
 TipoTriage.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_triage" },
-    triageType: { type: DataTypes.INTEGER, allowNull: false, field: "tipo_triage" },
-    classification: { type: DataTypes.STRING(100), allowNull: false, field: "clasificacion" },
-    waitingTime: { type: DataTypes.STRING(50), allowNull: false, field: "tiempo_espera" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_TIPO_TRIAGE" },
+    triageType: { type: DataTypes.INTEGER, allowNull: false, field: "TIPO_TRIAGE" },
+    classification: { type: DataTypes.STRING(100), allowNull: false, field: "CLASIFICACION" },
+    waitingTime: { type: DataTypes.STRING(50), allowNull: false, field: "TIEMPO_ESPERA" },
   },
   {
     sequelize,

@@ -1,6 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
-import Tarifarios from "./Tarifarios";
+import Tarifario from "./Tarifario";
 import Cups from "./Cups";
 
 class ParagrafoValor extends Model {
@@ -12,27 +12,27 @@ class ParagrafoValor extends Model {
   public variationType!: string;
   public paragraphType!: string;
 
-  public feeSchedule?: Tarifarios;
+  public feeSchedule?: Tarifario;
   public cups?: Cups;
 }
 
 ParagrafoValor.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_paragrafo_valor" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_PARAGRAFO_VALOR" },
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario"
+      field: "FK_TARIFARIO"
     },
-    articleCode: { type: DataTypes.INTEGER, allowNull: false, field: "cod_articulo" },
+    articleCode: { type: DataTypes.INTEGER, allowNull: false, field: "COD_ARTICULO" },
     mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "fk_codigo_mapiiss"
+      field: "FK_CODIGO_MAPIISS"
     },
-    percentage: { type: DataTypes.DECIMAL(5, 2), allowNull: false, field: "porcentaje" },
-    variationType: { type: DataTypes.STRING(50), allowNull: false, field: "tipo_variacion" },
-    paragraphType: { type: DataTypes.STRING(100), allowNull: false, field: "tipo_paragrafo" },
+    percentage: { type: DataTypes.DECIMAL(5, 2), allowNull: false, field: "PORCENTAJE" },
+    variationType: { type: DataTypes.STRING(50), allowNull: false, field: "TIPO_VARIACION" },
+    paragraphType: { type: DataTypes.STRING(100), allowNull: false, field: "TIPO_PARAGRAFO" },
   },
   {
     sequelize,

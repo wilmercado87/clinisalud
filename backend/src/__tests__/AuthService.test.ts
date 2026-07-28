@@ -8,11 +8,11 @@ jest.mock('jsonwebtoken', () => ({
 }));
 
 import { AuthService } from '../modules/auth/auth.service';
-import User from '../models/User';
-import Role from '../models/Role';
-import UserMenuOverride from '../models/UserMenuOverride';
-import RoleMenuPermission from '../models/RoleMenuPermission';
-import MenuOption from '../models/MenuOption';
+import Usuario from '../models/Usuario';
+import Rol from '../models/Rol';
+import SobreescrituraMenuUsuario from '../models/SobreescrituraMenuUsuario';
+import PermisoRolMenu from '../models/PermisoRolMenu';
+import OpcionMenu from '../models/OpcionMenu';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -31,11 +31,11 @@ describe('AuthService', () => {
     service = new AuthService();
     jest.clearAllMocks();
 
-    jest.spyOn(User, 'findOne').mockResolvedValue(mockUser as any);
-    jest.spyOn(Role, 'findByPk').mockResolvedValue({ code: 'ADMIN', id: 1 } as any);
-    jest.spyOn(RoleMenuPermission, 'findAll').mockResolvedValue([{ menuOptionId: 1 }] as any);
-    jest.spyOn(UserMenuOverride, 'findAll').mockResolvedValue([] as any);
-    jest.spyOn(MenuOption, 'findAll').mockResolvedValue([{ id: 1, get: () => ({ id: 1, label: 'Test', parentId: null }) }] as any);
+    jest.spyOn(Usuario, 'findOne').mockResolvedValue(mockUser as any);
+    jest.spyOn(Rol, 'findByPk').mockResolvedValue({ code: 'ADMIN', id: 1 } as any);
+    jest.spyOn(PermisoRolMenu, 'findAll').mockResolvedValue([{ menuOptionId: 1 }] as any);
+    jest.spyOn(SobreescrituraMenuUsuario, 'findAll').mockResolvedValue([] as any);
+    jest.spyOn(OpcionMenu, 'findAll').mockResolvedValue([{ id: 1, get: () => ({ id: 1, label: 'Test', parentId: null }) }] as any);
   });
 
   describe('login - SUCCESS', () => {
@@ -48,8 +48,8 @@ describe('AuthService', () => {
     });
 
     it('should return menu array', async () => {
-      jest.spyOn(Role, 'findByPk').mockResolvedValue({ code: 'USER', id: 2 } as any);
-      jest.spyOn(RoleMenuPermission, 'findAll').mockResolvedValue([{ menuOptionId: 1 }] as any);
+      jest.spyOn(Rol, 'findByPk').mockResolvedValue({ code: 'USER', id: 2 } as any);
+      jest.spyOn(PermisoRolMenu, 'findAll').mockResolvedValue([{ menuOptionId: 1 }] as any);
 
       const result = await service.login('admin@test.com', 'any_password');
 
@@ -59,13 +59,13 @@ describe('AuthService', () => {
 
   describe('login - ERROR', () => {
     it('should throw if user not found', async () => {
-      (User.findOne as jest.Mock).mockResolvedValueOnce(null as any);
+      (Usuario.findOne as jest.Mock).mockResolvedValueOnce(null as any);
 
       await expect(service.login('notfound@test.com', 'password')).rejects.toThrow('no encontrado');
     });
 
     it('should throw if user inactive', async () => {
-      (User.findOne as jest.Mock).mockResolvedValueOnce({ ...mockUser, isActive: false } as any);
+      (Usuario.findOne as jest.Mock).mockResolvedValueOnce({ ...mockUser, isActive: false } as any);
 
       await expect(service.login('admin@test.com', 'password')).rejects.toThrow('inactivo');
     });

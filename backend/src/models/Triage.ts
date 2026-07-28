@@ -2,9 +2,9 @@ import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
 import TipoTriage from "./TipoTriage";
 import TipoDocumento from "./TipoDocumento";
-import Convenios from "./Convenios";
+import Convenio from "./Convenio";
 import Diagnostico from "./Diagnostico";
-import User from "./User";
+import Usuario from "./Usuario";
 
 class Triage extends Model {
   public id!: number;
@@ -12,15 +12,15 @@ class Triage extends Model {
   public documentTypeId!: number;
   public documentNumber!: string;
   public attentionDate!: string;
-  public epsCode!: string;
-  public diagnosticCode!: string;
+  public epsId!: number;
+  public diagnosticId!: number;
   public systemUserId!: number;
 
   public priorityType?: TipoTriage;
   public documentType?: TipoDocumento;
-  public eps?: Convenios;
+  public eps?: Convenio;
   public diagnostic?: Diagnostico;
-  public systemUser?: User;
+  public systemUser?: Usuario;
 }
 
 Triage.init(
@@ -29,42 +29,42 @@ Triage.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
-      field: "pk_id_triage",
+      field: "ID_TRIAGE",
     },
     priorityTypeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_tipo_prioridad",
+      field: "FK_TIPO_PRIORIDAD",
     },
     documentTypeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_tipo_documento",
+      field: "FK_TIPO_DOCUMENTO",
     },
     documentNumber: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "numero_documento",
+      field: "NUMERO_DOCUMENTO",
     },
     attentionDate: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "fecha_atencion",
+      field: "FECHA_ATENCION",
     },
-    epsCode: {
-      type: DataTypes.STRING(30),
+    epsId: {
+      type: DataTypes.BIGINT,
       allowNull: false,
-      field: "fk_cod_eps",
+      field: "FK_EPS",
     },
-    diagnosticCode: {
-      type: DataTypes.STRING(20),
+    diagnosticId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_codigo_diagnostico",
+      field: "FK_DIAGNOSTICO",
     },
     systemUserId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "id_usuario_sistema",
+      field: "ID_USUARIO",
     },
   },
   {

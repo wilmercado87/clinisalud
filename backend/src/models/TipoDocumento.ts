@@ -9,9 +9,9 @@ class TipoDocumento extends Model {
 
 TipoDocumento.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_tipo_documento" },
-    code: { type: DataTypes.STRING(10), allowNull: false, unique: true, field: "pk_tipo_documento" },
-    description: { type: DataTypes.STRING(150), allowNull: false, field: "descripcion_documento" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_TIPO_DOCUMENTO" },
+    code: { type: DataTypes.STRING(10), allowNull: false, unique: true, field: "CODIGO_TIPO_DOCUMENTO" },
+    description: { type: DataTypes.STRING(150), allowNull: false, field: "DESCRIPCION_TIPO_DOCUMENTO" },
   },
   {
     sequelize,

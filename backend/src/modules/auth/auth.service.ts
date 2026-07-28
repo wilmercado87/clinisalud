@@ -1,10 +1,10 @@
 import * as bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../../models/User";
-import Role from "../../models/Role";
-import MenuOption from "../../models/MenuOption";
-import UserMenuOverride from "../../models/UserMenuOverride";
-import RoleMenuPermission from "../../models/RoleMenuPermission";
+import Usuario from "../../models/Usuario";
+import Rol from "../../models/Rol";
+import OpcionMenu from "../../models/OpcionMenu";
+import SobreescrituraMenuUsuario from "../../models/SobreescrituraMenuUsuario";
+import PermisoRolMenu from "../../models/PermisoRolMenu";
 import { buildMenuTree } from "../../utils/MenuTree.util";
 import { JWT_CONFIG } from "../../constants";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
@@ -12,9 +12,9 @@ import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 export class AuthService {
 
   public async login(email: string, pass: string) {
-    const user = await User.findOne({
+    const user = await Usuario.findOne({
       where: { email },
-      include: [{ model: Role, as: "roleData" }],
+      include: [{ model: Rol, as: "roleData" }],
     });
 
     if (!user) throw ApiError.unauthorized("Usuario no encontrado");
@@ -38,12 +38,12 @@ export class AuthService {
   }
 
   private async getAuthorizedMenu(userId: number, roleId: number) {
-    const role = await Role.findByPk(roleId);
+    const role = await Rol.findByPk(roleId);
     const isAdmin = role?.code === "ADMIN" || role?.code === "SUPER_ADMIN";
 
     const [rolePermissions, overrides] = await Promise.all([
-      RoleMenuPermission.findAll({ where: { roleId } }),
-      UserMenuOverride.findAll({ where: { userId } }),
+      PermisoRolMenu.findAll({ where: { roleId } }),
+      SobreescrituraMenuUsuario.findAll({ where: { userId } }),
     ]);
 
     const authorizedIds = new Set(rolePermissions.map(p => p.menuOptionId));
@@ -57,13 +57,13 @@ export class AuthService {
     }
 
     if (isAdmin) {
-      const gestorOption = await MenuOption.findOne({ where: { label: "Gestor Usuarios" } });
+      const gestorOption = await OpcionMenu.findOne({ where: { label: "Gestor Usuarios" } });
       if (gestorOption) authorizedIds.add(gestorOption.id);
     }
 
     if (authorizedIds.size === 0) return [];
 
-    const authorizedOptions = await MenuOption.findAll({
+    const authorizedOptions = await OpcionMenu.findAll({
       where: { id: Array.from(authorizedIds) },
       order: [["order", "ASC"]],
     });
@@ -74,8 +74,8 @@ export class AuthService {
     return buildMenuTree(Array.from(menuMap.values()));
   }
 
-  private buildOptionMap(options: MenuOption[]) {
-    const map = new Map<number, ReturnType<MenuOption['get']>>();
+  private buildOptionMap(options: OpcionMenu[]) {
+    const map = new Map<number, ReturnType<OpcionMenu['get']>>();
     for (const opt of options) {
       map.set(opt.id, opt.get({ plain: true }));
     }
@@ -89,7 +89,7 @@ export class AuthService {
 
     if (parentIdsMissing.length === 0) return;
 
-    const missingParents = await MenuOption.findAll({ where: { id: parentIdsMissing } });
+    const missingParents = await OpcionMenu.findAll({ where: { id: parentIdsMissing } });
     for (const parent of missingParents) {
       map.set(parent.id, parent.get({ plain: true }));
     }
@@ -98,7 +98,7 @@ export class AuthService {
   }
 
   public async updateProfile(userId: number, data: Partial<{ firstName: string; lastName: string; phone: string; address: string }>) {
-    const user = await User.findByPk(userId);
+    const user = await Usuario.findByPk(userId);
     if (!user) throw ApiError.notFound("Usuario no encontrado");
 
     const allowedFields: (keyof typeof data)[] = ["firstName", "lastName", "phone", "address"];
@@ -114,7 +114,7 @@ export class AuthService {
     return userJson;
   }
 
-  private generateToken(user: User): string {
+  private generateToken(user: Usuario): string {
     return jwt.sign(
       { id: user.id, role: user.roleData?.code, email: user.email },
       process.env["JWT_SECRET"] || "clinisalud_secret",

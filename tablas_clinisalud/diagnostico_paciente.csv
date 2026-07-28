@@ -1,1 +1,1 @@
-pk_diag_paciente;fk_numero_admision;fk_id_diagnostico
+ID_DIAG_PACIENTE;FK_ADMISION;FK_DIAGNOSTICO

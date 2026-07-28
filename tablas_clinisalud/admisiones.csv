@@ -1,1 +1,0 @@
-pk_numero_admision;fk_numero_factura;fk_documento_paciente;fecha_admision;pk_id_habitacion;codigo_cama;fk_cod_eps;nombre_eps;observaciones_admision;fk_id_tipo_estado;id_usuario_sistema

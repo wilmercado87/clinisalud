@@ -1,6 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
-import Tarifarios from "./Tarifarios";
+import Tarifario from "./Tarifario";
 import Cups from "./Cups";
 import Diagnostico from "./Diagnostico";
 
@@ -8,31 +8,30 @@ class ParagrafoAplicacion extends Model {
   public id!: number;
   public feeScheduleId!: number;
   public mapiissCode!: string;
-  public diagnosticCode!: string;
+  public diagnosticId!: number;
 
-  // 🔄 Propiedades virtuales sincronizadas con los alias exactos de associations.ts
-  public feeSchedule?: Tarifarios;
+  public feeSchedule?: Tarifario;
   public cups?: Cups;
   public diagnostic?: Diagnostico;
 }
 
 ParagrafoAplicacion.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_paragrafo_aplicacion" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_PARAGRAFO_APLICACION" },
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario"
+      field: "FK_TARIFARIO"
     },
     mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "fk_codigo_mapiiss"
+      field: "FK_CODIGO_MAPIISS"
     },
-    diagnosticCode: {
-      type: DataTypes.STRING(20),
+    diagnosticId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_codigo_diagnostico"
+      field: "FK_DIAGNOSTICO"
     },
   },
   {

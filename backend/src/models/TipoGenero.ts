@@ -12,12 +12,12 @@ TipoGenero.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
-      field: "pk_id_tipo_genero",
+      field: "ID_TIPO_GENERO",
     },
     description: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      field: "descripcion_tipo_genero",
+      field: "DESCRIPCION_TIPO_GENERO",
     },
   },
   {

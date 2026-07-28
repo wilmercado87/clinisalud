@@ -1,6 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
-import Tarifarios from "./Tarifarios";
+import Tarifario from "./Tarifario";
 import Cups from "./Cups";
 
 class TipoParagrafo extends Model {
@@ -9,24 +9,24 @@ class TipoParagrafo extends Model {
   public mapiissCode!: string;
   public paragraphType!: string;
 
-  public feeSchedule?: Tarifarios;
+  public feeSchedule?: Tarifario;
   public cups?: Cups;
 }
 
 TipoParagrafo.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_tipo_paragrafo" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_TIPO_PARAGRAFO" },
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario"
+      field: "FK_TARIFARIO"
     },
     mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "fk_codigo_mapiiss"
+      field: "FK_CODIGO_MAPIISS"
     },
-    paragraphType: { type: DataTypes.STRING(100), allowNull: false, field: "tipo_paragrafo" },
+    paragraphType: { type: DataTypes.STRING(100), allowNull: false, field: "TIPO_PARAGRAFO" },
   },
   {
     sequelize,

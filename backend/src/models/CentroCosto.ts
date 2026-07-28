@@ -1,7 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
 import NivelAtencion from "./NivelAtencion";
-import Especialidades from "./Especialidades";
+import Especialidad from "./Especialidad";
 
 class CentroCosto extends Model {
   public id!: number;
@@ -11,24 +11,24 @@ class CentroCosto extends Model {
   public specialtyId!: number | null;
 
   public level?: NivelAtencion;
-  public especialidad?: Especialidades;
+  public especialidad?: Especialidad;
 }
 
 CentroCosto.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_centro_costo" },
-    description: { type: DataTypes.STRING(150), allowNull: false, field: "descripcion_centro_costo" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_CENTRO_COSTO" },
+    description: { type: DataTypes.STRING(150), allowNull: false, field: "DESCRIPCION_CENTRO_COSTO" },
     levelId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "pk_id_nivel_atencion"
+      field: "FK_NIVEL_ATENCION"
     },
     specialtyId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: "fk_id_especialidad"
+      field: "FK_ESPECIALIDAD"
     },
-    scopeType: { type: DataTypes.STRING(50), allowNull: false, field: "tipo_ambito" },
+    scopeType: { type: DataTypes.STRING(50), allowNull: false, field: "TIPO_AMBITO" },
   },
   {
     sequelize,

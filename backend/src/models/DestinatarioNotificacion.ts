@@ -1,0 +1,48 @@
+import { DataTypes, Model } from "sequelize";
+import sequelize from "../config/database";
+
+class DestinatarioNotificacion extends Model {
+  public id!: number;
+  public notificationId!: number;
+  public userId!: number;
+  public isRead!: boolean;
+  public readAt!: Date | null;
+}
+
+DestinatarioNotificacion.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+      field: "ID",
+    },
+    notificationId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "FK_NOTIFICACION",
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "FK_USUARIO",
+    },
+    isRead: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: "LEIDO",
+    },
+    readAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "LEIDO_EN",
+    },
+  },
+  {
+    sequelize,
+    tableName: "destinatario_notificacion",
+    timestamps: false,
+  },
+);
+
+export default DestinatarioNotificacion;

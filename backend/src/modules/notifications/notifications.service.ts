@@ -1,8 +1,8 @@
 import { Op } from "sequelize";
-import Notification from "../../models/Notification";
-import NotificationRecipient from "../../models/NotificationRecipient";
-import User from "../../models/User";
-import Role from "../../models/Role";
+import Notificacion from "../../models/Notificacion";
+import DestinatarioNotificacion from "../../models/DestinatarioNotificacion";
+import Usuario from "../../models/Usuario";
+import Rol from "../../models/Rol";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import { ERROR_MESSAGES } from "../../constants";
 import { emitNotification } from "../../socket/socket.gateway";
@@ -13,10 +13,10 @@ export class NotificationsService {
     limit: number = 5,
     offset: number = 0,
   ) {
-    const recipients = await NotificationRecipient.findAll({
+    const recipients = await DestinatarioNotificacion.findAll({
       where: { userId },
-      include: [{ model: Notification, as: "notification" }],
-      order: [[{ model: Notification, as: "notification" }, "createdAt", "DESC"]],
+      include: [{ model: Notificacion, as: "notification" }],
+      order: [[{ model: Notificacion, as: "notification" }, "createdAt", "DESC"]],
       limit,
       offset,
     });
@@ -39,13 +39,13 @@ export class NotificationsService {
   }
 
   public async getUnreadCount(userId: number): Promise<number> {
-    return await NotificationRecipient.count({
+    return await DestinatarioNotificacion.count({
       where: { userId, isRead: false },
     });
   }
 
   public async markAsRead(recipientId: number, userId: number) {
-    const recipient = await NotificationRecipient.findByPk(recipientId);
+    const recipient = await DestinatarioNotificacion.findByPk(recipientId);
     if (!recipient) throw ApiError.notFound(ERROR_MESSAGES.RESOURCE_NOT_FOUND);
     if (recipient.userId !== userId) throw ApiError.forbidden(ERROR_MESSAGES.FORBIDDEN);
 
@@ -55,7 +55,7 @@ export class NotificationsService {
   }
 
   public async markAllAsRead(userId: number) {
-    await NotificationRecipient.update(
+    await DestinatarioNotificacion.update(
       { isRead: true, readAt: new Date() },
       { where: { userId, isRead: false } },
     );
@@ -71,7 +71,7 @@ export class NotificationsService {
     actionUrl?: string | null,
     actionLabel?: string | null,
   ) {
-    const notification = await Notification.create({
+    const notification = await Notificacion.create({
       type,
       title,
       message,
@@ -82,9 +82,9 @@ export class NotificationsService {
       actionLabel: actionLabel || null,
     });
 
-    const adminUsers = await User.findAll({
+    const adminUsers = await Usuario.findAll({
       include: [{
-        model: Role,
+        model: Rol,
         as: "roleData",
         where: { code: { [Op.in]: ["SUPER_ADMIN", "ADMIN"] } },
       }],
@@ -96,9 +96,9 @@ export class NotificationsService {
       userId: u.id,
     }));
 
-    let createdRecipients: NotificationRecipient[] = [];
+    let createdRecipients: DestinatarioNotificacion[] = [];
     if (recipients.length > 0) {
-      createdRecipients = await NotificationRecipient.bulkCreate(recipients);
+      createdRecipients = await DestinatarioNotificacion.bulkCreate(recipients);
     }
 
     for (const rec of createdRecipients) {

@@ -12,12 +12,12 @@ class TipoUsuario extends Model {
 
 TipoUsuario.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_tipo_usuario" },
-    name: { type: DataTypes.STRING(50), allowNull: false, field: "tipo_usuario" },
-    copay: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.0, field: "copago" },
-    moderatorFee: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.0, field: "cuota_moderadora" },
-    eventLimit: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.0, field: "tope_evento" },
-    annualEventLimit: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.0, field: "tope_evento_anual" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_TIPO_USUARIO" },
+    name: { type: DataTypes.STRING(50), allowNull: false, field: "TIPO_USUARIO" },
+    copay: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.0, field: "COPAGO" },
+    moderatorFee: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.0, field: "CUOTA_MODERADORA" },
+    eventLimit: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.0, field: "TOPE_EVENTO" },
+    annualEventLimit: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.0, field: "TOPE_EVENTO_ANUAL" },
   },
   {
     sequelize,

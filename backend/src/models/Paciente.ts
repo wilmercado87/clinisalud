@@ -4,7 +4,7 @@ import TipoDocumento from "./TipoDocumento";
 import TipoUsuario from "./TipoUsuario";
 import TipoGenero from "./TipoGenero";
 import TipoEstado from "./TipoEstado";
-import User from "./User";
+import Usuario from "./Usuario";
 
 class Paciente extends Model {
   public id!: number;
@@ -27,7 +27,7 @@ class Paciente extends Model {
   public userType?: TipoUsuario;
   public gender?: TipoGenero;
   public status?: TipoEstado;
-  public systemUser?: User;
+  public systemUser?: Usuario;
 }
 
 Paciente.init(
@@ -36,77 +36,77 @@ Paciente.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
-      field: "pk_id_paciente",
+      field: "ID_PACIENTE",
     },
     documentTypeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tipo_documento",
+      field: "FK_TIPO_DOCUMENTO",
     },
     document: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "pk_documento_paciente",
+      field: "DOCUMENTO_PACIENTE",
     },
     firstName: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      field: "nombre_paciente",
+      field: "NOMBRE_PACIENTE",
     },
     lastName: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      field: "apellido_paciente",
+      field: "APELLIDO_PACIENTE",
     },
     age: {
       type: DataTypes.STRING(10),
       allowNull: false,
-      field: "edad_paciente",
+      field: "EDAD_PACIENTE",
     },
     address: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      field: "direccion_paciente",
+      field: "DIRECCION",
     },
     phone: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      field: "telefono_paciente",
+      field: "TELEFONO",
     },
     email: {
       type: DataTypes.STRING(100),
       allowNull: true,
-      field: "correo",
+      field: "CORREO",
     },
     disability: {
       type: DataTypes.STRING(10),
       allowNull: false,
-      field: "discapacidad",
+      field: "DISCAPACIDAD",
     },
     userTypeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tipo_usuario",
+      field: "FK_TIPO_USUARIO",
     },
     birthDate: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "fecha_nacimiento",
+      field: "FECHA_NACIMIENTO",
     },
     genderId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tipo_genero",
+      field: "FK_TIPO_GENERO",
     },
     statusId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tipo_estado",
+      field: "FK_TIPO_ESTADO",
     },
     systemUserId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "id_usuario_sistema",
+      field: "ID_USUARIO",
     },
   },
   {

@@ -12,9 +12,9 @@ jest.mock('../modules/notifications/notifications.service', () => {
 });
 
 import { UsersService } from '../modules/users/users.service';
-import User from '../models/User';
-import UserMenuOverride from '../models/UserMenuOverride';
-import RoleMenuPermission from '../models/RoleMenuPermission';
+import Usuario from '../models/Usuario';
+import SobreescrituraMenuUsuario from '../models/SobreescrituraMenuUsuario';
+import PermisoRolMenu from '../models/PermisoRolMenu';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -30,7 +30,7 @@ describe('UsersService', () => {
         { id: 1, email: 'admin@test.com', toJSON: () => ({ id: 1, email: 'admin@test.com' }) },
         { id: 2, email: 'user@test.com', toJSON: () => ({ id: 2, email: 'user@test.com' }) },
       ];
-      jest.spyOn(User, 'findAll').mockResolvedValue(mockUsers as any);
+      jest.spyOn(Usuario, 'findAll').mockResolvedValue(mockUsers as any);
 
       const result = await service.findAllManageableUsers();
 
@@ -50,16 +50,16 @@ describe('UsersService', () => {
     };
 
     it('should create user with temp password', async () => {
-      jest.spyOn(User, 'findOne').mockResolvedValueOnce(null as any);
-      jest.spyOn(User, 'create').mockResolvedValue({
+      jest.spyOn(Usuario, 'findOne').mockResolvedValueOnce(null as any);
+      jest.spyOn(Usuario, 'create').mockResolvedValue({
         id: 1,
         ...validData,
         password: 'hashed_123',
         isActive: true,
         toJSON: () => ({ ...validData, id: 1 }),
       });
-      jest.spyOn(RoleMenuPermission, 'findAll').mockResolvedValue([{ menuOptionId: 1 }, { menuOptionId: 2 }] as any);
-      jest.spyOn(UserMenuOverride, 'bulkCreate').mockResolvedValue([]);
+      jest.spyOn(PermisoRolMenu, 'findAll').mockResolvedValue([{ menuOptionId: 1 }, { menuOptionId: 2 }] as any);
+      jest.spyOn(SobreescrituraMenuUsuario, 'bulkCreate').mockResolvedValue([]);
 
       const result = await service.createUser(validData, 'SUPER_ADMIN', 1, 'admin@test.com');
 
@@ -68,7 +68,7 @@ describe('UsersService', () => {
     });
 
     it('should throw if email already exists', async () => {
-      jest.spyOn(User, 'findOne').mockResolvedValue({
+      jest.spyOn(Usuario, 'findOne').mockResolvedValue({
         email: 'new@test.com',
         dni: 'different',
       } as any);
@@ -79,34 +79,34 @@ describe('UsersService', () => {
 
   describe('updateUserPermissions', () => {
     it('should update permissions', async () => {
-      jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 2, roleData: { code: 'USER' } } as any);
-      jest.spyOn(UserMenuOverride, 'destroy').mockResolvedValue(1);
-      jest.spyOn(UserMenuOverride, 'bulkCreate').mockResolvedValue([]);
+      jest.spyOn(Usuario, 'findByPk').mockResolvedValue({ id: 2, roleData: { code: 'USER' } } as any);
+      jest.spyOn(SobreescrituraMenuUsuario, 'destroy').mockResolvedValue(1);
+      jest.spyOn(SobreescrituraMenuUsuario, 'bulkCreate').mockResolvedValue([]);
 
       await service.updateUserPermissions(2, [
         { menuOptionId: 1, hasAccess: true },
       ], 'SUPER_ADMIN');
 
-      expect(UserMenuOverride.destroy).toHaveBeenCalled();
-      expect(UserMenuOverride.bulkCreate).toHaveBeenCalled();
+      expect(SobreescrituraMenuUsuario.destroy).toHaveBeenCalled();
+      expect(SobreescrituraMenuUsuario.bulkCreate).toHaveBeenCalled();
     });
 
     it('should throw if user not found', async () => {
-      jest.spyOn(User, 'findByPk').mockResolvedValue(null as any);
+      jest.spyOn(Usuario, 'findByPk').mockResolvedValue(null as any);
 
       await expect(service.updateUserPermissions(999, [], 'SUPER_ADMIN')).rejects.toThrow('no encontrado');
     });
 
     it('should throw for admin user', async () => {
-      jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
+      jest.spyOn(Usuario, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
 
       await expect(service.updateUserPermissions(1, [], 'ADMIN')).rejects.toThrow('No se puede cambiar permisos de administrador');
     });
 
     it('should allow SUPER_ADMIN to update ADMIN', async () => {
-      jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
-      jest.spyOn(UserMenuOverride, 'destroy').mockResolvedValue(1);
-      jest.spyOn(UserMenuOverride, 'bulkCreate').mockResolvedValue([]);
+      jest.spyOn(Usuario, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
+      jest.spyOn(SobreescrituraMenuUsuario, 'destroy').mockResolvedValue(1);
+      jest.spyOn(SobreescrituraMenuUsuario, 'bulkCreate').mockResolvedValue([]);
 
       await expect(
         service.updateUserPermissions(1, [{ menuOptionId: 1, hasAccess: true }], 'SUPER_ADMIN'),
@@ -114,7 +114,7 @@ describe('UsersService', () => {
     });
 
     it('should throw for super admin user (immutable)', async () => {
-      jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'SUPER_ADMIN' } } as any);
+      jest.spyOn(Usuario, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'SUPER_ADMIN' } } as any);
 
       await expect(service.updateUserPermissions(1, [], 'SUPER_ADMIN')).rejects.toThrow('No se puede cambiar permisos del super administrador');
     });
@@ -128,7 +128,7 @@ describe('UsersService', () => {
         roleData: { code: 'USER' },
         save: jest.fn().mockResolvedValue(true)
       };
-      jest.spyOn(User, 'findByPk').mockResolvedValue(mockUserObj as any);
+      jest.spyOn(Usuario, 'findByPk').mockResolvedValue(mockUserObj as any);
 
       const result = await service.toggleUserStatus(2, 'SUPER_ADMIN', 1, 'admin@test.com');
 
@@ -137,13 +137,13 @@ describe('UsersService', () => {
     });
 
     it('should throw if user not found', async () => {
-      jest.spyOn(User, 'findByPk').mockResolvedValue(null as any);
+      jest.spyOn(Usuario, 'findByPk').mockResolvedValue(null as any);
 
       await expect(service.toggleUserStatus(999, 'SUPER_ADMIN', 1, 'admin@test.com')).rejects.toThrow('no encontrado');
     });
 
     it('should throw for admin', async () => {
-      jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
+      jest.spyOn(Usuario, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'ADMIN' } } as any);
 
       await expect(service.toggleUserStatus(1, 'ADMIN', 1, 'admin@test.com')).rejects.toThrow('No se puede cambiar estado de administrador');
     });
@@ -155,13 +155,13 @@ describe('UsersService', () => {
         roleData: { code: 'ADMIN' },
         save: jest.fn().mockResolvedValue(true),
       };
-      jest.spyOn(User, 'findByPk').mockResolvedValue(mockUserObj as any);
+      jest.spyOn(Usuario, 'findByPk').mockResolvedValue(mockUserObj as any);
 
       await expect(service.toggleUserStatus(1, 'SUPER_ADMIN', 1, 'admin@test.com')).resolves.not.toThrow();
     });
 
     it('should throw for super admin (immutable)', async () => {
-      jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'SUPER_ADMIN' } } as any);
+      jest.spyOn(Usuario, 'findByPk').mockResolvedValue({ id: 1, roleData: { code: 'SUPER_ADMIN' } } as any);
 
       await expect(service.toggleUserStatus(1, 'SUPER_ADMIN', 1, 'admin@test.com')).rejects.toThrow('No se puede cambiar estado del super administrador');
     });

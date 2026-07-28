@@ -1,14 +1,14 @@
 import * as bcrypt from "bcryptjs";
 import path from "node:path";
 import sequelize from "./config/database";
-import Role from "./models/Role";
-import MenuOption from "./models/MenuOption";
-import User from "./models/User";
-import RoleMenuPermission from "./models/RoleMenuPermission";
+import Rol from "./models/Rol";
+import OpcionMenu from "./models/OpcionMenu";
+import Usuario from "./models/Usuario";
+import PermisoRolMenu from "./models/PermisoRolMenu";
 import TipoDocumento from "./models/TipoDocumento";
-import UserMenuOverride from "./models/UserMenuOverride";
-import Notification from "./models/Notification";
-import NotificationRecipient from "./models/NotificationRecipient";
+import SobreescrituraMenuUsuario from "./models/SobreescrituraMenuUsuario";
+import Notificacion from "./models/Notificacion";
+import DestinatarioNotificacion from "./models/DestinatarioNotificacion";
 import { initAssociations } from "./models/associations";
 
 // Helpers de automatización
@@ -19,34 +19,34 @@ import { autoMapCsvRow } from "./utils/bd/autoMapper";
 import TipoUsuario from "./models/TipoUsuario";
 import TipoGenero from "./models/TipoGenero";
 import TipoEstado from "./models/TipoEstado";
-import Camas from "./models/Camas";
-import Tarifarios from "./models/Tarifarios";
+import Cama from "./models/Cama";
+import Tarifario from "./models/Tarifario";
 import NivelAtencion from "./models/NivelAtencion";
 import TipoAutorizacion from "./models/TipoAutorizacion";
 import TipoOrigen from "./models/TipoOrigen";
 import TipoTriage from "./models/TipoTriage";
-import Especialidades from "./models/Especialidades";
-import Departamentos from "./models/Departamentos";
+import Especialidad from "./models/Especialidad";
+import Departamento from "./models/Departamento";
 import CentroCosto from "./models/CentroCosto";
-import Municipios from "./models/Municipios";
+import Municipio from "./models/Municipio";
 import Diagnostico from "./models/Diagnostico";
 import TriagePrioridad from "./models/TriagePrioridad";
-import Convenios from "./models/Convenios";
-import Contratos from "./models/Contratos";
+import Convenio from "./models/Convenio";
+import Contrato from "./models/Contrato";
 import Cups from "./models/Cups";
 import Paciente from "./models/Paciente";
 import Triage from "./models/Triage";
-import Admisiones from "./models/Admisiones";
-import Autorizaciones from "./models/Autorizaciones";
+import Admision from "./models/Admision";
+import Autorizacion from "./models/Autorizacion";
 import DiagnosticoPaciente from "./models/DiagnosticoPaciente";
-import Articulados from "./models/Articulados";
+import Articulado from "./models/Articulado";
 import TipoParagrafo from "./models/TipoParagrafo";
 import ParagrafoAplicacion from "./models/ParagrafoAplicacion";
 import ParagrafoEdad from "./models/ParagrafoEdad";
 import ParagrafoInclusion from "./models/ParagrafoInclusion";
 import ParagrafoValor from "./models/ParagrafoValor";
-import TiposAcceso from "./models/TiposAcceso";
-import ViasAcceso from "./models/ViasAcceso";
+import TipoAcceso from "./models/TipoAcceso";
+import ViaAcceso from "./models/ViaAcceso";
 
 // ----------------------------------------------------------------
 // FUNCIONES AUXILIARES (Solución S3776: Reduce Complejidad Cognitiva)
@@ -56,14 +56,14 @@ async function resetDatabaseTables() {
   await sequelize.query("PRAGMA foreign_keys = OFF;");
   
   const allModels: any[] = [
-    RoleMenuPermission, UserMenuOverride, User, Role, MenuOption, TipoDocumento,
-    Notification, NotificationRecipient, 
-    TipoUsuario, TipoGenero, TipoEstado, Camas, Tarifarios, NivelAtencion,
-    TipoAutorizacion, TipoOrigen, TipoTriage, Especialidades, Departamentos,
-    CentroCosto, Municipios, Diagnostico, TriagePrioridad, Convenios, Contratos,
-    Cups, Paciente, Triage, Admisiones, Autorizaciones, DiagnosticoPaciente,
-    Articulados, TipoParagrafo, ParagrafoAplicacion, ParagrafoEdad,
-    ParagrafoInclusion, ParagrafoValor, TiposAcceso, ViasAcceso
+    PermisoRolMenu, SobreescrituraMenuUsuario, Usuario, Rol, OpcionMenu, TipoDocumento,
+    Notificacion, DestinatarioNotificacion, 
+    TipoUsuario, TipoGenero, TipoEstado, Cama, Tarifario, NivelAtencion,
+    TipoAutorizacion, TipoOrigen, TipoTriage, Especialidad, Departamento,
+    CentroCosto, Municipio, Diagnostico, TriagePrioridad, Convenio, Contrato,
+    Cups, Paciente, Triage, Admision, Autorizacion, DiagnosticoPaciente,
+    Articulado, TipoParagrafo, ParagrafoAplicacion, ParagrafoEdad,
+    ParagrafoInclusion, ParagrafoValor, TipoAcceso, ViaAcceso
   ];
 
   for (const model of allModels) {
@@ -81,10 +81,10 @@ async function seedSystemRoles() {
     { code: "FACTURADOR", name: "Personal de Facturación" }
   ];
 
-  const initializedRoles: Record<string, Role> = {};
+  const initializedRoles: Record<string, Rol> = {};
 
   for (const item of rolesData) {
-    const [roleInstance] = await Role.findOrCreate({
+    const [roleInstance] = await Rol.findOrCreate({
       where: { code: item.code },
       defaults: item,
     });
@@ -122,26 +122,26 @@ async function validateAndLoadCsv(step: { model: any; file: string }, csvFolder:
   console.log(`   --> Éxito: ${mappedRows.length} registros nuevos inyectados.`);
 }
 
-async function assignAllRolePermissions(rolesMap: Record<string, Role>) {
-  const allOptions = await MenuOption.findAll();
+async function assignAllRolePermissions(rolesMap: Record<string, Rol>) {
+  const allOptions = await OpcionMenu.findAll();
 
   for (const opt of allOptions) {
     const isGestorUsuarios = opt.label.toUpperCase() === 'GESTOR USUARIOS';
 
     // SUPER_ADMIN and ADMIN get ALL menu options
-    await RoleMenuPermission.findOrCreate({
+    await PermisoRolMenu.findOrCreate({
       where: { roleId: rolesMap["SUPER_ADMIN"].id, menuOptionId: opt.id },
     });
-    await RoleMenuPermission.findOrCreate({
+    await PermisoRolMenu.findOrCreate({
       where: { roleId: rolesMap["ADMIN"].id, menuOptionId: opt.id },
     });
 
     // MEDICO and FACTURADOR get all EXCEPT Gestor Usuarios
     if (!isGestorUsuarios) {
-      await RoleMenuPermission.findOrCreate({
+      await PermisoRolMenu.findOrCreate({
         where: { roleId: rolesMap["MEDICO"].id, menuOptionId: opt.id },
       });
-      await RoleMenuPermission.findOrCreate({
+      await PermisoRolMenu.findOrCreate({
         where: { roleId: rolesMap["FACTURADOR"].id, menuOptionId: opt.id },
       });
     }
@@ -151,13 +151,13 @@ async function assignAllRolePermissions(rolesMap: Record<string, Role>) {
 
 async function deployInitialSuperAdmin(superAdminRoleId: number) {
   const adminEmail = "admin@clinisalud.com";
-  const adminExists = await User.findOne({ where: { email: adminEmail } });
+  const adminExists = await Usuario.findOne({ where: { email: adminEmail } });
 
   if (!adminExists) {
     const ccDocType = await TipoDocumento.findOne({ where: { code: "CC" } });
     const hashedPassword = await bcrypt.hash("Admin2026!", 10);
 
-    await User.create({
+    await Usuario.create({
       firstName: "Super",
       lastName: "Admin",
       documentTypeId: ccDocType ? ccDocType.id : 3,
@@ -176,7 +176,7 @@ async function deployInitialSuperAdmin(superAdminRoleId: number) {
 // ----------------------------------------------------------------
 
 async function seedSampleNotifications() {
-  const adminUser = await User.findOne({ where: { email: 'admin@clinisalud.com' } });
+  const adminUser = await Usuario.findOne({ where: { email: 'admin@clinisalud.com' } });
   if (!adminUser) {
     console.log("⚠️ No se encontró admin, se saltan notificaciones de simulación.");
     return;
@@ -184,7 +184,7 @@ async function seedSampleNotifications() {
 
   const now = new Date();
 
-  const notif1 = await Notification.create({
+  const notif1 = await Notificacion.create({
     type: "ADMISSION_CREATED",
     title: "Nueva admisión registrada",
     message:
@@ -197,7 +197,7 @@ async function seedSampleNotifications() {
     createdAt: new Date(now.getTime() - 5 * 60000),
   });
 
-  const notif2 = await Notification.create({
+  const notif2 = await Notificacion.create({
     type: "BILLING_COMPLETED",
     title: "Facturación completada",
     message:
@@ -210,7 +210,7 @@ async function seedSampleNotifications() {
     createdAt: new Date(now.getTime() - 15 * 60000),
   });
 
-  const notif3 = await Notification.create({
+  const notif3 = await Notificacion.create({
     type: "DIAGNOSIS_UPDATED",
     title: "Diagnóstico actualizado",
     message:
@@ -223,7 +223,7 @@ async function seedSampleNotifications() {
     createdAt: new Date(now.getTime() - 60 * 60000),
   });
 
-  const notif4 = await Notification.create({
+  const notif4 = await Notificacion.create({
     type: "BILLING_CANCELLED",
     title: "Factura anulada",
     message:
@@ -236,7 +236,7 @@ async function seedSampleNotifications() {
     createdAt: new Date(now.getTime() - 120 * 60000),
   });
 
-  const notif5 = await Notification.create({
+  const notif5 = await Notificacion.create({
     type: "AUTHORIZATION_REQUESTED",
     title: "Autorización solicitada",
     message:
@@ -249,7 +249,7 @@ async function seedSampleNotifications() {
     createdAt: new Date(now.getTime() - 180 * 60000),
   });
 
-  await NotificationRecipient.bulkCreate([
+  await DestinatarioNotificacion.bulkCreate([
     { notificationId: notif1.id, userId: adminUser.id, isRead: false },
     { notificationId: notif2.id, userId: adminUser.id, isRead: false },
     { notificationId: notif3.id, userId: adminUser.id, isRead: true, readAt: new Date(now.getTime() - 30 * 60000) },
@@ -281,39 +281,39 @@ export const runSeeder = async () => {
     const csvFolder = path.join(__dirname, "../../tablas_clinisalud");
 
     const loadingSequence = [
-      { model: MenuOption, file: "menu_option.csv" },
+      { model: OpcionMenu, file: "opcion_menu.csv" },
       { model: TipoDocumento, file: "tipo_documento.csv" },
       { model: TipoGenero, file: "tipo_genero.csv" },
       { model: TipoEstado, file: "tipo_estado.csv" },
       { model: TipoUsuario, file: "tipo_usuario.csv" },
-      { model: Camas, file: "camas.csv" },
-      { model: Tarifarios, file: "tarifarios.csv" },
+      { model: Cama, file: "cama.csv" },
+      { model: Tarifario, file: "tarifario.csv" },
       { model: NivelAtencion, file: "nivel_atencion.csv" },
       { model: TipoAutorizacion, file: "tipo_autorizacion.csv" },
       { model: TipoOrigen, file: "tipo_origen.csv" },
       { model: TipoTriage, file: "tipo_triage.csv" },
-      { model: Especialidades, file: "especialidades.csv" },
-      { model: Departamentos, file: "departamentos.csv" },
+      { model: Especialidad, file: "especialidad.csv" },
+      { model: Departamento, file: "departamento.csv" },
       { model: CentroCosto, file: "centro_costo.csv" },
-      { model: Municipios, file: "municipios.csv" },
+      { model: Municipio, file: "municipio.csv" },
       { model: Diagnostico, file: "diagnostico.csv" },
       { model: TriagePrioridad, file: "triage_prioridad.csv" },
-      { model: Convenios, file: "convenios.csv" },
-      { model: Contratos, file: "contratos.csv" },
+      { model: Convenio, file: "convenio.csv" },
+      { model: Contrato, file: "contrato.csv" },
       { model: Cups, file: "cups.csv" },
       { model: Paciente, file: "paciente.csv" },
       { model: Triage, file: "triage.csv" },
-      { model: Admisiones, file: "admisiones.csv" },
-      { model: Autorizaciones, file: "autorizaciones.csv" },
+      { model: Admision, file: "admision.csv" },
+      { model: Autorizacion, file: "autorizacion.csv" },
       { model: DiagnosticoPaciente, file: "diagnostico_paciente.csv" },
-      { model: Articulados, file: "articulados.csv" },
+      { model: Articulado, file: "articulado.csv" },
       { model: TipoParagrafo, file: "tipo_paragrafo.csv" },
       { model: ParagrafoAplicacion, file: "paragrafo_aplicacion.csv" },
       { model: ParagrafoEdad, file: "paragrafo_edad.csv" },
       { model: ParagrafoInclusion, file: "paragrafo_inclusion.csv" },
       { model: ParagrafoValor, file: "paragrafo_valor.csv" },
-      { model: TiposAcceso, file: "tipos_de_acceso.csv" },
-      { model: ViasAcceso, file: "vias_acceso.csv" }
+      { model: TipoAcceso, file: "tipo_acceso.csv" },
+      { model: ViaAcceso, file: "via_acceso.csv" }
     ];
 
     for (const step of loadingSequence) {

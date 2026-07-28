@@ -1,4 +1,4 @@
-pk_id_paragrafo_valor;fk_id_tarifario;cod_articulo;fk_codigo_mapiiss;porcentaje;tipo_variacion;tipo_paragrafo
+ID_PARAGRAFO_VALOR;FK_TARIFARIO;COD_ARTICULO;FK_CODIGO_MAPIISS;PORCENTAJE;TIPO_VARIACION;TIPO_PARAGRAFO
 1;1;22;350100;40;descuento;paragrafo 1
 2;1;22;350200;40;descuento;paragrafo 1
 3;1;22;350300;40;descuento;paragrafo 1

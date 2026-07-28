@@ -1,4 +1,4 @@
-pk_id_tipo_usuario;tipo_usuario;copago;cuota_moderadora;tope_evento;tope_evento_anual
+ID_TIPO_USUARIO;TIPO_USUARIO;COPAGO;CUOTA_MODERADORA;TOPE_EVENTO;TOPE_EVENTO_ANUAL
 1;Cotizante_A;0;2500;0;0
 2;Cotizante_B;0;9900;0;0
 3;Cotizante_C;0;26100;0;0

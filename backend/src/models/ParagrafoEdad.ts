@@ -1,6 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
-import Tarifarios from "./Tarifarios";
+import Tarifario from "./Tarifario";
 import Cups from "./Cups";
 
 class ParagrafoEdad extends Model {
@@ -10,25 +10,25 @@ class ParagrafoEdad extends Model {
   public rangeFrom!: number;
   public rangeTo!: number;
 
-  public feeSchedule?: Tarifarios;
+  public feeSchedule?: Tarifario;
   public cups?: Cups;
 }
 
 ParagrafoEdad.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_paragrafo_edad" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_PARAGRAFO_EDAD" },
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tarifario"
+      field: "FK_TARIFARIO"
     },
     mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "fk_codigo_mapiiss"
+      field: "FK_CODIGO_MAPIISS"
     },
-    rangeFrom: { type: DataTypes.INTEGER, defaultValue: 0, field: "rango_desde" },
-    rangeTo: { type: DataTypes.INTEGER, defaultValue: 150, field: "rango_hasta" },
+    rangeFrom: { type: DataTypes.INTEGER, defaultValue: 0, field: "RANGO_DESDE" },
+    rangeTo: { type: DataTypes.INTEGER, defaultValue: 150, field: "RANGO_HASTA" },
   },
   {
     sequelize,

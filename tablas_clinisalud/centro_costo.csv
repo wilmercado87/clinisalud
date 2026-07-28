@@ -1,4 +1,4 @@
-pk_id_centro_costo;descripcion_centro_costo;pk_id_nivel_atencion;tipo_ambito;fk_id_especialidad
+ID_CENTRO_COSTO;DESCRIPCION_CENTRO_COSTO;FK_NIVEL_ATENCION;TIPO_AMBITO;FK_ESPECIALIDAD
 1;ATENCION ODONTOLOGICA;2;ambulatorio;17
 2;CIRUGIA AMBULATORIA;3;hospitalario;10
 3;CIRUGIA AMBULATORIA NO POS;4;hospitalario;10

@@ -1,10 +1,10 @@
 import * as bcrypt from "bcryptjs";
 import { Op } from "sequelize";
-import User from "../../models/User";
-import Role from "../../models/Role";
-import MenuOption from "../../models/MenuOption";
-import UserMenuOverride from "../../models/UserMenuOverride";
-import RoleMenuPermission from "../../models/RoleMenuPermission";
+import Usuario from "../../models/Usuario";
+import Rol from "../../models/Rol";
+import OpcionMenu from "../../models/OpcionMenu";
+import SobreescrituraMenuUsuario from "../../models/SobreescrituraMenuUsuario";
+import PermisoRolMenu from "../../models/PermisoRolMenu";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import { ERROR_MESSAGES } from "../../constants";
 import TipoDocumento from "../../models/TipoDocumento";
@@ -25,12 +25,12 @@ interface CreateUserData {
 
 export class UsersService {
   private readonly notificationsService = new NotificationsService();
-  public async findAllRoles(): Promise<Role[]> {
-    return await Role.findAll({ order: [["name", "ASC"]] });
+  public async findAllRoles(): Promise<Rol[]> {
+    return await Rol.findAll({ order: [["name", "ASC"]] });
   }
 
   public async findAllMenuOptions(): Promise<any[]> {
-    const options = await MenuOption.findAll({
+    const options = await OpcionMenu.findAll({
       where: { isActive: true },
       order: [["order", "ASC"]]
     });
@@ -38,21 +38,21 @@ export class UsersService {
   }
 
   public async findAllManageableUsers() {
-    const users = await User.findAll({
+    const users = await Usuario.findAll({
       attributes: { exclude: ["password"] },
       include: [
-        { model: Role, as: "roleData", attributes: ["id", "name", "code"] },
-        { model: UserMenuOverride, as: "menuOverrides" },
+        { model: Rol, as: "roleData", attributes: ["id", "name", "code"] },
+        { model: SobreescrituraMenuUsuario, as: "menuOverrides" },
       ],
       order: [["createdAt", "DESC"]],
     });
 
     const roleIds = [...new Set(users.map(u => (u.toJSON() as any).roleData?.id).filter(Boolean))];
     const allRolePerms = roleIds.length > 0
-      ? await RoleMenuPermission.findAll({ where: { roleId: roleIds } })
+      ? await PermisoRolMenu.findAll({ where: { roleId: roleIds } })
       : [];
 
-    const permsByRole = new Map<number, RoleMenuPermission[]>();
+    const permsByRole = new Map<number, PermisoRolMenu[]>();
     for (const p of allRolePerms) {
       if (!permsByRole.has(p.roleId)) permsByRole.set(p.roleId, []);
       permsByRole.get(p.roleId)!.push(p);
@@ -71,7 +71,7 @@ export class UsersService {
     });
   }
 
-  private resolvePermissionsFromArrays(rolePerms: RoleMenuPermission[], overrides: any[]): { menuOptionId: number; hasAccess: boolean }[] {
+  private resolvePermissionsFromArrays(rolePerms: PermisoRolMenu[], overrides: any[]): { menuOptionId: number; hasAccess: boolean }[] {
     const overrideMap = new Map<number, boolean>(
       overrides.map(o => [Number(o.menuOptionId), Boolean(o.hasAccess)])
     );
@@ -93,7 +93,7 @@ export class UsersService {
   }
 
   public async createUser(data: CreateUserData, requestingUserRole: string, requestingUserId: number, requestingUserName: string) {
-      const targetRole = await Role.findByPk(data.roleId);
+      const targetRole = await Rol.findByPk(data.roleId);
       const isTargetAdmin = targetRole?.code === "ADMIN" || targetRole?.code === "SUPER_ADMIN";
       if (isTargetAdmin && requestingUserRole !== "SUPER_ADMIN") {
         throw ApiError.forbidden(ERROR_MESSAGES.CREATE_ADMIN_FORBIDDEN);
@@ -107,7 +107,7 @@ export class UsersService {
       const tempPassword = this.generateTempPassword();
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
-      const newUser = await User.create({
+      const newUser = await Usuario.create({
         ...data,
         documentTypeId: data.documentTypeId || defaultDocumentTypeId,
         password: hashedPassword,
@@ -133,10 +133,10 @@ export class UsersService {
   }
 
   private async findExistingUser(email: string, dni: string) {
-    return await User.findOne({ where: { [Op.or]: [{ email }, { dni }] } });
+    return await Usuario.findOne({ where: { [Op.or]: [{ email }, { dni }] } });
   }
 
-  private throwDuplicateError(existingUser: User, data: CreateUserData) {
+  private throwDuplicateError(existingUser: Usuario, data: CreateUserData) {
     if (existingUser.email === data.email) throw ApiError.emailExists(ERROR_MESSAGES.EMAIL_EXISTS);
     if (existingUser.dni === data.dni) throw ApiError.conflict(ERROR_MESSAGES.DNI_EXISTS);
   }
@@ -146,7 +146,7 @@ export class UsersService {
   }
 
   private async createPermissions(userId: number, roleId: number, permissions: number[]) {
-    const rolePerms = await RoleMenuPermission.findAll({ where: { roleId } });
+    const rolePerms = await PermisoRolMenu.findAll({ where: { roleId } });
     const roleAllowedIds = new Set(rolePerms.map(p => p.menuOptionId));
 
     const selectedSet = new Set(permissions);
@@ -160,7 +160,7 @@ export class UsersService {
     }
 
     if (toCreate.length > 0) {
-      await UserMenuOverride.bulkCreate(toCreate);
+      await SobreescrituraMenuUsuario.bulkCreate(toCreate);
     }
   }
 
@@ -169,8 +169,8 @@ export class UsersService {
     permissions: { menuOptionId: number; hasAccess: boolean }[],
     requestingUserRole: string,
   ) {
-    const targetUser = await User.findByPk(targetUserId, {
-      include: [{ model: Role, as: "roleData" }],
+    const targetUser = await Usuario.findByPk(targetUserId, {
+      include: [{ model: Rol, as: "roleData" }],
     });
 
     if (!targetUser) throw ApiError.notFound(ERROR_MESSAGES.USER_NOT_FOUND);
@@ -183,7 +183,7 @@ export class UsersService {
       throw ApiError.forbidden(ERROR_MESSAGES.PERMISSIONS_ADMIN_FORBIDDEN);
     }
 
-    await UserMenuOverride.destroy({ where: { userId: targetUserId } });
+    await SobreescrituraMenuUsuario.destroy({ where: { userId: targetUserId } });
 
     const overrideData = permissions.map(p => ({
       userId: targetUserId,
@@ -191,12 +191,12 @@ export class UsersService {
       hasAccess: p.hasAccess,
     }));
 
-    return await UserMenuOverride.bulkCreate(overrideData);
+    return await SobreescrituraMenuUsuario.bulkCreate(overrideData);
   }
 
   public async toggleUserStatus(userId: number, requestingUserRole: string, requestingUserId: number, requestingUserName: string) {
-    const user = await User.findByPk(userId, {
-      include: [{ model: Role, as: "roleData" }],
+    const user = await Usuario.findByPk(userId, {
+      include: [{ model: Rol, as: "roleData" }],
     });
 
     if (!user) throw ApiError.notFound(ERROR_MESSAGES.USER_NOT_FOUND);

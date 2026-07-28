@@ -1,4 +1,4 @@
-pk_id_tipo_autorizacion;descripcion_tipo_autorizacion
+ID_TIPO_AUTORIZACION;DESCRIPCION_TIPO_AUTORIZACION
 1;Aut. Urgencia
 2;Aut. Hospitalizacion
 3;Aut. Cirugia

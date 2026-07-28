@@ -8,8 +8,8 @@ class TipoOrigen extends Model {
 
 TipoOrigen.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_tipo_origen" },
-    description: { type: DataTypes.STRING(150), allowNull: false, field: "descripcion_tipo_origen" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_TIPO_ORIGEN" },
+    description: { type: DataTypes.STRING(150), allowNull: false, field: "DESCRIPCION_TIPO_ORIGEN" },
   },
   {
     sequelize,

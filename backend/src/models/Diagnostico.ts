@@ -14,15 +14,15 @@ class Diagnostico extends Model {
 
 Diagnostico.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_diagnostico" },
-    code: { type: DataTypes.STRING(20), allowNull: false, unique: true, field: "pk_codigo_diagnostico" },
-    description: { type: DataTypes.TEXT, allowNull: false, field: "descripcion_diagnostico" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_DIAGNOSTICO" },
+    code: { type: DataTypes.STRING(20), allowNull: false, unique: true, field: "CODIGO_DIAGNOSTICO" },
+    description: { type: DataTypes.TEXT, allowNull: false, field: "DESCRIPCION_DIAGNOSTICO" },
     originTypeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_tipo_origen"
+      field: "FK_TIPO_ORIGEN"
     },
-    applyGender: { type: DataTypes.STRING(20), allowNull: false, field: "aplica_sexo" },
+    applyGender: { type: DataTypes.STRING(20), allowNull: false, field: "APLICA_SEXO" },
   },
   {
     sequelize,

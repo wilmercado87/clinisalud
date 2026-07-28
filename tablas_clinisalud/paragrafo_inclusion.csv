@@ -1,4 +1,4 @@
-pk_id_paragrafo_inclusion;fk_id_tarifario;fk_codigo_mapiiss;codigo_simple
+ID_PARAGRAFO_INCLUSION;FK_TARIFARIO;FK_CODIGO_MAPIISS;CODIGO_SIMPLE
 1;1;103106;103108
 2;1;128800;128100
 3;1;115101;128800

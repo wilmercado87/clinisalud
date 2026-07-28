@@ -1,6 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
-import Admisiones from "./Admisiones";
+import Admision from "./Admision";
 import Diagnostico from "./Diagnostico";
 
 class DiagnosticoPaciente extends Model {
@@ -8,22 +8,22 @@ class DiagnosticoPaciente extends Model {
   public admissionNumber!: string;
   public diagnosticId!: number;
 
-  public admission?: Admisiones;
+  public admission?: Admision;
   public diagnostic?: Diagnostico;
 }
 
 DiagnosticoPaciente.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_diag_paciente" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_DIAG_PACIENTE" },
     admissionNumber: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      field: "fk_numero_admision"
+      field: "FK_ADMISION"
     },
     diagnosticId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_diagnostico"
+      field: "FK_DIAGNOSTICO"
     },
   },
   {

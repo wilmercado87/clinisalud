@@ -1,4 +1,4 @@
-pk_id_tipo_genero;descripcion_tipo_genero
+ID_TIPO_GENERO;DESCRIPCION_TIPO_GENERO
 1;Masculino
 2;Femenino
 3;Indeterminado

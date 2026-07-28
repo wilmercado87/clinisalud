@@ -8,8 +8,8 @@ class TipoAutorizacion extends Model {
 
 TipoAutorizacion.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "pk_id_tipo_autorizacion" },
-    description: { type: DataTypes.STRING(100), allowNull: false, field: "descripcion_tipo_autorizacion" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_TIPO_AUTORIZACION" },
+    description: { type: DataTypes.STRING(100), allowNull: false, field: "DESCRIPCION_TIPO_AUTORIZACION" },
   },
   {
     sequelize,

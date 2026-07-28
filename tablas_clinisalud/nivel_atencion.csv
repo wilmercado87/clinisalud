@@ -1,4 +1,4 @@
-pk_id_nivel_atencion;complejidad;descripcion;tipo_personal
+ID_NIVEL_ATENCION;COMPLEJIDAD;DESCRIPCION;TIPO_PERSONAL
 1;Baja;Primer nivel;Medicos generales, personal auxiliar de enfermer�a y odontologos generales
 2;Media;Segundo nivel;Medicos especialistas en �reas basicas y generales con interconsulta especializada y anteriores
 3;Alta;Tercer nivel;Subespecialistas (cardiologos, neurologos, nefrologos) y equipos de salud altamente entrenados y anteriores

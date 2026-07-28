@@ -12,12 +12,12 @@ TipoEstado.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
-      field: "pk_id_tipo_estado",
+      field: "ID_TIPO_ESTADO",
     },
     description: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      field: "descripcion_tipo_estado",
+      field: "DESCRIPCION_TIPO_ESTADO",
     },
   },
   {

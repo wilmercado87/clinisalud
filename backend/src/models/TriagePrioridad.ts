@@ -15,16 +15,16 @@ class TriagePrioridad extends Model {
 
 TriagePrioridad.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID" },
     triageId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "fk_id_triage",
+      field: "FK_TIPO_TRIAGE",
     },
-    priorityType: { type: DataTypes.INTEGER, allowNull: false, field: "tipo_prioridad" },
-    ageFrom: { type: DataTypes.INTEGER, allowNull: false, field: "rango_edad_desde" },
-    ageTo: { type: DataTypes.INTEGER, allowNull: false, field: "rango_edad_hasta" },
-    gender: { type: DataTypes.STRING(5), allowNull: false, field: "sexo" },
+    priorityType: { type: DataTypes.INTEGER, allowNull: false, field: "TIPO_PRIORIDAD" },
+    ageFrom: { type: DataTypes.INTEGER, allowNull: false, field: "RANGO_EDAD_DESDE" },
+    ageTo: { type: DataTypes.INTEGER, allowNull: false, field: "RANGO_EDAD_HASTA" },
+    gender: { type: DataTypes.STRING(5), allowNull: false, field: "SEXO" },
   },
   {
     sequelize,
