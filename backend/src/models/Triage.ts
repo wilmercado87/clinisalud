@@ -1,23 +1,22 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
 import TipoTriage from "./TipoTriage";
-import TipoDocumento from "./TipoDocumento";
 import Convenio from "./Convenio";
 import Diagnostico from "./Diagnostico";
 import Usuario from "./Usuario";
+import Paciente from "./Paciente";
 
 class Triage extends Model {
   public id!: number;
   public priorityTypeId!: number;
-  public documentTypeId!: number;
-  public documentNumber!: string;
+  public pacienteId!: number;
   public attentionDate!: string;
   public epsId!: number;
   public diagnosticId!: number;
   public systemUserId!: number;
 
   public priorityType?: TipoTriage;
-  public documentType?: TipoDocumento;
+  public paciente?: Paciente;
   public eps?: Convenio;
   public diagnostic?: Diagnostico;
   public systemUser?: Usuario;
@@ -36,15 +35,10 @@ Triage.init(
       allowNull: false,
       field: "FK_TIPO_PRIORIDAD",
     },
-    documentTypeId: {
+    pacienteId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "FK_TIPO_DOCUMENTO",
-    },
-    documentNumber: {
-      type: DataTypes.STRING(30),
-      allowNull: false,
-      field: "NUMERO_DOCUMENTO",
+      field: "FK_PACIENTE",
     },
     attentionDate: {
       type: DataTypes.STRING(30),
@@ -54,12 +48,12 @@ Triage.init(
     epsId: {
       type: DataTypes.BIGINT,
       allowNull: false,
-      field: "FK_EPS",
+      field: "FK_COD_EPS",
     },
     diagnosticId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "FK_DIAGNOSTICO",
+      field: "FK_CODIGO_DIAGNOSTICO",
     },
     systemUserId: {
       type: DataTypes.INTEGER,

@@ -73,13 +73,14 @@ export function initAssociations() {
 
   // === [MÓDULO 3: TRIAGE] ===
   Triage.belongsTo(TipoTriage, { foreignKey: "priorityTypeId", as: "priorityType" });
-  Triage.belongsTo(TipoDocumento, { foreignKey: "documentTypeId", as: "documentType" });
+  Triage.belongsTo(Paciente, { foreignKey: "pacienteId", as: "paciente" });
   Triage.belongsTo(Convenio, { foreignKey: "epsId", as: "eps" });
   Triage.belongsTo(Diagnostico, { foreignKey: "diagnosticId", as: "diagnostic" });
   Triage.belongsTo(Usuario, { foreignKey: "systemUserId", as: "systemUser" });
 
   // === [MÓDULO 4: CONFIGURACIÓN COMERCIAL Y TARIFARIOS] ===
-  Convenio.belongsTo(Tarifario, { foreignKey: "feeScheduleId", as: "feeSchedule" });
+  Contrato.belongsTo(Convenio, { foreignKey: "epsId", as: "eps" });
+  Convenio.hasMany(Contrato, { foreignKey: "epsId", as: "contracts" });
   Contrato.belongsTo(Tarifario, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   CentroCosto.belongsTo(NivelAtencion, { foreignKey: "levelId", as: "level" });
   CentroCosto.belongsTo(Especialidad, { foreignKey: "specialtyId", as: "especialidad" });

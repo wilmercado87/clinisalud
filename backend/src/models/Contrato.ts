@@ -1,10 +1,11 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
+import Convenio from "./Convenio";
 import Tarifario from "./Tarifario";
 
 class Contrato extends Model {
+  public id!: number;
   public epsId!: number;
-  public name!: string;
   public feeScheduleId!: number;
   public variationType!: string;
   public ambulatoryPercentage!: number;
@@ -14,13 +15,14 @@ class Contrato extends Model {
   public startDate!: string;
   public endDate!: string;
 
+  public eps?: Convenio;
   public feeSchedule?: Tarifario;
 }
 
 Contrato.init(
   {
-    epsId: { type: DataTypes.BIGINT, primaryKey: true, field: "ID_EPS" },
-    name: { type: DataTypes.STRING(150), allowNull: false, field: "NOMBRE" },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, field: "ID_CONTRATO" },
+    epsId: { type: DataTypes.BIGINT, allowNull: false, field: "FK_EPS" },
     feeScheduleId: {
       type: DataTypes.INTEGER,
       allowNull: false,
