@@ -36,6 +36,10 @@ Departamento.init(
     sequelize,
     tableName: "departamento",
     timestamps: false,
+    indexes: [
+      { fields: ["COD_DPTO_RIPS"] },
+      { fields: ["DEPARTAMENTO"] },
+    ],
   },
 );
 

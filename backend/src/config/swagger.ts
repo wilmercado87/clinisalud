@@ -1,6 +1,6 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUiExpress from 'swagger-ui-express';
-import { API_VERSION } from '../constants';
+import { API_VERSION, API_PREFIX } from '../constants';
 
 const swaggerOptions = {
   definition: {
@@ -16,7 +16,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:3000/api/${API_VERSION}`,
+        url: `http://localhost:3000${API_PREFIX}`,
         description: 'Servidor desarrollo local',
       },
     ],
@@ -28,7 +28,7 @@ const swaggerOptions = {
       { name: 'Catalogs', description: 'Catálogos del sistema' },
     ],
     paths: {
-      '/auth/login': {
+      '/v1/auth/login': {
         post: {
           tags: ['Auth'],
           summary: 'Iniciar sesión',
@@ -78,7 +78,7 @@ const swaggerOptions = {
           },
         },
       },
-      '/users': {
+      '/v1/users': {
         get: {
           tags: ['Users'],
           summary: 'Listar usuarios',
@@ -127,7 +127,7 @@ const swaggerOptions = {
           },
         },
       },
-      '/users/{id}': {
+      '/v1/users/{id}': {
         get: {
           tags: ['Users'],
           summary: 'Obtener usuario por ID',
@@ -139,8 +139,8 @@ const swaggerOptions = {
           },
         },
       },
-      '/users/{id}/permissions': {
-        put: {
+      '/v1/users/{id}/permissions': {
+        patch: {
           tags: ['Users'],
           summary: 'Actualizar permisos de usuario',
           description: 'Actualiza los permisos de menú de un usuario',
@@ -175,8 +175,8 @@ const swaggerOptions = {
           },
         },
       },
-      '/users/{id}/toggle': {
-        put: {
+      '/v1/users/{id}/toggle-status': {
+        post: {
           tags: ['Users'],
           summary: 'Cambiar estado de usuario',
           description: 'Activa o desactiva un usuario',

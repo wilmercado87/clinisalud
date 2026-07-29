@@ -38,6 +38,12 @@ ParagrafoAplicacion.init(
     sequelize,
     tableName: "paragrafo_aplicacion",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_TARIFARIO"] },
+      { fields: ["FK_CODIGO_MAPIISS"] },
+      { fields: ["FK_DIAGNOSTICO"] },
+      { fields: ["FK_TARIFARIO", "FK_CODIGO_MAPIISS"] },
+    ],
   }
 );
 

@@ -68,6 +68,11 @@ Notificacion.init(
     tableName: "notificacion",
     timestamps: true,
     updatedAt: false,
+    indexes: [
+      { fields: ["TIPO"] },
+      { fields: ["ID_ACTOR"] },
+      { fields: ["createdAt"] },
+    ],
   },
 );
 

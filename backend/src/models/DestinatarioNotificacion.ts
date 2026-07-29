@@ -42,6 +42,12 @@ DestinatarioNotificacion.init(
     sequelize,
     tableName: "destinatario_notificacion",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_NOTIFICACION"] },
+      { fields: ["FK_USUARIO"] },
+      { fields: ["FK_USUARIO", "LEIDO"] },
+      { fields: ["FK_NOTIFICACION", "FK_USUARIO"] },
+    ],
   },
 );
 

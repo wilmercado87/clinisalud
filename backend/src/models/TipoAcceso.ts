@@ -24,6 +24,10 @@ TipoAcceso.init(
     sequelize,
     tableName: "tipo_acceso",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_TARIFARIO"] },
+      { fields: ["VIA_ACCESO"] },
+    ],
   }
 );
 

@@ -27,6 +27,6 @@ export class UserService {
   }
 
   public toggleStatus(id: number): Observable<ToggleStatusResponse> {
-    return this.http.patch<ToggleStatusResponse>(`${this.apiUrl}/${id}/toggle-status`, {});
+    return this.http.post<ToggleStatusResponse>(`${this.apiUrl}/${id}/toggle-status`, {});
   }
 }

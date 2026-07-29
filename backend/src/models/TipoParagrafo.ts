@@ -32,6 +32,12 @@ TipoParagrafo.init(
     sequelize,
     tableName: "tipo_paragrafo",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_TARIFARIO"] },
+      { fields: ["FK_CODIGO_MAPIISS"] },
+      { fields: ["TIPO_PARAGRAFO"] },
+      { fields: ["FK_TARIFARIO", "FK_CODIGO_MAPIISS"] },
+    ],
   }
 );
 

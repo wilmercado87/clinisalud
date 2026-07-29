@@ -26,6 +26,11 @@ Municipio.init(
     sequelize,
     tableName: "municipio",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_DEPARTAMENTO"] },
+      { fields: ["NOMBRE_MUNICIPIO"] },
+      { fields: ["FK_DEPARTAMENTO", "NOMBRE_MUNICIPIO"] },
+    ],
   }
 );
 

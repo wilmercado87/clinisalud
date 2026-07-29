@@ -77,6 +77,16 @@ Admision.init(
     sequelize,
     tableName: "admision",
     timestamps: true,
+    indexes: [
+      { fields: ["FK_PACIENTE"] },
+      { fields: ["FK_FACTURA"] },
+      { fields: ["ID_HABITACION"] },
+      { fields: ["FK_EPS"] },
+      { fields: ["FK_TIPO_ESTADO"] },
+      { fields: ["ID_USUARIO"] },
+      { fields: ["FECHA_ADMISION"] },
+      { fields: ["FK_PACIENTE", "FECHA_ADMISION"] },
+    ],
   },
 );
 

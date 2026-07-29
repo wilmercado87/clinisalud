@@ -19,6 +19,11 @@ Cama.init(
     sequelize,
     tableName: "cama",
     timestamps: false,
+    indexes: [
+      { fields: ["CODIGO_CAMA"] },
+      { fields: ["ESTADO_CAMA"] },
+      { fields: ["TIPO_CAMA"] },
+    ],
   }
 );
 

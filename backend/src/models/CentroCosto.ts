@@ -34,6 +34,12 @@ CentroCosto.init(
     sequelize,
     tableName: "centro_costo",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_NIVEL_ATENCION"] },
+      { fields: ["FK_ESPECIALIDAD"] },
+      { fields: ["DESCRIPCION_CENTRO_COSTO"] },
+      { fields: ["TIPO_AMBITO"] },
+    ],
   }
 );
 

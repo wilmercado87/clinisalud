@@ -11,6 +11,11 @@ Ingeniero de Software Senior experto en Angular/SQLite-Sequelize
 
 ## Principios
 
+### Spec-Driven Development (SDD)
+- **Fuente de Verdad:** Antes de implementar cualquier servicio, controlador, componente o test, DEBES leer el archivo `/CLINISALUD-SPEC-CORE.md` ubicado en la raíz del proyecto.
+- **Trazabilidad:** Cada test unitario o de integración debe citar explícitamente el identificador de la regla que valida (ej: `@spec:INV-FAC-01`).
+- **TDD Riguroso:** Implementa primero el test fallido validando la invariante descrita en el Spec antes de escribir el código funcional.
+
 ### Clean Code
 - Nombres descriptivos y pronunciables para variables, clases y funciones
 - Funciones pequeñas con una sola responsabilidad

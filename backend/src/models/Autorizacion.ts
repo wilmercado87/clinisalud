@@ -53,6 +53,14 @@ Autorizacion.init(
     sequelize,
     tableName: "autorizacion",
     timestamps: true,
+    indexes: [
+      { fields: ["FK_ADMISION"] },
+      { fields: ["FK_TIPO_AUTORIZACION"] },
+      { fields: ["FK_CODIGO_MAPIISS"] },
+      { fields: ["ID_USUARIO"] },
+      { fields: ["NUMERO_AUTORIZACION"] },
+      { fields: ["FK_ADMISION", "FK_CODIGO_MAPIISS"] },
+    ],
   }
 );
 

@@ -78,10 +78,13 @@ Cups.init(
     tableName: "cups",
     timestamps: false,
     indexes: [
-      {
-        fields: ["CODIGO_MAPIISS", "FK_TARIFARIO"]
-      }
-    ]
+      { fields: ["FK_CENTRO_COSTO"] },
+      { fields: ["FK_TARIFARIO"] },
+      { fields: ["FK_NIVEL_ATENCION"] },
+      { fields: ["FK_TIPO_RIPS"] },
+      { fields: ["DESCRIPCION_MAPIISS"] },
+      { fields: ["CODIGO_MAPIISS", "FK_TARIFARIO"] },
+    ],
   }
 );
 

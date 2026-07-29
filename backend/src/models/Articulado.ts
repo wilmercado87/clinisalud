@@ -38,6 +38,12 @@ Articulado.init(
     sequelize,
     tableName: "articulado",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_TARIFARIO"] },
+      { fields: ["FK_CODIGO_CUPS"] },
+      { fields: ["COD_ARTICULO"] },
+      { fields: ["FK_TARIFARIO", "COD_ARTICULO"] },
+    ],
   }
 );
 

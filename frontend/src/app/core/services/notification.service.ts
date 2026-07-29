@@ -22,10 +22,10 @@ export class NotificationService {
   }
 
   public markAsRead(recipientId: number): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/${recipientId}/read`, {});
+    return this.http.post<void>(`${this.apiUrl}/${recipientId}/read`, {});
   }
 
   public markAllAsRead(): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/read-all`, {});
+    return this.http.post<void>(`${this.apiUrl}/read-all`, {});
   }
 }

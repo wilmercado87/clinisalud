@@ -28,6 +28,10 @@ Diagnostico.init(
     sequelize,
     tableName: "diagnostico",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_TIPO_ORIGEN"] },
+      { fields: ["DESCRIPCION_DIAGNOSTICO"] },
+    ],
   }
 );
 

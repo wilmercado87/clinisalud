@@ -32,6 +32,12 @@ ParagrafoInclusion.init(
     sequelize,
     tableName: "paragrafo_inclusion",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_TARIFARIO"] },
+      { fields: ["FK_CODIGO_MAPIISS"] },
+      { fields: ["CODIGO_SIMPLE"] },
+      { fields: ["FK_TARIFARIO", "FK_CODIGO_MAPIISS"] },
+    ],
   }
 );
 

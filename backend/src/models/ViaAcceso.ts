@@ -26,6 +26,9 @@ ViaAcceso.init(
     sequelize,
     tableName: "via_acceso",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_TIPO_ACCESO"] },
+    ],
   }
 );
 

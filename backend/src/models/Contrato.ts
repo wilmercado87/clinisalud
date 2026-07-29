@@ -40,6 +40,12 @@ Contrato.init(
     sequelize,
     tableName: "contrato",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_EPS"] },
+      { fields: ["FK_TARIFARIO"] },
+      { fields: ["CONTRATO"] },
+      { fields: ["FK_EPS", "FK_TARIFARIO"] },
+    ],
   }
 );
 

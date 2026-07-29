@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, shareReplay } from 'rxjs';
 import { environment } from '@env/environment';
+
 import { RoleResponse } from '@core/models/user-manager.model';
 import { MenuOption } from '@core/models/auth.model';
 
@@ -25,7 +26,7 @@ export class RoleService {
 
   getMenuOptions(): Observable<MenuOption[]> {
     this.menuCache$ ??= this.http
-        .get<MenuOption[]>(`${this.apiUrl}/menus`)
+        .get<MenuOption[]>(`${environment.apiUrl}/menu-options`)
         .pipe(shareReplay(1));
     return this.menuCache$;
   }

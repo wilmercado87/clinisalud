@@ -113,6 +113,15 @@ Paciente.init(
     sequelize,
     tableName: "paciente",
     timestamps: true,
+    indexes: [
+      { fields: ["FK_TIPO_DOCUMENTO"] },
+      { fields: ["FK_TIPO_USUARIO"] },
+      { fields: ["FK_TIPO_GENERO"] },
+      { fields: ["FK_TIPO_ESTADO"] },
+      { fields: ["ID_USUARIO"] },
+      { fields: ["DOCUMENTO_PACIENTE"] },
+      { fields: ["FK_TIPO_DOCUMENTO", "DOCUMENTO_PACIENTE"] },
+    ],
   },
 );
 

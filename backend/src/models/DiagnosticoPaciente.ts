@@ -30,6 +30,11 @@ DiagnosticoPaciente.init(
     sequelize,
     tableName: "diagnostico_paciente",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_ADMISION"] },
+      { fields: ["FK_DIAGNOSTICO"] },
+      { fields: ["FK_ADMISION", "FK_DIAGNOSTICO"] },
+    ],
   }
 );
 

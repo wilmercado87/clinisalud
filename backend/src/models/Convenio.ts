@@ -21,6 +21,10 @@ Convenio.init(
     sequelize,
     tableName: "convenio",
     timestamps: false,
+    indexes: [
+      { fields: ["COD_EPS"] },
+      { fields: ["NOMBRE_EPS"] },
+    ],
   }
 );
 

@@ -12,7 +12,7 @@ import {
 const router = Router();
 
 router.get("/roles", authenticateToken, UsersController.getRoles);
-router.get('/roles/menus', authenticateToken, UsersController.getMenuOptions);
+router.get('/menu-options', authenticateToken, UsersController.getMenuOptions);
 
 const adminOrSuperAdmin = requireRole('ADMIN', 'SUPER_ADMIN');
 
@@ -32,7 +32,7 @@ router.patch(
   validateBody(updatePermissionsValidation),
   UsersController.updatePermissions
 );
-router.patch(
+router.post(
   "/users/:id/toggle-status",
   authenticateToken,
   adminOrSuperAdmin,

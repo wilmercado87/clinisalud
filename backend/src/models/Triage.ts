@@ -65,6 +65,15 @@ Triage.init(
     sequelize,
     tableName: "triage",
     timestamps: true,
+    indexes: [
+      { fields: ["FK_TIPO_PRIORIDAD"] },
+      { fields: ["FK_PACIENTE"] },
+      { fields: ["FK_COD_EPS"] },
+      { fields: ["FK_CODIGO_DIAGNOSTICO"] },
+      { fields: ["ID_USUARIO"] },
+      { fields: ["FECHA_ATENCION"] },
+      { fields: ["FK_PACIENTE", "FECHA_ATENCION"] },
+    ],
   },
 );
 

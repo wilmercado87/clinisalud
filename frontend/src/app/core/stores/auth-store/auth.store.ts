@@ -8,6 +8,7 @@ import { MenuOption, AuthResponse, LoginRequest } from '@core/models/auth.model'
 import { AuthApiService } from '@core/services/auth-api.service';
 import { RoleService } from '@core/services/roles.service';
 import { SocketService } from '@core/services/socket.service';
+import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 
 const STORAGE_KEYS = {
   TOKEN: 'token',
@@ -21,6 +22,7 @@ export class AuthStore {
   private readonly router = inject(Router);
   private readonly roleService = inject(RoleService);
   private readonly socketService = inject(SocketService);
+  private readonly catalogStore = inject(CatalogStore);
 
   private readonly userSignal = signal<UserResponse | null>(this.getUserFromStorage());
   private readonly menuSignal = signal<MenuOption[]>(this.getMenuFromStorage());
@@ -88,6 +90,7 @@ export class AuthStore {
     this.socketService.disconnect();
     this.roleService.clearCache();
     this.roleService.clearMenuCache();
+    this.catalogStore.clearCache();
     this.clear();
     this.router.navigate(['/login']);
   }

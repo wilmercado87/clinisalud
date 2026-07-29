@@ -88,6 +88,11 @@ Usuario.init(
     sequelize,
     tableName: "usuario",
     timestamps: true,
+    indexes: [
+      { fields: ["FK_TIPO_DOCUMENTO"] },
+      { fields: ["FK_ROL"] },
+      { fields: ["FK_ROL", "ACTIVO"] },
+    ],
   },
 );
 

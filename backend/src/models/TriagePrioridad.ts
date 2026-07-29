@@ -30,6 +30,10 @@ TriagePrioridad.init(
     sequelize,
     tableName: "triage_prioridad",
     timestamps: false,
+    indexes: [
+      { fields: ["FK_TIPO_TRIAGE"] },
+      { fields: ["TIPO_PRIORIDAD"] },
+    ],
   }
 );
 
