@@ -10,3 +10,6 @@
 {"error":"401:Usuario no encontrado","level":"error","message":"Login failed for email: sal@gmail.com","service":"clinisalud-api","timestamp":"2026-05-23 17:14:24"}
 {"error":"401:Credenciales inválidas","level":"error","message":"Login failed for email: sal@gmail.com","service":"clinisalud-api","timestamp":"2026-05-23 17:15:10"}
 {"error":"401:Credenciales inválidas","level":"error","message":"Login failed for email: sa@gmail.com","service":"clinisalud-api","timestamp":"2026-05-23 17:25:44"}
+{"error":"Usuario no encontrado","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 14:56:12"}
+{"error":"Usuario no encontrado","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 14:57:45"}
+{"error":"Usuario no encontrado","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:02:01"}

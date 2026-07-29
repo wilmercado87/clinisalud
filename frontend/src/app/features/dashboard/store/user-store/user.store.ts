@@ -13,6 +13,7 @@ interface CreatePayload {
   address?: string;
   roleId: number;
   permissions: number[];
+  documentTypeId?: number;
 }
 
 @Injectable({ providedIn: 'root' })

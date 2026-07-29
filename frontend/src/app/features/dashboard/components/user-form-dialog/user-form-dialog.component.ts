@@ -19,11 +19,12 @@ import { AuthStore } from '@core/stores/auth-store/auth.store';
 import { ToastService } from '@core/services/toast.service';
 import { MenuOption } from '@core/models/auth.model';
 import { ERROR_MAPPING, HTTP_STATUS, ApiError } from '@shared/utils/status.codes';
+import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import { ROLE_CODES } from '@shared/utils/role-constants';
 
 @Component({
   selector: 'app-user-form-dialog',
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatCheckboxModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatCheckboxModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, CatalogSelectComponent],
   templateUrl: './user-form-dialog.component.html',
   styleUrl: './user-form-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +46,7 @@ export class UserFormDialogComponent {
   public readonly createError = this.userStore.createError;
 
   public userForm = this.fb.group({
+    documentTypeId: [null as number | null],
     firstName: ['', [Validators.required]],
     lastName: ['', [Validators.required]],
     dni: ['', [Validators.required, Validators.pattern('^[0-9]+$')]],
@@ -58,6 +60,8 @@ export class UserFormDialogComponent {
     this.userForm.controls.roleId.valueChanges,
     { initialValue: this.userForm.controls.roleId.value }
   );
+
+  private formSubmitted = false;
 
   public selectedIds = signal<Set<number>>(new Set());
   public generatedPassword = signal('');
@@ -126,7 +130,7 @@ export class UserFormDialogComponent {
 
     effect(() => {
       const res = this.createResult();
-      if (res?.temporaryPassword) {
+      if (res?.temporaryPassword && this.formSubmitted) {
         this.generatedPassword.set(res.temporaryPassword);
         this.toast.success('¡Usuario registrado con éxito!');
       }
@@ -179,12 +183,14 @@ export class UserFormDialogComponent {
   public onSubmit(): void {
     if (!this.canSubmit()) return;
 
+    this.formSubmitted = true;
     this.userStore.createUser(this.buildPayload(this.userForm.getRawValue()));
   }
 
   private buildPayload(rawForm: Record<string, unknown>): {
     firstName: string; lastName: string; dni: string; email: string;
     phone?: string; address?: string; roleId: number; permissions: number[];
+    documentTypeId?: number;
   } {
     const cleanFields = Object.fromEntries(
       Object.entries(rawForm).map(([key, value]) => [
@@ -194,7 +200,7 @@ export class UserFormDialogComponent {
     );
 
     return {
-      ...cleanFields as { firstName: string; lastName: string; dni: string; email: string; phone?: string; address?: string; roleId: number; },
+      ...cleanFields as { firstName: string; lastName: string; dni: string; email: string; phone?: string; address?: string; roleId: number; documentTypeId?: number; },
       permissions: Array.from(this.selectedIds()),
     };
   }

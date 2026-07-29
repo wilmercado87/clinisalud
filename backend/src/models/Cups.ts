@@ -41,7 +41,6 @@ Cups.init(
     },
     mapiissCode: {
       type: DataTypes.STRING(30),
-      unique: true,
       field: "CODIGO_MAPIISS"
     },
     mapiissDescription: { type: DataTypes.TEXT, field: "DESCRIPCION_MAPIISS" },

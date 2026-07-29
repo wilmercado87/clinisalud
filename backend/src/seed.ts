@@ -277,6 +277,11 @@ export const runSeeder = async () => {
     console.log("👥 Inicializando roles base del sistema...");
     const rolesMap = await seedSystemRoles();
 
+    await deployInitialSuperAdmin(rolesMap["SUPER_ADMIN"].id);
+
+    console.log("🔔 Sembrando notificaciones de simulación...");
+    await seedSampleNotifications();
+
     console.log("📦 Iniciando procesamiento e inserción de archivos CSV...");
     const csvFolder = path.join(__dirname, "../../tablas_clinisalud");
 
@@ -321,13 +326,14 @@ export const runSeeder = async () => {
     }
 
     await assignAllRolePermissions(rolesMap);
-    await deployInitialSuperAdmin(rolesMap["SUPER_ADMIN"].id);
-
-    console.log("🔔 Sembrando notificaciones de simulación...");
-    await seedSampleNotifications();
 
     console.log("🎉 ¡Reset global, validación estructural e importación masiva exitosos!");
   } catch (error) {
     console.error("❌ Error en el Seed:", error);
   }
 };
+
+// Auto-ejecución cuando se llama directamente: npm run seed
+if (require.main === module) {
+  runSeeder();
+}

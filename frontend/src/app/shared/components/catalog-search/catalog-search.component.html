@@ -1,0 +1,36 @@
+<mat-form-field appearance="outline" class="catalog-search__field">
+  @if (label()) {
+    <mat-label>{{ label() }}</mat-label>
+  }
+  <input
+    matInput
+    type="text"
+    [placeholder]="placeholder()"
+    [value]="query()"
+    (input)="onInputChange($any($event).target.value)"
+    [matAutocomplete]="auto"
+  />
+  @if (isSearching()) {
+    <mat-spinner matSuffix diameter="20" />
+  }
+</mat-form-field>
+
+<mat-autocomplete
+  #auto="matAutocomplete"
+  (optionSelected)="onOptionSelected($event.option.value)"
+  [displayWith]="displayFn"
+>
+  @for (item of results(); track item.id) {
+    <mat-option [value]="item">
+      @if ('code' in item) {
+        <span class="catalog-search__code">{{ item.code }}</span>
+        <span class="catalog-search__sep">—</span>
+        <span class="catalog-search__desc">{{ item.description }}</span>
+      } @else if ('mapiissCode' in item) {
+        <span class="catalog-search__code">{{ item.mapiissCode }}</span>
+        <span class="catalog-search__sep">—</span>
+        <span class="catalog-search__desc">{{ item.description }}</span>
+      }
+    </mat-option>
+  }
+</mat-autocomplete>

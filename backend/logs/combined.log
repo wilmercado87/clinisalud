@@ -192,3 +192,39 @@
 {"level":"info","message":"User logged in successfully: sa@gmail.com","service":"clinisalud-api","timestamp":"2026-05-23 17:31:47"}
 {"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-05-23 17:32:09"}
 {"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-29 14:12:49"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-29 14:55:54"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 14:56:12"}
+{"error":"Usuario no encontrado","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 14:56:12"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 14:57:45"}
+{"error":"Usuario no encontrado","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 14:57:45"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-29 15:00:00"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-29 15:00:09"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-29 15:01:55"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:02:01"}
+{"error":"Usuario no encontrado","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:02:01"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-29 15:08:50"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-29 15:11:42"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-29 15:12:23"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:12:54"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:12:54"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-29 15:15:09"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-29 15:16:48"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:17:09"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:17:09"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:33:32"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:33:32"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:55:35"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:55:35"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-29 15:55:54"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:56:17"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:56:17"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:58:22"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:58:22"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:58:46"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:58:46"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:59:25"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:59:25"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 16:00:05"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 16:00:05"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 16:04:57"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 16:04:57"}

@@ -20,6 +20,14 @@
       <form [formGroup]="userForm" class="user-form__body">
         <div class="user-form__section-label">IDENTIDAD Y CONTACTO</div>
         <div class="user-form__grid">
+          <app-catalog-select
+            class="user-form__field"
+            catalogType="document-types"
+            label="Tipo de Documento"
+            placeholder="Seleccione"
+            formControlName="documentTypeId"
+          />
+
           <mat-form-field appearance="outline" class="user-form__field">
             <mat-label>Nombres</mat-label>
             <input matInput formControlName="firstName" />

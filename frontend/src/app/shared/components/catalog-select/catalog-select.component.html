@@ -1,0 +1,22 @@
+<mat-form-field appearance="outline" class="catalog-select__field">
+  @if (label()) {
+    <mat-label>{{ label() }}</mat-label>
+  }
+  <mat-select
+    [value]="value()"
+    [placeholder]="placeholder()"
+    [multiple]="multiple()"
+    [disabled]="disabled()"
+    (selectionChange)="onSelectChange($event.value)"
+  >
+    @if (isLoading()) {
+      <mat-option disabled>
+        <mat-spinner diameter="20" />
+      </mat-option>
+    } @else {
+      @for (item of items(); track item.id) {
+        <mat-option [value]="item.id">{{ item.description }}</mat-option>
+      }
+    }
+  </mat-select>
+</mat-form-field>
