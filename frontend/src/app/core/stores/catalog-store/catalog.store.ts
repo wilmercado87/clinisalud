@@ -125,5 +125,10 @@ export class CatalogStore {
   clearCache(): void {
     this.cache.clear();
     this.observables.clear();
+    this.searchDiagTrigger.set(null);
+    this.searchCupsTrigger.set(null);
+    this.municipalitiesTrigger.set(null);
+    this.contractsTrigger.set(null);
+    this.bedsTrigger.set(null);
   }
 }

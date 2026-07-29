@@ -1,4 +1,4 @@
-import { Component, input, forwardRef, inject, ChangeDetectionStrategy, signal, effect } from '@angular/core';
+import { Component, input, forwardRef, inject, ChangeDetectionStrategy, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -33,8 +33,6 @@ export class CatalogSelectComponent implements ControlValueAccessor {
   readonly value = signal<number | number[] | null>(null);
   readonly disabled = signal(false);
 
-  readonly items = signal<CatalogItem[]>([]);
-
   private readonly loadTrigger = signal<string | null>(null);
 
   private readonly itemsResource = rxResource({
@@ -46,6 +44,7 @@ export class CatalogSelectComponent implements ControlValueAccessor {
   });
 
   readonly isLoading = this.itemsResource.isLoading;
+  readonly items = computed(() => this.itemsResource.value() ?? []);
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
@@ -54,11 +53,6 @@ export class CatalogSelectComponent implements ControlValueAccessor {
     effect(() => {
       const type = this.catalogType();
       if (type) this.loadTrigger.set(type);
-    });
-
-    effect(() => {
-      const loaded = this.itemsResource.value();
-      if (loaded) this.items.set(loaded);
     });
   }
 
