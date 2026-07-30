@@ -1,0 +1,197 @@
+<div class="admission-form">
+  <header class="admission-form__header">
+    <div class="admission-form__title-group">
+      <h1 class="admission-form__title">Registro de Admisión</h1>
+      <p class="admission-form__subtitle">Gestión de ingresos hospitalarios y censo.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="patientForm">
+    <mat-card appearance="outlined" class="admission-form__card">
+      <mat-card-header>
+        <mat-card-title>Datos del Paciente</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="admission-form__row">
+          <app-catalog-select
+            catalogType="document-types"
+            label="Tipo Documento"
+            [formControl]="$any(patientForm.controls)['documentTypeId']"
+            class="admission-form__field--small"
+          />
+          <mat-form-field appearance="outline" class="admission-form__field--medium">
+            <mat-label>Número Documento</mat-label>
+            <input matInput formControlName="document" placeholder="Ingrese documento" />
+          </mat-form-field>
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            class="admission-form__search-btn"
+            (click)="onSearchPatient()"
+            [disabled]="isLookingUp()"
+          >
+            @if (isLookingUp()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              <mat-icon>search</mat-icon>
+            }
+            Buscar
+          </button>
+        </div>
+
+        @if (isExistingPatient()) {
+          <div class="admission-form__badge">Paciente existente</div>
+        } @else {
+          <div class="admission-form__badge admission-form__badge--new">Nuevo paciente</div>
+        }
+
+        <mat-divider class="admission-form__divider" />
+
+        <div class="admission-form__grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Nombres</mat-label>
+            <input matInput formControlName="firstName" placeholder="Nombres" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Apellidos</mat-label>
+            <input matInput formControlName="lastName" placeholder="Apellidos" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha Nacimiento</mat-label>
+            <input matInput formControlName="birthDate" placeholder="YYYY-MM-DD" />
+          </mat-form-field>
+          <app-catalog-select
+            catalogType="genders"
+            label="Género"
+            [formControl]="$any(patientForm.controls)['genderId']"
+          />
+          <mat-form-field appearance="outline">
+            <mat-label>Edad</mat-label>
+            <input matInput formControlName="age" placeholder="Edad" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Discapacidad</mat-label>
+            <input matInput formControlName="disability" placeholder="SÍ / NO" />
+          </mat-form-field>
+          <app-catalog-select
+            catalogType="user-types"
+            label="Tipo Usuario"
+            [formControl]="$any(patientForm.controls)['userTypeId']"
+          />
+          <mat-form-field appearance="outline">
+            <mat-label>Dirección</mat-label>
+            <input matInput formControlName="address" placeholder="Dirección" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="phone" placeholder="Teléfono" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Correo</mat-label>
+            <input matInput formControlName="email" placeholder="correo@ejemplo.com" />
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </form>
+
+  <form [formGroup]="admissionForm">
+    <mat-card appearance="outlined" class="admission-form__card">
+      <mat-card-header>
+        <mat-card-title>Datos de la Admisión</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="admission-form__grid">
+          <app-catalog-select
+            catalogType="eps"
+            label="EPS"
+            [formControl]="$any(admissionForm.controls)['epsId']"
+          />
+          <mat-form-field appearance="outline">
+            <mat-label>Cama</mat-label>
+            <mat-select formControlName="roomId" placeholder="Seleccione">
+              @if (isLoadingBeds()) {
+                <mat-option disabled>
+                  <mat-spinner diameter="20" />
+                </mat-option>
+              } @else {
+                @for (bed of beds(); track bed.roomId) {
+                  <mat-option [value]="bed.roomId">
+                    {{ bed.bedCode }} - {{ bed.tipoCama }}
+                  </mat-option>
+                }
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="admission-form__field--full">
+            <mat-label>Observaciones</mat-label>
+            <textarea matInput formControlName="observations" rows="3" placeholder="Observaciones"></textarea>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined" class="admission-form__card">
+      <mat-card-header>
+        <mat-card-title>
+          Autorizaciones
+          <mat-slide-toggle
+            [checked]="showAuthorizations()"
+            (change)="showAuthorizations.set(!showAuthorizations())"
+            class="admission-form__toggle"
+          >
+            Agregar
+          </mat-slide-toggle>
+        </mat-card-title>
+      </mat-card-header>
+      @if (showAuthorizations()) {
+        <mat-card-content>
+          @for (auth of authEntries(); track $index) {
+            <div class="admission-form__auth-row">
+              <app-catalog-select
+                catalogType="authorization-types"
+                label="Tipo Autorización"
+                [formControl]="$any(auth).controls.authTypeId"
+                class="admission-form__field--medium"
+              />
+              <mat-form-field appearance="outline" class="admission-form__field--medium">
+                <mat-label>N° Autorización</mat-label>
+                <input matInput [formControl]="$any(auth).controls.authNumber" placeholder="Número" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="admission-form__field--medium">
+                <mat-label>Código MAPIISS</mat-label>
+                <input matInput [formControl]="$any(auth).controls['mapiissCode']" placeholder="Código" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="admission-form__field--small">
+                <mat-label>Cantidad</mat-label>
+                <input matInput type="number" [formControl]="$any(auth).controls['quantity']" placeholder="1" />
+              </mat-form-field>
+              <button mat-icon-button color="warn" type="button" (click)="removeAuthEntry($index)">
+                <mat-icon>remove_circle</mat-icon>
+              </button>
+            </div>
+          }
+          <button mat-stroked-button type="button" (click)="addAuthEntry()">
+            <mat-icon>add</mat-icon>
+            Agregar autorización
+          </button>
+        </mat-card-content>
+      }
+    </mat-card>
+  </form>
+
+  <div class="admission-form__actions">
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="onSubmit()"
+      [disabled]="isCreating()"
+    >
+      @if (isCreating()) {
+        <mat-spinner diameter="20" />
+      }
+      Registrar Admisión
+    </button>
+  </div>
+</div>

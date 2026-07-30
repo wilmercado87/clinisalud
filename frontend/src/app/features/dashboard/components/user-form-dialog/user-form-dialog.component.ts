@@ -91,28 +91,48 @@ export class UserFormDialogComponent {
 
   public isPermissionsLocked = computed(() => this.isSuperAdminRole());
 
-  public filteredMenuOptions = computed(() =>
-    (this.menuOptions() ?? []).filter(item => item.label === 'Panel Principal')
-  );
+  public filteredMenuOptions = computed(() => {
+    const items = this.menuOptions() ?? [];
+    const roleId = this.roleIdSignal();
+    const selectedRole = (this.roles() ?? []).find(r => r.id === roleId);
+    const hideGestor = selectedRole?.code === ROLE_CODES.MEDICO || selectedRole?.code === ROLE_CODES.FACTURADOR;
+    if (!hideGestor) return items;
+    return items.filter(g => g.label.toUpperCase() !== 'GESTOR USUARIOS');
+  });
 
-  public totalOptionsCount = computed(() =>
-    this.filteredMenuOptions().reduce((acc, group) => acc + 1 + (group.children?.length || 0), 0)
-  );
+  private gestorUsuariosIds = computed<Set<number>>(() => {
+    const group = (this.menuOptions() ?? []).find(
+      g => g.label.toUpperCase() === 'GESTOR USUARIOS'
+    );
+    if (!group) return new Set();
+    return new Set([group.id, ...(group.children?.map(c => c.id) ?? [])]);
+  });
 
-  public isFullAccessDenied = computed(() => {
-    if (this.isAdmin()) return false;
-    const total = this.totalOptionsCount();
-    return total > 0 && this.selectedIds().size >= total;
+  public isGestorUsuariosForced = computed(() => {
+    const roleId = this.roleIdSignal();
+    const items = this.roles() ?? [];
+    const selectedRole = items.find(r => r.id === roleId);
+    return selectedRole?.code === ROLE_CODES.ADMIN;
+  });
+
+  public effectiveSelectedIds = computed(() => {
+    const ids = new Set(this.selectedIds());
+    if (this.isGestorUsuariosForced()) {
+      this.gestorUsuariosIds().forEach(id => ids.add(id));
+    }
+    return ids;
   });
 
   public canSubmit = computed(() =>
     this.formStatus() === 'VALID' &&
-    this.selectedIds().size > 0 &&
-    !this.isFullAccessDenied() &&
+    this.effectiveSelectedIds().size > 0 &&
     !this.isCreating()
   );
 
   constructor() {
+    if (this.menuOptions()?.length === 0) {
+      this.roleStore.reloadMenuOptions();
+    }
     this.registerEffects();
   }
 
@@ -123,8 +143,6 @@ export class UserFormDialogComponent {
 
       if (is_admin && options.length > 0) {
         this.selectAllPermissions();
-      } else {
-        this.selectedIds.set(new Set());
       }
     });
 
@@ -143,6 +161,8 @@ export class UserFormDialogComponent {
   }
 
   public toggleParent(group: MenuOption, isChecked: boolean): void {
+    if (this.isGestorUsuariosForced() && group.label.toUpperCase() === 'GESTOR USUARIOS') return;
+
     const newSet = new Set(this.selectedIds());
     const childIds = group.children?.map(c => c.id) || [];
 
@@ -157,6 +177,8 @@ export class UserFormDialogComponent {
   }
 
   public toggleChild(childId: number, parent: MenuOption): void {
+    if (this.isGestorUsuariosForced() && parent.label.toUpperCase() === 'GESTOR USUARIOS') return;
+
     const newSet = new Set(this.selectedIds());
     const childIds = parent.children?.map(c => c.id) || [];
     const isChildSelected = newSet.has(childId);
@@ -201,7 +223,7 @@ export class UserFormDialogComponent {
 
     return {
       ...cleanFields as { firstName: string; lastName: string; dni: string; email: string; phone?: string; address?: string; roleId: number; documentTypeId?: number; },
-      permissions: Array.from(this.selectedIds()),
+      permissions: Array.from(this.effectiveSelectedIds()),
     };
   }
 

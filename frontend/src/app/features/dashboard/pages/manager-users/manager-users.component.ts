@@ -49,6 +49,8 @@ export class ManagerUsersComponent implements AfterViewInit {
   @ViewChild(MatSort) sort!: MatSort;
 
   constructor() {
+    this.userStore.loadUsers();
+
     effect(() => {
       const users = this.userStore.users();
       if (users) this.usersTable.setData(users);
@@ -98,6 +100,7 @@ export class ManagerUsersComponent implements AfterViewInit {
   }
 
   public openPermissionsDialog(user: UserResponse): void {
+    this.userStore.resetUpdatePermissions();
     this.dialog.open(PermissionsDialogComponent, { width: '600px', disableClose: true, data: { user } })
       .afterClosed()
       .subscribe(result => result?.success && this.userStore.loadUsers());

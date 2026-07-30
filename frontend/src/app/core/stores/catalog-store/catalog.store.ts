@@ -1,12 +1,12 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, of, shareReplay, tap } from 'rxjs';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { CatalogApiService } from '@core/services/catalog-api.service';
+import { CatalogService } from '@core/services/catalog.service';
 import { CatalogItem, MunicipioItem, ContratoItem, CamaItem, DiagnosticoItem, CupsItem } from '@core/models/catalog.model';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogStore {
-  private readonly catalogApi = inject(CatalogApiService);
+  private readonly catalogApi = inject(CatalogService);
 
   private cache = new Map<string, CatalogItem[]>();
   private observables = new Map<string, Observable<CatalogItem[]>>();

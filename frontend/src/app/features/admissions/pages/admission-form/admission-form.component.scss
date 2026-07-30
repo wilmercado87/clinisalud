@@ -1,0 +1,98 @@
+.admission-form {
+  max-width: 960px;
+  margin: 0 auto;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+  }
+
+  &__subtitle {
+    margin: 4px 0 0;
+    color: var(--mat-sys-on-surface-variant, #666);
+    font-size: 14px;
+  }
+
+  &__card {
+    margin-bottom: 20px;
+  }
+
+  &__row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  &__field--small {
+    min-width: 180px;
+    flex: 1;
+  }
+
+  &__field--medium {
+    min-width: 200px;
+    flex: 2;
+  }
+
+  &__field--full {
+    width: 100%;
+  }
+
+  &__search-btn {
+    height: 56px;
+    min-width: 120px;
+  }
+
+  &__badge {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--mat-sys-primary-container, #e0e3ff);
+    color: var(--mat-sys-on-primary-container, #00164e);
+
+    &--new {
+      background: var(--mat-sys-tertiary-container, #ffe2e2);
+      color: var(--mat-sys-on-tertiary-container, #5c0e0e);
+    }
+  }
+
+  &__divider {
+    margin: 16px 0;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 8px;
+  }
+
+  &__toggle {
+    margin-left: 16px;
+  }
+
+  &__auth-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+}

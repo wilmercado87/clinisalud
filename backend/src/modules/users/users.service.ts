@@ -147,20 +147,20 @@ export class UsersService {
 
   private async createPermissions(userId: number, roleId: number, permissions: number[]) {
     const rolePerms = await PermisoRolMenu.findAll({ where: { roleId } });
-    const roleAllowedIds = new Set(rolePerms.map(p => p.menuOptionId));
-
     const selectedSet = new Set(permissions);
+    const allMenuIds = new Set([
+      ...rolePerms.map(p => p.menuOptionId),
+      ...permissions,
+    ]);
 
-    const toCreate: { userId: number; menuOptionId: number; hasAccess: boolean }[] = [];
+    const overrides = Array.from(allMenuIds).map(menuOptionId => ({
+      userId,
+      menuOptionId,
+      hasAccess: selectedSet.has(menuOptionId),
+    }));
 
-    for (const allowedId of roleAllowedIds) {
-      if (!selectedSet.has(allowedId)) {
-        toCreate.push({ userId, menuOptionId: allowedId, hasAccess: false });
-      }
-    }
-
-    if (toCreate.length > 0) {
-      await SobreescrituraMenuUsuario.bulkCreate(toCreate);
+    if (overrides.length > 0) {
+      await SobreescrituraMenuUsuario.bulkCreate(overrides);
     }
   }
 

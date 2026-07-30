@@ -15,7 +15,6 @@ import { ConfigStore } from '@core/stores/config-store/config.store';
 import { SidebarMenuComponent } from '@layout/sidebar/sidebar-menu.component';
 import { ProfileDialogComponent } from '@layout/header/profile-dialog/profile-dialog.component';
 import { NotificationBellComponent } from '@layout/header/notification-bell/notification-bell.component';
-import { MenuOption } from '@core/models/auth.model';
 import { ROLE_CODES } from '@shared/utils/role-constants';
 import { AuthStore } from '@core/stores/auth-store/auth.store';
 import { UiStore } from '@core/stores/ui-store/ui.store';
@@ -40,11 +39,7 @@ export class MainLayoutComponent {
 
   public readonly currentUser = this.authStore.currentUser;
 
-  private readonly rawMenu = toSignal(this.authStore.userMenu$, { initialValue: [] as MenuOption[] });
-
-  public menuItems = computed<MenuOption[]>(() =>
-    this.rawMenu().map(group => ({ ...group }))
-  );
+  public menuItems = computed(() => this.authStore.menu());
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(

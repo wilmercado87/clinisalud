@@ -12,7 +12,7 @@ import {
 } from '@core/models/catalog.model';
 
 @Injectable({ providedIn: 'root' })
-export class CatalogApiService {
+export class CatalogService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/catalogs`;
 

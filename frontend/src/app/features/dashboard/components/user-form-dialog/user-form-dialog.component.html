@@ -83,21 +83,14 @@
 
         <div class="user-form__section-label">ACCESOS DEL PANEL</div>
 
-        @if (isFullAccessDenied()) {
-          <div class="user-form__security-alert">
-            <mat-icon>report_problem</mat-icon>
-            <span>Solo los Administradores pueden tener acceso total al sistema.</span>
-          </div>
-        }
-
         <div class="user-form__permissions">
           @for (group of filteredMenuOptions(); track group.id) {
             <div class="user-form__permission-item">
               <div class="user-form__permission-parent">
                 <mat-checkbox
-                  [checked]="selectedIds().has(group.id)"
+                  [checked]="effectiveSelectedIds().has(group.id)"
                   (change)="toggleParent(group, $event.checked)"
-                  [disabled]="isPermissionsLocked()"
+                  [disabled]="isPermissionsLocked() || (isGestorUsuariosForced() && group.label === 'Gestor Usuarios')"
                   color="primary"
                 >
                   <mat-icon class="user-form__group-icon">grid_view</mat-icon>
@@ -110,9 +103,9 @@
               <div class="user-form__permission-children">
                 @for (child of group.children; track child.id) {
                   <mat-checkbox
-                    [checked]="selectedIds().has(child.id)"
+                    [checked]="effectiveSelectedIds().has(child.id)"
                     (change)="toggleChild(child.id, group)"
-                    [disabled]="isPermissionsLocked()"
+                    [disabled]="isPermissionsLocked() || (isGestorUsuariosForced() && group.label === 'Gestor Usuarios')"
                     class="user-form__child-checkbox"
                   >
                     {{ child.label }}

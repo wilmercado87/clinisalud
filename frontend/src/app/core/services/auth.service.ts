@@ -7,7 +7,7 @@ import { UserResponse } from '@core/models/user-manager.model';
 import { ERROR_MAPPING, HTTP_STATUS } from '@shared/utils/status.codes';
 
 @Injectable({ providedIn: 'root' })
-export class AuthApiService {
+export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 

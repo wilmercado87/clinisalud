@@ -171,32 +171,6 @@
     }
   }
 
-  &__security-alert {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background-color: v.$color-alert-bg;
-    color: v.$color-alert-text;
-    border: 1px solid v.$color-alert-border;
-    padding: 5px;
-    border-radius: 8px;
-    margin: 5px 0;
-    animation: fadeInDown 0.3s ease-out;
-
-    mat-icon {
-      color: v.$color-alert-icon;
-      font-size: 22px;
-      height: 22px;
-      width: 22px;
-    }
-
-    span {
-      font-size: 13px;
-      font-weight: 500;
-      line-height: 1.4;
-    }
-  }
-
   &__actions {
     padding: 16px 24px;
     gap: 12px;

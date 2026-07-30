@@ -81,7 +81,7 @@ export class PermissionsDialogComponent {
     }, 0);
 
     return (
-      this.assignedMenuOptionIds().size >= maxSelectableCountForNonAdmin &&
+      this.assignedMenuOptionIds().size > maxSelectableCountForNonAdmin &&
       maxSelectableCountForNonAdmin > 0
     );
   });
@@ -96,13 +96,18 @@ export class PermissionsDialogComponent {
   );
 
   constructor() {
+    if (this.menuOptions()?.length === 0) {
+      this.roleStore.reloadMenuOptions();
+    }
     this.initializePermissionsEffects();
   }
 
   private initializePermissionsEffects(): void {
     effect(() => {
       const menuGroups = this.permissionMenuGroups();
-      if (menuGroups.length > 0) {
+      const loading = this.isLoadingMenuOptions();
+      const userId = this.targetUserData?.user?.id;
+      if (!loading && menuGroups.length > 0 && userId) {
         this.loadExistingUserPermissions(menuGroups);
       }
     });

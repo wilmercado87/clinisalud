@@ -5,6 +5,7 @@ import authRoutes from './modules/auth/auth.routes';
 import userRoutes from './modules/users/users.routes';
 import notificationRoutes from './modules/notifications/notifications.routes';
 import catalogRoutes from './modules/catalogs/catalogs.routes';
+import admissionRoutes from './modules/admissions/admissions.routes';
 import { securityMiddleware, generalLimiter } from './middlewares/SecurityMiddleware';
 import { errorHandler, notFoundHandler } from './middlewares/ErrorHandlerMiddleware';
 import { logInfo, healthCheck, rootEndpoint } from './utils';
@@ -26,6 +27,7 @@ app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(API_PREFIX, userRoutes);
 app.use(API_PREFIX, notificationRoutes);
 app.use(API_PREFIX, catalogRoutes);
+app.use(API_PREFIX, admissionRoutes);
 
 app.use('/api-docs', swaggerUiExpress.serve, swaggerUiExpress.setup(swaggerSpec));
 app.get('/api-docs.json', (req: express.Request, res: express.Response) => {

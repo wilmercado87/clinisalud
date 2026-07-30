@@ -1,4 +1,4 @@
-import { Injectable, inject, computed } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RoleService } from '@core/services/roles.service';
 import { MenuOption } from '@core/models/auth.model';

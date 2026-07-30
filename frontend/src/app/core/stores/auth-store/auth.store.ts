@@ -1,14 +1,15 @@
-import { Injectable, signal, inject, effect } from '@angular/core';
+import { Injectable, signal, inject, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of, tap } from 'rxjs';
-import { toObservable } from '@angular/core/rxjs-interop';
 import { UserResponse } from '@core/models/user-manager.model';
 import { MenuOption, AuthResponse, LoginRequest } from '@core/models/auth.model';
-import { AuthApiService } from '@core/services/auth-api.service';
-import { RoleService } from '@core/services/roles.service';
+import { AuthService } from '@core/services/auth.service';
 import { SocketService } from '@core/services/socket.service';
+import { RoleService } from '@core/services/roles.service';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
+import { RoleStore } from '@core/stores/role-store/role.store';
+import { UserStore } from '@features/dashboard/store/user-store/user.store';
 
 const STORAGE_KEYS = {
   TOKEN: 'token',
@@ -18,19 +19,23 @@ const STORAGE_KEYS = {
 
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
-  private readonly authApi = inject(AuthApiService);
+  private readonly authApi = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly roleService = inject(RoleService);
+  private readonly injector = inject(Injector);
   private readonly socketService = inject(SocketService);
-  private readonly catalogStore = inject(CatalogStore);
+
+  private get roleService() { return this.injector.get(RoleService); }
+  private get catalogStore() { return this.injector.get(CatalogStore); }
+  private get roleStore() { return this.injector.get(RoleStore); }
+  private get userStore() { return this.injector.get(UserStore); }
 
   private readonly userSignal = signal<UserResponse | null>(this.getUserFromStorage());
   private readonly menuSignal = signal<MenuOption[]>(this.getMenuFromStorage());
 
+  private loggingOut = false;
+
   public readonly currentUser = this.userSignal.asReadonly();
   public readonly menu = this.menuSignal.asReadonly();
-  public readonly currentUser$ = toObservable(this.currentUser);
-  public readonly userMenu$ = toObservable(this.menu);
 
   private readonly loginTrigger = signal<LoginRequest | null>(null);
 
@@ -78,7 +83,21 @@ export class AuthStore {
   constructor() {
     const token = this.getToken();
     if (token) {
+      if (this.isTokenExpired(token)) {
+        this.logout();
+        return;
+      }
       this.socketService.connect(token);
+    }
+  }
+
+  private isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Math.floor(Date.now() / 1000);
+      return payload.exp && payload.exp < now;
+    } catch {
+      return true;
     }
   }
 
@@ -87,6 +106,9 @@ export class AuthStore {
   }
 
   public logout(): void {
+    if (this.loggingOut) return;
+    this.loggingOut = true;
+
     this.socketService.disconnect();
     this.roleService.clearCache();
     this.roleService.clearMenuCache();
@@ -140,10 +162,12 @@ export class AuthStore {
   }
 
   private saveSession(res: AuthResponse): void {
+    this.loggingOut = false;
     this.setToken(res.token);
     this.setUser(res.user);
     this.setMenu(res.menu);
     this.socketService.connect(res.token);
+    this.injector.get(RoleStore);
   }
 
   private getUserFromStorage(): UserResponse | null {

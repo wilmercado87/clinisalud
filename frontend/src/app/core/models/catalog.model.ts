@@ -15,10 +15,10 @@ export interface ContratoItem extends CatalogItem {
 }
 
 export interface CamaItem {
-  id: number;
+  roomId: number;
   bedCode: string;
   bedStatus: number;
-  name: string;
+  tipoCama: string;
 }
 
 export interface DiagnosticoItem {

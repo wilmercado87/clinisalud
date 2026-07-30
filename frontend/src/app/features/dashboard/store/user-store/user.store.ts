@@ -20,8 +20,14 @@ interface CreatePayload {
 export class UserStore {
   private readonly userService = inject(UserService);
 
+  private readonly loadTrigger = signal(0);
+
   private readonly usersResource = rxResource({
-    loader: () => this.userService.getManageableUsers(),
+    request: () => this.loadTrigger(),
+    loader: ({ request }) => {
+      if (!request) return of([]);
+      return this.userService.getManageableUsers();
+    },
   });
 
   readonly users = this.usersResource.value.asReadonly();
@@ -71,7 +77,11 @@ export class UserStore {
   readonly updatePermissionsError = this.updatePermissionsResource.error;
 
   loadUsers(): void {
-    this.usersResource.reload();
+    this.loadTrigger.update(n => n + 1);
+  }
+
+  clearCache(): void {
+    this.loadTrigger.update(n => n + 1);
   }
 
   toggleStatus(id: number): void {
@@ -84,5 +94,9 @@ export class UserStore {
 
   updatePermissions(userId: number, overrides: PermissionOverride[]): void {
     this.updatePermissionsTrigger.set({ userId, overrides });
+  }
+
+  resetUpdatePermissions(): void {
+    this.updatePermissionsTrigger.set(null);
   }
 }

@@ -13,5 +13,9 @@ export const dashboardRoutes: Routes = [
     path: 'notifications',
     loadComponent: () => import('@features/dashboard/pages/notifications/notifications.component').then(m => m.NotificationsComponent),
   },
+  {
+    path: 'admission',
+    loadChildren: () => import('@features/admissions/admissions.routes').then(m => m.admissionsRoutes),
+  },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 ];
