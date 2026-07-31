@@ -17,9 +17,20 @@ export interface PatientLookupResult {
   userTypeId: number;
   birthDate: string;
   genderId: number;
+  epsId?: number | null;
   documentType?: { id: number; code: string; description: string };
   gender?: { id: number; code: string; description: string };
   userType?: { id: number; code: string; name: string };
+}
+
+export interface CompanionData {
+  firstName: string;
+  lastName: string;
+  documentTypeId: number;
+  document: string;
+  address: string;
+  relationshipId: number;
+  phone: string;
 }
 
 export interface CreateAdmissionData {
@@ -37,8 +48,9 @@ export interface CreateAdmissionData {
   phone?: string;
   email?: string;
   epsId: number;
-  roomId: number;
+  roomId?: number;
   observations?: string;
+  companion?: CompanionData;
   authorizations?: {
     authTypeId: number;
     authNumber: string;
@@ -68,11 +80,11 @@ export class AdmissionsService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/admissions`;
 
-  lookupPatient(documentTypeId: number, document: string): Observable<PatientLookupResult | null> {
+  lookupPatient(documentTypeId: number, document: string): Observable<PatientLookupResult> {
     const params = new HttpParams()
       .set('documentTypeId', documentTypeId)
       .set('document', document);
-    return this.http.get<PatientLookupResult | null>(`${this.apiUrl}/patient-lookup`, { params });
+    return this.http.get<PatientLookupResult>(`${this.apiUrl}/patient-lookup`, { params });
   }
 
   createAdmission(data: CreateAdmissionData): Observable<CreateAdmissionResult> {

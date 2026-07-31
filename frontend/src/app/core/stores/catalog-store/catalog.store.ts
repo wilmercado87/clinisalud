@@ -20,9 +20,12 @@ export class CatalogStore {
     if (cached) return of(cached);
 
     if (!this.observables.has(type)) {
+      const source: Observable<any[]> = type === 'beds'
+        ? this.catalogApi.getBeds(0)
+        : this.catalogApi.getCatalog(type);
       this.observables.set(
         type,
-        this.catalogApi.getCatalog(type).pipe(
+        source.pipe(
           tap((items) => this.cache.set(type, items)),
           shareReplay(1),
         ),
@@ -88,20 +91,6 @@ export class CatalogStore {
   readonly isLoadingContracts = this.contractsResource.isLoading;
   readonly contractsError = this.contractsResource.error;
 
-  private readonly bedsTrigger = signal<{ status?: number } | null>(null);
-
-  private readonly bedsResource = rxResource({
-    request: () => this.bedsTrigger(),
-    loader: ({ request }) => {
-      if (!request) return of([]);
-      return this.catalogApi.getBeds(request.status);
-    },
-  });
-
-  readonly beds = this.bedsResource.value.asReadonly();
-  readonly isLoadingBeds = this.bedsResource.isLoading;
-  readonly bedsError = this.bedsResource.error;
-
   searchDiagnostics(q: string): void {
     this.searchDiagTrigger.set(q || null);
   }
@@ -118,10 +107,6 @@ export class CatalogStore {
     this.contractsTrigger.set({ epsId });
   }
 
-  loadBeds(status?: number): void {
-    this.bedsTrigger.set({ status });
-  }
-
   clearCache(): void {
     this.cache.clear();
     this.observables.clear();
@@ -129,6 +114,5 @@ export class CatalogStore {
     this.searchCupsTrigger.set(null);
     this.municipalitiesTrigger.set(null);
     this.contractsTrigger.set(null);
-    this.bedsTrigger.set(null);
   }
 }

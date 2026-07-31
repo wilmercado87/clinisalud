@@ -23,6 +23,8 @@ import CentroCosto from "./CentroCosto";
 import Cups from "./Cups";
 import TipoAutorizacion from "./TipoAutorizacion";
 import Autorizacion from "./Autorizacion";
+import TipoParentesco from "./TipoParentesco";
+import Acompanante from "./Acompanante";
 
 import Articulado from "./Articulado";
 import TipoParagrafo from "./TipoParagrafo";
@@ -93,6 +95,12 @@ export function initAssociations() {
   Autorizacion.belongsTo(TipoAutorizacion, { foreignKey: "authTypeId", as: "authType" });
   Autorizacion.belongsTo(Cups, { foreignKey: "mapiissCode", targetKey: "mapiissCode", as: "cups" });
   Autorizacion.belongsTo(Usuario, { foreignKey: "systemUserId", as: "systemUser" });
+
+  // === [MÓDULO 2B: ACOMPAÑANTE] ===
+  Admision.hasOne(Acompanante, { foreignKey: "admissionNumber", as: "companion" });
+  Acompanante.belongsTo(Admision, { foreignKey: "admissionNumber", as: "admission" });
+  Acompanante.belongsTo(TipoDocumento, { foreignKey: "documentTypeId", as: "documentType" });
+  Acompanante.belongsTo(TipoParentesco, { foreignKey: "relationshipId", as: "relationship" });
 
   // === [MÓDULO 6: REGLAS DE AUDITORÍA Y PARÁGRAFOS] ===
   Articulado.belongsTo(Cups, { foreignKey: "mapiissCode", targetKey: "mapiissCode", as: "cups" });

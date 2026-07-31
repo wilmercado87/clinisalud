@@ -2,21 +2,40 @@
   @if (label()) {
     <mat-label>{{ label() }}</mat-label>
   }
-  <mat-select
-    [value]="value()"
+
+  <input
+    matInput
+    [formControl]="inputControl"
+    [errorStateMatcher]="errorMatcher"
     [placeholder]="placeholder()"
-    [multiple]="multiple()"
-    [disabled]="disabled()"
-    (selectionChange)="onSelectChange($event.value)"
-  >
+    [required]="isRequired()"
+    [matAutocomplete]="auto"
+    (input)="onInput($event)"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+  />
+  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event.option)">
     @if (isLoading()) {
       <mat-option disabled>
         <mat-spinner diameter="20" />
       </mat-option>
     } @else {
-      @for (item of items(); track item.id) {
+      @for (item of filteredItems(); track item.id) {
         <mat-option [value]="item.id">{{ item.description }}</mat-option>
       }
+      @if (filteredItems().length === 0) {
+        <mat-option disabled>Sin resultados</mat-option>
+      }
     }
-  </mat-select>
+  </mat-autocomplete>
+
+  @if (value() !== null && !disabled()) {
+    <button matSuffix mat-icon-button type="button" (click)="onClear()">
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+
+  @if (errorMessage(); as message) {
+    <mat-error>{{ message }}</mat-error>
+  }
 </mat-form-field>

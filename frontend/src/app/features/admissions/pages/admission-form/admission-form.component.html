@@ -21,7 +21,16 @@
           />
           <mat-form-field appearance="outline" class="admission-form__field--medium">
             <mat-label>Número Documento</mat-label>
-            <input matInput formControlName="document" placeholder="Ingrese documento" />
+            <input
+              matInput
+              formControlName="document"
+              placeholder="Ingrese documento"
+              required
+              (blur)="onDocumentBlur()"
+            />
+            @if (patientErrors().document) {
+              <mat-error>{{ patientErrors().document }}</mat-error>
+            }
           </mat-form-field>
           <button
             mat-raised-button
@@ -29,9 +38,9 @@
             type="button"
             class="admission-form__search-btn"
             (click)="onSearchPatient()"
-            [disabled]="isLookingUp()"
+            [disabled]="mode() === 'SEARCHING' || mode() === 'FOUND'"
           >
-            @if (isLookingUp()) {
+            @if (mode() === 'SEARCHING') {
               <mat-spinner diameter="20" />
             } @else {
               <mat-icon>search</mat-icon>
@@ -40,10 +49,14 @@
           </button>
         </div>
 
-        @if (isExistingPatient()) {
+        @if (mode() === 'FOUND') {
           <div class="admission-form__badge">Paciente existente</div>
-        } @else {
+        } @else if (mode() === 'NOT_FOUND') {
           <div class="admission-form__badge admission-form__badge--new">Nuevo paciente</div>
+          <div class="admission-form__alert">
+            <mat-icon>info</mat-icon>
+            El paciente no existe. Complete los datos para registrarlo como nuevo paciente.
+          </div>
         }
 
         <mat-divider class="admission-form__divider" />
@@ -51,15 +64,44 @@
         <div class="admission-form__grid">
           <mat-form-field appearance="outline">
             <mat-label>Nombres</mat-label>
-            <input matInput formControlName="firstName" placeholder="Nombres" />
+            <input
+              matInput
+              formControlName="firstName"
+              placeholder="Nombres"
+              [required]="mode() === 'NOT_FOUND'"
+            />
+            @if (patientErrors().firstName) {
+              <mat-error>{{ patientErrors().firstName }}</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Apellidos</mat-label>
-            <input matInput formControlName="lastName" placeholder="Apellidos" />
+            <input
+              matInput
+              formControlName="lastName"
+              placeholder="Apellidos"
+              [required]="mode() === 'NOT_FOUND'"
+            />
+            @if (patientErrors().lastName) {
+              <mat-error>{{ patientErrors().lastName }}</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Fecha Nacimiento</mat-label>
-            <input matInput formControlName="birthDate" placeholder="YYYY-MM-DD" />
+            <input
+              matInput
+              [matDatepicker]="birthPicker"
+              formControlName="birthDate"
+              [max]="today"
+              readonly
+              placeholder="Seleccione fecha"
+              [required]="mode() === 'NOT_FOUND'"
+            />
+            <mat-datepicker-toggle matIconSuffix [for]="birthPicker"></mat-datepicker-toggle>
+            <mat-datepicker #birthPicker></mat-datepicker>
+            @if (patientErrors().birthDate) {
+              <mat-error>{{ patientErrors().birthDate }}</mat-error>
+            }
           </mat-form-field>
           <app-catalog-select
             catalogType="genders"
@@ -68,11 +110,19 @@
           />
           <mat-form-field appearance="outline">
             <mat-label>Edad</mat-label>
-            <input matInput formControlName="age" placeholder="Edad" />
+            <input matInput formControlName="age" readonly placeholder="Calculada automáticamente" />
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Discapacidad</mat-label>
-            <input matInput formControlName="disability" placeholder="SÍ / NO" />
+            <input
+              matInput
+              formControlName="disability"
+              placeholder="SÍ / NO"
+              [required]="mode() === 'NOT_FOUND'"
+            />
+            @if (patientErrors().disability) {
+              <mat-error>{{ patientErrors().disability }}</mat-error>
+            }
           </mat-form-field>
           <app-catalog-select
             catalogType="user-types"
@@ -86,10 +136,103 @@
           <mat-form-field appearance="outline">
             <mat-label>Teléfono</mat-label>
             <input matInput formControlName="phone" placeholder="Teléfono" />
+            @if (patientErrors().phone) {
+              <mat-error>{{ patientErrors().phone }}</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Correo</mat-label>
             <input matInput formControlName="email" placeholder="correo@ejemplo.com" />
+            @if (patientErrors().email) {
+              <mat-error>{{ patientErrors().email }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </form>
+
+  <form [formGroup]="companionForm">
+    <mat-card appearance="outlined" class="admission-form__card">
+      <mat-card-header>
+        <mat-card-title>Datos del Acompañante</mat-card-title>
+        <mat-card-subtitle>
+          Si el paciente llegó con un acompañante, registre sus datos. Estos no se prellenan
+          al buscar un paciente existente. Al digitar el nombre o apellido, todos los campos
+          pasan a ser requeridos.
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="admission-form__grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Nombres</mat-label>
+            <input
+              matInput
+              formControlName="firstName"
+              placeholder="Nombres"
+              [required]="companionActive()"
+            />
+            @if (companionErrors().firstName) {
+              <mat-error>{{ companionErrors().firstName }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Apellidos</mat-label>
+            <input
+              matInput
+              formControlName="lastName"
+              placeholder="Apellidos"
+              [required]="companionActive()"
+            />
+            @if (companionErrors().lastName) {
+              <mat-error>{{ companionErrors().lastName }}</mat-error>
+            }
+          </mat-form-field>
+          <app-catalog-select
+            catalogType="document-types"
+            label="Tipo Documento"
+            [formControl]="$any(companionForm.controls)['documentTypeId']"
+          />
+          <mat-form-field appearance="outline">
+            <mat-label>Documento</mat-label>
+            <input
+              matInput
+              formControlName="document"
+              placeholder="Documento"
+              [required]="companionActive()"
+            />
+            @if (companionErrors().document) {
+              <mat-error>{{ companionErrors().document }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Dirección</mat-label>
+            <input
+              matInput
+              formControlName="address"
+              placeholder="Dirección"
+              [required]="companionActive()"
+            />
+            @if (companionErrors().address) {
+              <mat-error>{{ companionErrors().address }}</mat-error>
+            }
+          </mat-form-field>
+          <app-catalog-select
+            catalogType="parentescos"
+            label="Parentesco"
+            [formControl]="$any(companionForm.controls)['relationshipId']"
+          />
+          <mat-form-field appearance="outline">
+            <mat-label>Teléfono</mat-label>
+            <input
+              matInput
+              formControlName="phone"
+              placeholder="Teléfono"
+              [required]="companionActive()"
+            />
+            @if (companionErrors().phone) {
+              <mat-error>{{ companionErrors().phone }}</mat-error>
+            }
           </mat-form-field>
         </div>
       </mat-card-content>
@@ -108,31 +251,29 @@
             label="EPS"
             [formControl]="$any(admissionForm.controls)['epsId']"
           />
-          <mat-form-field appearance="outline">
-            <mat-label>Cama</mat-label>
-            <mat-select formControlName="roomId" placeholder="Seleccione">
-              @if (isLoadingBeds()) {
-                <mat-option disabled>
-                  <mat-spinner diameter="20" />
-                </mat-option>
-              } @else {
-                @for (bed of beds(); track bed.roomId) {
-                  <mat-option [value]="bed.roomId">
-                    {{ bed.bedCode }} - {{ bed.tipoCama }}
-                  </mat-option>
-                }
-              }
-            </mat-select>
-          </mat-form-field>
+          <app-catalog-select
+            catalogType="beds"
+            label="Cama"
+            [formControl]="$any(admissionForm.controls)['roomId']"
+          />
           <mat-form-field appearance="outline" class="admission-form__field--full">
             <mat-label>Observaciones</mat-label>
-            <textarea matInput formControlName="observations" rows="3" placeholder="Observaciones"></textarea>
+            <textarea
+              matInput
+              formControlName="observations"
+              rows="3"
+              placeholder="Observaciones"
+              required
+            ></textarea>
+            @if (admissionErrors().observations) {
+              <mat-error>{{ admissionErrors().observations }}</mat-error>
+            }
           </mat-form-field>
         </div>
       </mat-card-content>
     </mat-card>
 
-    <mat-card appearance="outlined" class="admission-form__card">
+    <mat-card appearance="outlined" class="admission-form__card admission-form__card--auth">
       <mat-card-header>
         <mat-card-title>
           Autorizaciones
@@ -153,19 +294,44 @@
                 catalogType="authorization-types"
                 label="Tipo Autorización"
                 [formControl]="$any(auth).controls.authTypeId"
-                class="admission-form__field--medium"
               />
-              <mat-form-field appearance="outline" class="admission-form__field--medium">
+              <mat-form-field appearance="outline">
                 <mat-label>N° Autorización</mat-label>
-                <input matInput [formControl]="$any(auth).controls.authNumber" placeholder="Número" />
+                <input
+                  matInput
+                  [formControl]="$any(auth).controls.authNumber"
+                  placeholder="Número"
+                  required
+                />
+                @if (authErrors()[$index].authNumber) {
+                  <mat-error>{{ authErrors()[$index].authNumber }}</mat-error>
+                }
               </mat-form-field>
-              <mat-form-field appearance="outline" class="admission-form__field--medium">
+              <mat-form-field appearance="outline">
                 <mat-label>Código MAPIISS</mat-label>
-                <input matInput [formControl]="$any(auth).controls['mapiissCode']" placeholder="Código" />
+                <input
+                  matInput
+                  [formControl]="$any(auth).controls['mapiissCode']"
+                  placeholder="Código"
+                  required
+                />
+                @if (authErrors()[$index].mapiissCode) {
+                  <mat-error>{{ authErrors()[$index].mapiissCode }}</mat-error>
+                }
               </mat-form-field>
-              <mat-form-field appearance="outline" class="admission-form__field--small">
+              <mat-form-field appearance="outline">
                 <mat-label>Cantidad</mat-label>
-                <input matInput type="number" [formControl]="$any(auth).controls['quantity']" placeholder="1" />
+                <input
+                  matInput
+                  type="number"
+                  [formControl]="$any(auth).controls['quantity']"
+                  min="1"
+                  placeholder="1"
+                  required
+                />
+                @if (authErrors()[$index].quantity) {
+                  <mat-error>{{ authErrors()[$index].quantity }}</mat-error>
+                }
               </mat-form-field>
               <button mat-icon-button color="warn" type="button" (click)="removeAuthEntry($index)">
                 <mat-icon>remove_circle</mat-icon>
@@ -183,10 +349,19 @@
 
   <div class="admission-form__actions">
     <button
+      mat-stroked-button
+      color="warn"
+      type="button"
+      (click)="onCancel()"
+    >
+      <mat-icon>restart_alt</mat-icon>
+      Cancelar
+    </button>
+    <button
       mat-raised-button
       color="primary"
       (click)="onSubmit()"
-      [disabled]="isCreating()"
+      [disabled]="!canSubmit()"
     >
       @if (isCreating()) {
         <mat-spinner diameter="20" />

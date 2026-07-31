@@ -45,7 +45,9 @@ export const getContracts = async (req: Request, res: Response) => {
 export const getBeds = async (req: Request, res: Response) => {
   try {
     const status = req.query.status !== undefined ? Number(req.query.status) : undefined;
-    const data = await catalogsService.getBeds(status);
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 10));
+    const data = await catalogsService.getBeds(status, page, pageSize);
     res.set("Cache-Control", `private, max-age=${CACHE_MAX_AGE}`);
     res.json(data);
   } catch (error: any) {

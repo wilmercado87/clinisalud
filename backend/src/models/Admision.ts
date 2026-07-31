@@ -11,7 +11,7 @@ class Admision extends Model {
   public invoiceNumber!: string | null;
   public patientId!: number;
   public admissionDate!: string;
-  public roomId!: number;
+  public roomId?: number;
   public epsId!: number;
   public observations!: string | null;
   public statusId!: number;
@@ -50,7 +50,7 @@ Admision.init(
     },
     roomId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       field: "ID_HABITACION",
     },
     epsId: {

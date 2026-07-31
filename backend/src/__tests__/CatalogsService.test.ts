@@ -99,14 +99,28 @@ describe("CatalogsService", () => {
 
   // @spec:INV-CAT-01
   describe("getBeds", () => {
-    it("should return all without filter", async () => {
-      const result = await service.getBeds();
-      expect(result).toEqual([]);
+    beforeEach(() => {
+      jest.spyOn(Cama, "findAndCountAll").mockResolvedValue({ count: 0, rows: [] } as any);
     });
 
-    it("should filter by status", async () => {
-      const result = await service.getBeds(0);
-      expect(result).toEqual([]);
+    it("should return paginated result without filter", async () => {
+      const result = await service.getBeds();
+      expect(result).toEqual({ items: [], total: 0 });
+    });
+
+    it("should filter by status and paginate", async () => {
+      jest.spyOn(Cama, "findAndCountAll").mockResolvedValue({
+        count: 25,
+        rows: [{ roomId: 1, bedCode: "CAMA-01", bedStatus: 0 }],
+      } as any);
+
+      const result = await service.getBeds(0, 1, 10);
+
+      expect(result.total).toBe(25);
+      expect(result.items).toHaveLength(1);
+      expect(Cama.findAndCountAll).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 10, offset: 0 }),
+      );
     });
   });
 

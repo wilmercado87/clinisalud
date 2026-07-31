@@ -4,6 +4,7 @@ import TipoGenero from "../../models/TipoGenero";
 import TipoUsuario from "../../models/TipoUsuario";
 import TipoEstado from "../../models/TipoEstado";
 import TipoAutorizacion from "../../models/TipoAutorizacion";
+import TipoParentesco from "../../models/TipoParentesco";
 import TipoOrigen from "../../models/TipoOrigen";
 import TipoTriage from "../../models/TipoTriage";
 import Especialidad from "../../models/Especialidad";
@@ -30,6 +31,7 @@ const STATIC_CATALOGS: Record<string, CatalogDef> = {
   "user-types": { model: TipoUsuario, order: [["name", "ASC"]] },
   "status-types": { model: TipoEstado, order: [["description", "ASC"]] },
   "authorization-types": { model: TipoAutorizacion, order: [["description", "ASC"]] },
+  "parentescos": { model: TipoParentesco, order: [["description", "ASC"]] },
   "origin-types": { model: TipoOrigen, order: [["description", "ASC"]] },
   "triage-types": { model: TipoTriage, order: [["classification", "ASC"]] },
   "specialties": { model: Especialidad, order: [["description", "ASC"]] },
@@ -65,12 +67,15 @@ export class CatalogsService {
     });
   }
 
-  async getBeds(status?: number): Promise<any[]> {
+  async getBeds(status?: number, page = 1, pageSize = 10): Promise<{ items: any[]; total: number }> {
     const where = status !== undefined ? { bedStatus: status } : {};
-    return await Cama.findAll({
+    const { count, rows } = await Cama.findAndCountAll({
       where,
       order: [["bedCode", "ASC"]],
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
     });
+    return { items: rows, total: count };
   }
 
   async searchDiagnostics(q: string, limit = 20): Promise<any[]> {

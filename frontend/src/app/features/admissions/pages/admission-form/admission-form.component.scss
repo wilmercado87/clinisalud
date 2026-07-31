@@ -23,6 +23,24 @@
 
   &__card {
     margin-bottom: 20px;
+
+    mat-card-header {
+      padding-bottom: 16px;
+    }
+
+    &--auth {
+      mat-card-content {
+        padding-top: 16px;
+        padding-bottom: 24px;
+      }
+    }
+  }
+
+  ::ng-deep {
+    .mat-mdc-form-field-hint-wrapper,
+    .mat-mdc-form-field-error-wrapper {
+      padding-left: 0;
+    }
   }
 
   &__row {
@@ -33,17 +51,18 @@
   }
 
   &__field--small {
-    min-width: 180px;
-    flex: 1;
+    min-width: 240px;
+    flex: 1.5;
   }
 
   &__field--medium {
-    min-width: 200px;
+    min-width: 240px;
     flex: 2;
   }
 
   &__field--full {
     width: 100%;
+    grid-column: 1 / -1;
   }
 
   &__search-btn {
@@ -53,7 +72,7 @@
 
   &__badge {
     display: inline-block;
-    margin-top: 12px;
+    margin-top: 4px;
     padding: 4px 12px;
     border-radius: 16px;
     font-size: 12px;
@@ -67,8 +86,26 @@
     }
   }
 
+  &__alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--mat-sys-surface-container-high, #fff1c2);
+    color: var(--mat-sys-on-surface, #4d3a00);
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
   &__divider {
-    margin: 16px 0;
+    margin: 12px 0;
   }
 
   &__grid {
@@ -83,16 +120,17 @@
   }
 
   &__auth-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) 48px;
     gap: 12px;
-    align-items: center;
+    align-items: start;
     margin-bottom: 12px;
-    flex-wrap: wrap;
   }
 
   &__actions {
     display: flex;
     justify-content: flex-end;
+    gap: 12px;
     margin-top: 24px;
   }
 }

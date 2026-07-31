@@ -6,12 +6,23 @@ import Cama from "../../models/Cama";
 import Convenio from "../../models/Convenio";
 import TipoEstado from "../../models/TipoEstado";
 import Autorizacion from "../../models/Autorizacion";
+import Acompanante from "../../models/Acompanante";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import { NotificationsService } from "../notifications/notifications.service";
 
 interface PatientLookupQuery {
   documentTypeId: number;
   document: string;
+}
+
+interface CompanionData {
+  firstName: string;
+  lastName: string;
+  documentTypeId: number;
+  document: string;
+  address: string;
+  relationshipId: number;
+  phone: string;
 }
 
 interface CreateAdmissionData {
@@ -29,8 +40,9 @@ interface CreateAdmissionData {
   phone?: string;
   email?: string;
   epsId: number;
-  roomId: number;
+  roomId?: number;
   observations?: string;
+  companion?: CompanionData;
   authorizations?: {
     authTypeId: number;
     authNumber: string;
@@ -63,11 +75,20 @@ export class AdmissionsService {
       where: { documentTypeId: query.documentTypeId, document: query.document },
       include: [
         { association: "documentType", attributes: ["id", "code", "description"] },
-        { association: "gender", attributes: ["id", "code", "description"] },
-        { association: "userType", attributes: ["id", "code", "name"] },
+        { association: "gender", attributes: ["id", "description"] },
+        { association: "userType", attributes: ["id", "name"] },
       ],
     });
-    return patient ? patient.toJSON() : null;
+    if (!patient) throw ApiError.notFound("Paciente no encontrado");
+
+    const latestAdmission = await Admision.findOne({
+      where: { patientId: patient.id },
+      order: [["admissionDate", "DESC"]],
+    });
+
+    const result = patient.toJSON() as any;
+    result.epsId = latestAdmission ? latestAdmission.epsId : null;
+    return result;
   }
 
   public async createAdmission(
@@ -81,7 +102,6 @@ export class AdmissionsService {
     if (!data.documentTypeId) errors.push("Tipo de documento es requerido");
     if (!data.document) errors.push("Número de documento es requerido");
     if (!data.epsId) errors.push("EPS es requerida");
-    if (!data.roomId) errors.push("Cama es requerida");
 
     if (errors.length > 0) {
       throw ApiError.badRequest(errors.join("; "));
@@ -134,12 +154,32 @@ export class AdmissionsService {
           throw ApiError.notFound("Paciente no encontrado con los datos proporcionados");
         }
         patientId = existingPatient.id;
+
+        await existingPatient.update(
+          {
+            firstName: data.firstName?.trim() || existingPatient.firstName,
+            lastName: data.lastName?.trim() || existingPatient.lastName,
+            age: data.age ?? existingPatient.age,
+            address: data.address !== undefined ? data.address : existingPatient.address,
+            phone: data.phone !== undefined ? data.phone : existingPatient.phone,
+            email: data.email !== undefined ? data.email : existingPatient.email,
+            disability: data.disability?.trim() || existingPatient.disability,
+            userTypeId: data.userTypeId ?? existingPatient.userTypeId,
+            birthDate: data.birthDate?.trim() || existingPatient.birthDate,
+            genderId: data.genderId ?? existingPatient.genderId,
+          },
+          { transaction: t },
+        );
       }
 
-      const bed = await Cama.findByPk(data.roomId, { transaction: t });
-      if (!bed) throw ApiError.notFound("Cama no encontrada");
-      if (bed.bedStatus !== 0) {
-        throw ApiError.conflict("La cama seleccionada no está disponible");
+      if (data.roomId) {
+        const bed = await Cama.findByPk(data.roomId, { transaction: t });
+        if (!bed) throw ApiError.notFound("Cama no encontrada");
+        if (bed.bedStatus !== 0) {
+          throw ApiError.conflict("La cama seleccionada no está disponible");
+        }
+        bed.bedStatus = 1;
+        await bed.save({ transaction: t });
       }
 
       const eps = await Convenio.findByPk(data.epsId, { transaction: t });
@@ -171,8 +211,21 @@ export class AdmissionsService {
         { transaction: t },
       );
 
-      bed.bedStatus = 1;
-      await bed.save({ transaction: t });
+      if (data.companion) {
+        await Acompanante.create(
+          {
+            admissionNumber,
+            firstName: data.companion.firstName,
+            lastName: data.companion.lastName,
+            documentTypeId: data.companion.documentTypeId,
+            document: data.companion.document,
+            address: data.companion.address,
+            relationshipId: data.companion.relationshipId,
+            phone: data.companion.phone,
+          },
+          { transaction: t },
+        );
+      }
 
       if (data.authorizations && data.authorizations.length > 0) {
         const authData = data.authorizations.map((a) => ({

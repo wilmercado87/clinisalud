@@ -1,13 +1,13 @@
-import { Component, input, output, inject, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, input, output, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { DiagnosticoItem, CupsItem } from '@core/models/catalog.model';
 
@@ -27,31 +27,32 @@ export class CatalogSearchComponent {
   readonly selected = output<DiagnosticoItem | CupsItem>();
 
   readonly query = signal('');
-  readonly isSearching = signal(false);
+
+  readonly results = computed<(DiagnosticoItem | CupsItem)[]>(() =>
+    this.searchType() === 'diagnostics'
+      ? (this.catalogStore.diagnostics() ?? [])
+      : (this.catalogStore.cups() ?? []),
+  );
+
+  readonly isSearching = computed(() =>
+    this.searchType() === 'diagnostics'
+      ? this.catalogStore.isSearchingDiagnostics()
+      : this.catalogStore.isSearchingCups(),
+  );
 
   private readonly searchSubject = new Subject<string>();
 
-  private readonly resultsSignal = toSignal(
-    this.searchSubject.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      tap(() => this.isSearching.set(true)),
-      switchMap((q) => {
+  constructor() {
+    this.searchSubject
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((q) => {
         if (this.searchType() === 'diagnostics') {
           this.catalogStore.searchDiagnostics(q);
         } else {
           this.catalogStore.searchCups(q);
         }
-        return this.searchType() === 'diagnostics'
-          ? this.catalogStore.diagnostics
-          : this.catalogStore.cups;
-      }),
-      tap(() => this.isSearching.set(false)),
-    ),
-    { initialValue: [] as (DiagnosticoItem | CupsItem)[] },
-  );
-
-  readonly results = this.resultsSignal;
+      });
+  }
 
   onInputChange(value: string): void {
     this.query.set(value);

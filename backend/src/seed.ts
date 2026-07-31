@@ -47,6 +47,8 @@ import ParagrafoInclusion from "./models/ParagrafoInclusion";
 import ParagrafoValor from "./models/ParagrafoValor";
 import TipoAcceso from "./models/TipoAcceso";
 import ViaAcceso from "./models/ViaAcceso";
+import TipoParentesco from "./models/TipoParentesco";
+import Acompanante from "./models/Acompanante";
 
 // ----------------------------------------------------------------
 // FUNCIONES AUXILIARES (Solución S3776: Reduce Complejidad Cognitiva)
@@ -295,6 +297,7 @@ export const runSeeder = async () => {
       { model: Tarifario, file: "tarifario.csv" },
       { model: NivelAtencion, file: "nivel_atencion.csv" },
       { model: TipoAutorizacion, file: "tipo_autorizacion.csv" },
+      { model: TipoParentesco, file: "parentesco.csv" },
       { model: TipoOrigen, file: "tipo_origen.csv" },
       { model: TipoTriage, file: "tipo_triage.csv" },
       { model: Especialidad, file: "especialidad.csv" },
@@ -309,6 +312,7 @@ export const runSeeder = async () => {
       { model: Paciente, file: "paciente.csv" },
       { model: Triage, file: "triage.csv" },
       { model: Admision, file: "admision.csv" },
+      { model: Acompanante, file: "acompanante.csv" },
       { model: Autorizacion, file: "autorizacion.csv" },
       { model: DiagnosticoPaciente, file: "diagnostico_paciente.csv" },
       { model: Articulado, file: "articulado.csv" },
