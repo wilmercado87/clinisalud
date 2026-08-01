@@ -114,6 +114,24 @@ export class AuthService {
     return userJson;
   }
 
+  public async changePassword(userId: number, currentPassword: string, newPassword: string) {
+    const user = await Usuario.findByPk(userId);
+    if (!user) throw ApiError.notFound("Usuario no encontrado");
+
+    if (!await bcrypt.compare(currentPassword, user.password)) {
+      throw ApiError.badRequest("La contraseña actual no es correcta");
+    }
+
+    if (await bcrypt.compare(newPassword, user.password)) {
+      throw ApiError.badRequest("La nueva contraseña debe ser diferente a la actual");
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return { message: "Contraseña actualizada correctamente" };
+  }
+
   private generateToken(user: Usuario): string {
     return jwt.sign(
       { id: user.id, role: user.roleData?.code, email: user.email },

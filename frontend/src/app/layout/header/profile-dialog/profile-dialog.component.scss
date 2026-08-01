@@ -122,6 +122,90 @@
     gap: 12px;
   }
 
+  &__password-section {
+    margin-top: 20px;
+    border-top: 1px solid v.$color-gray-light-100;
+    padding-top: 16px;
+
+    .profile-dialog__section-label {
+      margin-bottom: 12px;
+    }
+  }
+
+  &__password-toggle {
+    margin-bottom: 14px;
+  }
+
+  &__password-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  &__criteria {
+    list-style: none;
+    margin: 0 0 12px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__criterion {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: v.$color-rose-700;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    &--met {
+      color: v.$color-green-light-600;
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 40px 16px 24px;
+    text-align: center;
+  }
+
+  &__info-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: v.$color-green-light-600;
+  }
+
+  &__info-title {
+    margin: 0;
+    color: v.$navy-500;
+    font-size: 1.2rem;
+    font-weight: 800;
+  }
+
+  &__info-text {
+    margin: 0;
+    color: v.$color-gray-700;
+    font-size: 14px;
+    max-width: 320px;
+  }
+
+  &__btn-accept {
+    border-radius: 8px !important;
+    padding: 0 32px !important;
+    margin-top: 8px;
+  }
+
   &__form-field {
     width: 100%;
   }

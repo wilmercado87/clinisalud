@@ -80,6 +80,23 @@ export class AuthStore {
   readonly isUpdatingProfile = this.updateResource.isLoading;
   readonly updateError = this.updateResource.error;
 
+  private readonly changePasswordTrigger = signal<{
+    currentPassword: string;
+    newPassword: string;
+  } | null>(null);
+
+  private readonly changePasswordResource = rxResource({
+    request: () => this.changePasswordTrigger(),
+    loader: ({ request: data }) => {
+      if (!data) return of(undefined);
+      return this.authApi.changePassword(data);
+    },
+  });
+
+  readonly changePasswordResult = this.changePasswordResource.value.asReadonly();
+  readonly isChangingPassword = this.changePasswordResource.isLoading;
+  readonly changePasswordError = this.changePasswordResource.error;
+
   constructor() {
     const token = this.getToken();
     if (token) {
@@ -123,6 +140,14 @@ export class AuthStore {
 
   public updateProfile(data: Partial<{ firstName: string; lastName: string; phone: string; address: string }>): void {
     this.updateTrigger.set(data);
+  }
+
+  public changePassword(data: { currentPassword: string; newPassword: string }): void {
+    this.changePasswordTrigger.set(data);
+  }
+
+  public resetPasswordChangeFeedback(): void {
+    this.changePasswordTrigger.set(null);
   }
 
   public updateStoredUser(user: UserResponse): void {

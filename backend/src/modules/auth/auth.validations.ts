@@ -28,3 +28,18 @@ export const updateProfileValidation = [
     .isLength({ max: 255 })
     .withMessage('La dirección debe tener máximo 255 caracteres'),
 ];
+
+export const changePasswordValidation = [
+  body('currentPassword')
+    .isLength({ min: 1 })
+    .withMessage('La contraseña actual es requerida'),
+  body('newPassword')
+    .isStrongPassword({
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+    .withMessage('La nueva contraseña debe tener mínimo 8 caracteres, incluir mayúsculas, minúsculas, números y un carácter especial'),
+];

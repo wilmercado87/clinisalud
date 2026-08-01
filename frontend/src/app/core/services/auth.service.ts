@@ -23,6 +23,12 @@ export class AuthService {
     );
   }
 
+  public changePassword(data: { currentPassword: string; newPassword: string }): Observable<{ message: string }> {
+    return this.http.patch<{ message: string }>(`${this.apiUrl}/change-password`, data).pipe(
+      catchError((error: HttpErrorResponse) => this.handleError(error)),
+    );
+  }
+
   private handleError(error: HttpErrorResponse): Observable<never> {
     const businessMessage = this.getErrorValidation(error);
     return throwError(() => businessMessage);

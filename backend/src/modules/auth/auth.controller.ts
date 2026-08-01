@@ -59,3 +59,18 @@ export async function updateProfile(req: AuthRequest, res: Response) {
     return res.status(statusCode).json({ message, ...(error.code && { code: error.code }) });
   }
 }
+
+export async function changePassword(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user!.id;
+    const { currentPassword, newPassword } = req.body;
+    const result = await authService.changePassword(userId, currentPassword, newPassword);
+    logInfo(`Password changed for user ID: ${userId}`);
+    return res.status(HTTP_STATUS.OK).json(result);
+  } catch (error: any) {
+    logError(`Password change failed`, { error: error.message });
+    const statusCode = getHttpCode(error);
+    const message = error.message;
+    return res.status(statusCode).json({ message, ...(error.code && { code: error.code }) });
+  }
+}

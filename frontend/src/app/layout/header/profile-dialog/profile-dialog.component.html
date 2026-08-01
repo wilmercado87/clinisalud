@@ -1,97 +1,171 @@
 <div class="profile-dialog">
   <header class="profile-dialog__header">
     <h2 class="profile-dialog__title" mat-dialog-title>Mi Perfil</h2>
-    @if (!isUpdatingProfile()) {
+    @if (!isUpdatingProfile() && !isChangingPassword()) {
       <button class="profile-dialog__close-btn" mat-icon-button (click)="onCancel()">
         <mat-icon>close</mat-icon>
       </button>
     }
   </header>
 
-  <mat-dialog-content class="profile-dialog__content">
-    <div class="profile-dialog__banner">
-      <div class="profile-dialog__avatar">
-        {{ currentUser()?.firstName?.[0]?.toUpperCase() }}{{ currentUser()?.lastName?.[0]?.toUpperCase() }}
+  @if (passwordChanged()) {
+    <mat-dialog-content class="profile-dialog__content">
+      <div class="profile-dialog__info">
+        <mat-icon class="profile-dialog__info-icon">lock_reset</mat-icon>
+        <h3 class="profile-dialog__info-title">Perfil actualizado correctamente</h3>
+        <p class="profile-dialog__info-text">
+          Has cambiado tu contraseña, deberás volver a autenticarte con tu nueva contraseña.
+        </p>
+        <button mat-raised-button color="primary" class="profile-dialog__btn-accept" (click)="logoutAfterPasswordChange()">
+          ACEPTAR
+        </button>
       </div>
-      <div class="profile-dialog__banner-info">
-        <span class="profile-dialog__banner-name">{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</span>
-        <span class="profile-dialog__banner-role">{{ currentUser()?.roleData?.name || currentUser()?.role }}</span>
+    </mat-dialog-content>
+  } @else {
+    <mat-dialog-content class="profile-dialog__content">
+      <div class="profile-dialog__banner">
+        <div class="profile-dialog__avatar">
+          {{ currentUser()?.firstName?.[0]?.toUpperCase() }}{{ currentUser()?.lastName?.[0]?.toUpperCase() }}
+        </div>
+        <div class="profile-dialog__banner-info">
+          <span class="profile-dialog__banner-name">{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</span>
+          <span class="profile-dialog__banner-role">{{ currentUser()?.roleData?.name || currentUser()?.role }}</span>
+        </div>
       </div>
-    </div>
 
-    <div class="profile-dialog__readonly">
-      <div class="profile-dialog__field">
-        <span class="profile-dialog__field-label">Correo electrónico</span>
-        <span class="profile-dialog__field-value">{{ currentUser()?.email }}</span>
+      <div class="profile-dialog__readonly">
+        <div class="profile-dialog__field">
+          <span class="profile-dialog__field-label">Correo electrónico</span>
+          <span class="profile-dialog__field-value">{{ currentUser()?.email }}</span>
+        </div>
+        <div class="profile-dialog__field">
+          <span class="profile-dialog__field-label">Documento</span>
+          <span class="profile-dialog__field-value">{{ currentUser()?.dni }}</span>
+        </div>
       </div>
-      <div class="profile-dialog__field">
-        <span class="profile-dialog__field-label">Documento</span>
-        <span class="profile-dialog__field-value">{{ currentUser()?.dni }}</span>
-      </div>
-    </div>
 
-    <div class="profile-dialog__section-label">DATOS PERSONALES</div>
+      <div class="profile-dialog__section-label">DATOS PERSONALES</div>
 
-    <form [formGroup]="profileForm" class="profile-dialog__form">
-      <div class="profile-dialog__grid">
-        <mat-form-field appearance="outline" class="profile-dialog__form-field">
-          <mat-label>Nombres</mat-label>
-          <input matInput formControlName="firstName" />
-        </mat-form-field>
+      <form [formGroup]="profileForm" class="profile-dialog__form">
+        <div class="profile-dialog__grid">
+          <mat-form-field appearance="outline" class="profile-dialog__form-field">
+            <mat-label>Nombres</mat-label>
+            <input matInput formControlName="firstName" />
+            @if (userErrors().firstName) {
+              <mat-error>{{ userErrors().firstName }}</mat-error>
+            }
+          </mat-form-field>
 
-        <mat-form-field appearance="outline" class="profile-dialog__form-field">
-          <mat-label>Apellidos</mat-label>
-          <input matInput formControlName="lastName" />
-        </mat-form-field>
+          <mat-form-field appearance="outline" class="profile-dialog__form-field">
+            <mat-label>Apellidos</mat-label>
+            <input matInput formControlName="lastName" />
+            @if (userErrors().lastName) {
+              <mat-error>{{ userErrors().lastName }}</mat-error>
+            }
+          </mat-form-field>
 
-        <mat-form-field appearance="outline" class="profile-dialog__form-field">
-          <mat-label>Teléfono</mat-label>
-          <input matInput formControlName="phone" maxlength="15" />
-          <mat-icon matSuffix>phone</mat-icon>
-        </mat-form-field>
+          <mat-form-field appearance="outline" class="profile-dialog__form-field">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="phone" maxlength="15" />
+            <mat-icon matSuffix>phone</mat-icon>
+            @if (userErrors().phone) {
+              <mat-error>{{ userErrors().phone }}</mat-error>
+            }
+          </mat-form-field>
 
-        <mat-form-field appearance="outline" class="profile-dialog__form-field">
-          <mat-label>Dirección</mat-label>
-          <input matInput formControlName="address" />
-          <mat-icon matSuffix>place</mat-icon>
-        </mat-form-field>
-      </div>
-    </form>
+          <mat-form-field appearance="outline" class="profile-dialog__form-field">
+            <mat-label>Dirección</mat-label>
+            <input matInput formControlName="address" />
+            <mat-icon matSuffix>place</mat-icon>
+          </mat-form-field>
+        </div>
 
-    @if (updateError()) {
-      <div class="profile-dialog__error">
-        <mat-icon>error</mat-icon>
-        <span>Error al actualizar el perfil. Intenta de nuevo.</span>
-      </div>
-    }
+        <div class="profile-dialog__password-section">
+          <div class="profile-dialog__section-label">SEGURIDAD</div>
 
-    @if (updateResult()) {
-      <div class="profile-dialog__success">
-        <mat-icon>check_circle</mat-icon>
-        <span>Perfil actualizado correctamente.</span>
-      </div>
-    }
-  </mat-dialog-content>
+          <mat-slide-toggle
+            class="profile-dialog__password-toggle"
+            [checked]="changePasswordEnabled()"
+            (change)="togglePasswordChange($event.checked)"
+          >
+            ¿Desea cambiar contraseña?
+          </mat-slide-toggle>
 
-  <mat-dialog-actions class="profile-dialog__actions" align="end">
-    <button mat-button (click)="onCancel()" [disabled]="isUpdatingProfile()">
-      CANCELAR
-    </button>
-    <button
-      mat-raised-button
-      color="primary"
-      class="profile-dialog__btn-save"
-      [disabled]="!canSubmit()"
-      (click)="onSubmit()"
-    >
-      @if (isUpdatingProfile()) {
-        <mat-spinner diameter="20"></mat-spinner>
-      } @else {
-        <div class="profile-dialog__btn-content">
-          <mat-icon>save</mat-icon>
-          <span>GUARDAR CAMBIOS</span>
+          @if (changePasswordEnabled()) {
+            <div class="profile-dialog__password-fields">
+              <mat-form-field appearance="outline" class="profile-dialog__form-field">
+                <mat-label>Contraseña actual</mat-label>
+                <input matInput formControlName="currentPassword" type="password" />
+                <mat-icon matSuffix>lock</mat-icon>
+                @if (userErrors().currentPassword && profileForm.controls.currentPassword.touched) {
+                  <mat-error>{{ userErrors().currentPassword }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="profile-dialog__form-field">
+                <mat-label>Nueva contraseña</mat-label>
+                <input matInput formControlName="newPassword" type="password" />
+                <mat-icon matSuffix>lock</mat-icon>
+                @if (userErrors().newPassword && profileForm.controls.newPassword.touched) {
+                  <mat-error>{{ userErrors().newPassword }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <ul class="profile-dialog__criteria">
+              @for (criterion of passwordCriteria(); track criterion.key) {
+                <li class="profile-dialog__criterion" [class.profile-dialog__criterion--met]="criterion.met">
+                  <mat-icon>{{ criterion.met ? 'check_circle' : 'cancel' }}</mat-icon>
+                  <span>{{ criterion.label }}</span>
+                </li>
+              }
+            </ul>
+
+            @if (passwordChangeError()) {
+              <div class="profile-dialog__error">
+                <mat-icon>error</mat-icon>
+                <span>{{ passwordChangeError() }}</span>
+              </div>
+            }
+          }
+        </div>
+      </form>
+
+      @if (showUpdateError()) {
+        <div class="profile-dialog__error">
+          <mat-icon>error</mat-icon>
+          <span>Error al actualizar el perfil. Intenta de nuevo.</span>
         </div>
       }
-    </button>
-  </mat-dialog-actions>
+
+      @if (showUpdateSuccess()) {
+        <div class="profile-dialog__success">
+          <mat-icon>check_circle</mat-icon>
+          <span>Perfil actualizado correctamente.</span>
+        </div>
+      }
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="profile-dialog__actions" align="end">
+      <button mat-button (click)="onCancel()" [disabled]="isUpdatingProfile() || isChangingPassword()">
+        CANCELAR
+      </button>
+      <button
+        mat-raised-button
+        color="primary"
+        class="profile-dialog__btn-save"
+        [disabled]="!canSubmit()"
+        (click)="onSubmit()"
+      >
+        @if (isUpdatingProfile() || isChangingPassword()) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          <div class="profile-dialog__btn-content">
+            <mat-icon>save</mat-icon>
+            <span>GUARDAR CAMBIOS</span>
+          </div>
+        }
+      </button>
+    </mat-dialog-actions>
+  }
 </div>
