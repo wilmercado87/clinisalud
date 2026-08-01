@@ -16,6 +16,11 @@ import Admision from "../models/Admision";
 import TipoEstado from "../models/TipoEstado";
 import Autorizacion from "../models/Autorizacion";
 
+const expectedAdmissionNumber = () => {
+  const todayPrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  return `ADM-${todayPrefix}-0001`;
+};
+
 describe("AdmissionsService", () => {
   let service: AdmissionsService;
 
@@ -126,15 +131,15 @@ describe("AdmissionsService", () => {
       const bedSave = jest.fn().mockResolvedValue(true);
       jest.spyOn(Cama.prototype, "save").mockResolvedValue({} as any);
       jest.spyOn(Admision, "create").mockResolvedValue({
-        admissionNumber: "ADM-20260731-0001",
+        admissionNumber: expectedAdmissionNumber(),
         patientId: 1,
-        toJSON: () => ({ admissionNumber: "ADM-20260731-0001", patientId: 1 }),
+        toJSON: () => ({ admissionNumber: expectedAdmissionNumber(), patientId: 1 }),
       } as any);
 
       const result = await service.createAdmission(validData, 1, "admin@test.com", "SUPER_ADMIN");
 
       expect(result).toHaveProperty("admissionNumber");
-      expect(result.admissionNumber).toBe("ADM-20260731-0001");
+      expect(result.admissionNumber).toBe(expectedAdmissionNumber());
     });
 
     it("should throw if new patient but missing firstName", async () => {
@@ -202,8 +207,8 @@ describe("AdmissionsService", () => {
       jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 1 } as any);
       jest.spyOn(Cama.prototype, "save").mockResolvedValue({} as any);
       jest.spyOn(Admision, "create").mockResolvedValue({
-        admissionNumber: "ADM-20260731-0001",
-        toJSON: () => ({ admissionNumber: "ADM-20260731-0001" }),
+        admissionNumber: expectedAdmissionNumber(),
+        toJSON: () => ({ admissionNumber: expectedAdmissionNumber() }),
       } as any);
 
       const result = await service.createAdmission(
@@ -213,7 +218,7 @@ describe("AdmissionsService", () => {
         "SUPER_ADMIN",
       );
 
-      expect(result.admissionNumber).toBe("ADM-20260731-0001");
+      expect(result.admissionNumber).toBe(expectedAdmissionNumber());
       expect(Paciente.create).not.toHaveBeenCalled();
       expect(updateSpy).toHaveBeenCalledWith(
         expect.objectContaining({ firstName: "Juan", lastName: "Perez", genderId: 1, userTypeId: 1 }),
@@ -244,14 +249,14 @@ describe("AdmissionsService", () => {
       jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 1 } as any);
       jest.spyOn(Cama.prototype, "save").mockResolvedValue({} as any);
       jest.spyOn(Admision, "create").mockResolvedValue({
-        admissionNumber: "ADM-20260731-0001",
-        toJSON: () => ({ admissionNumber: "ADM-20260731-0001" }),
+        admissionNumber: expectedAdmissionNumber(),
+        toJSON: () => ({ admissionNumber: expectedAdmissionNumber() }),
       } as any);
       const bulkCreateSpy = jest.spyOn(Autorizacion, "bulkCreate").mockResolvedValue([] as any);
 
       const result = await service.createAdmission(dataWithAuth, 1, "admin@test.com", "SUPER_ADMIN");
 
-      expect(result.admissionNumber).toBe("ADM-20260731-0001");
+      expect(result.admissionNumber).toBe(expectedAdmissionNumber());
       expect(bulkCreateSpy).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({ authNumber: "AUTH-001", mapiissCode: "CUP-001" }),

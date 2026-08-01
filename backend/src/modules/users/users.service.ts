@@ -10,6 +10,9 @@ import { ERROR_MESSAGES } from "../../constants";
 import TipoDocumento from "../../models/TipoDocumento";
 import { buildMenuTree } from "../../utils/MenuTree.util";
 import { NotificationsService } from "../notifications/notifications.service";
+import { EmailService } from "../notifications/email.service";
+import { generateTempPassword } from "../../utils/Password.util";
+import { logError } from "../../utils/Logger";
 
 interface CreateUserData {
   email: string;
@@ -25,6 +28,7 @@ interface CreateUserData {
 
 export class UsersService {
   private readonly notificationsService = new NotificationsService();
+  private readonly emailService = new EmailService();
   public async findAllRoles(): Promise<Rol[]> {
     return await Rol.findAll({ order: [["name", "ASC"]] });
   }
@@ -104,7 +108,7 @@ export class UsersService {
 
       const ccDocument = await TipoDocumento.findOne({ where: { code: "CC" } });
       const defaultDocumentTypeId = ccDocument ? ccDocument.id : 3;
-      const tempPassword = this.generateTempPassword();
+      const tempPassword = generateTempPassword();
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
       const newUser = await Usuario.create({
@@ -129,7 +133,19 @@ export class UsersService {
         "Ver usuarios",
       ).catch(() => {});
 
-      return { user: userJson, temporaryPassword: tempPassword };
+      let emailSent = false;
+      try {
+        await this.emailService.sendTemporaryPassword(data.email, `${data.firstName} ${data.lastName}`, tempPassword);
+        emailSent = true;
+      } catch (error: any) {
+        logError("No se pudo enviar la contraseña temporal al usuario creado", {
+          userId: newUser.id,
+          email: data.email,
+          error: error.message,
+        });
+      }
+
+      return { user: userJson, emailSent };
   }
 
   private async findExistingUser(email: string, dni: string) {
@@ -139,10 +155,6 @@ export class UsersService {
   private throwDuplicateError(existingUser: Usuario, data: CreateUserData) {
     if (existingUser.email === data.email) throw ApiError.emailExists(ERROR_MESSAGES.EMAIL_EXISTS);
     if (existingUser.dni === data.dni) throw ApiError.conflict(ERROR_MESSAGES.DNI_EXISTS);
-  }
-
-  private generateTempPassword(): string {
-    return `Clini-${Math.random().toString(36).slice(-4)}!`;
   }
 
   private async createPermissions(userId: number, roleId: number, permissions: number[]) {

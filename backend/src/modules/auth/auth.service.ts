@@ -8,8 +8,34 @@ import PermisoRolMenu from "../../models/PermisoRolMenu";
 import { buildMenuTree } from "../../utils/MenuTree.util";
 import { JWT_CONFIG } from "../../constants";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
+import { generateTempPassword } from "../../utils/Password.util";
+import { EmailService } from "../notifications/email.service";
+import { logError } from "../../utils/Logger";
 
 export class AuthService {
+
+  public async forgotPassword(email: string) {
+    const user = await Usuario.findOne({ where: { email } });
+
+    if (user) {
+      const tempPassword = generateTempPassword();
+      user.password = await bcrypt.hash(tempPassword, 10);
+      await user.save();
+
+      const emailService = new EmailService();
+      try {
+        await emailService.sendTemporaryPassword(email, `${user.firstName} ${user.lastName}`, tempPassword);
+      } catch (error: any) {
+        logError("No se pudo enviar la contraseña temporal recuperada", {
+          userId: user.id,
+          email,
+          error: error.message,
+        });
+      }
+    }
+
+    return { message: "Si el correo existe, recibirás una contraseña temporal para iniciar sesión" };
+  }
 
   public async login(email: string, pass: string) {
     const user = await Usuario.findOne({
@@ -97,11 +123,16 @@ export class AuthService {
     await this.ensureParentHierarchy(map);
   }
 
-  public async updateProfile(userId: number, data: Partial<{ firstName: string; lastName: string; phone: string; address: string }>) {
+  public async updateProfile(userId: number, data: Partial<{ email: string; firstName: string; lastName: string; phone: string; address: string }>) {
     const user = await Usuario.findByPk(userId);
     if (!user) throw ApiError.notFound("Usuario no encontrado");
 
-    const allowedFields: (keyof typeof data)[] = ["firstName", "lastName", "phone", "address"];
+    if (data.email !== undefined && data.email !== user.email) {
+      const existing = await Usuario.findOne({ where: { email: data.email } });
+      if (existing) throw ApiError.emailExists();
+    }
+
+    const allowedFields: (keyof typeof data)[] = ["email", "firstName", "lastName", "phone", "address"];
     for (const field of allowedFields) {
       if (data[field] !== undefined) {
         (user as any)[field] = data[field];

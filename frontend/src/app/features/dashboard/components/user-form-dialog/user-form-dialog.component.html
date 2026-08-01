@@ -1,10 +1,10 @@
 <div class="user-form">
   <header class="user-form__header">
     <h2 class="user-form__title" mat-dialog-title>
-      {{ generatedPassword() ? "Usuario Registrado" : "Registrar Nuevo Empleado" }}
+      {{ created() ? "Usuario Registrado" : "Registrar Nuevo Empleado" }}
     </h2>
 
-    @if (!generatedPassword() && !isCreating()) {
+    @if (!created() && !isCreating()) {
       <button
         class="user-form__close-btn"
         mat-icon-button
@@ -16,7 +16,7 @@
   </header>
 
   <mat-dialog-content class="user-form__content">
-    @if (!generatedPassword()) {
+    @if (!created()) {
       <form [formGroup]="userForm" class="user-form__body">
         <div class="user-form__section-label user-form__section-label--first">IDENTIDAD Y CONTACTO</div>
         <div class="user-form__grid">
@@ -129,13 +129,15 @@
       <div class="user-form__success">
         <mat-icon class="user-form__success-icon">check_circle</mat-icon>
         <h3 class="user-form__success-title">Usuario Creado</h3>
-        <p class="user-form__success-text">
-          El empleado ha sido registrado. Proporcione esta clave para su primer ingreso:
-        </p>
-        <div class="user-form__success-card">
-          <small class="user-form__success-label">CLAVE TEMPORAL</small>
-          <div class="user-form__success-clave">{{ generatedPassword() }}</div>
-        </div>
+        @if (emailSent()) {
+          <p class="user-form__success-text user-form__success-text--email">
+            La clave temporal fue enviada al correo del usuario.
+          </p>
+        } @else {
+          <p class="user-form__success-text">
+            No se pudo enviar el correo con la clave temporal. El correo tal vez no existe; contacte con el administrador para restablecer la contraseña.
+          </p>
+        }
       </div>
       <mat-dialog-actions class="user-form__actions" align="center">
         <button mat-raised-button color="primary" (click)="close(true)">
@@ -145,7 +147,7 @@
     }
   </mat-dialog-content>
 
-  @if (!generatedPassword()) {
+  @if (!created()) {
     <mat-dialog-actions class="user-form__actions" align="end">
       <button mat-button (click)="close()" [disabled]="isCreating()">
         CANCELAR

@@ -232,3 +232,57 @@
 {"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-31 21:51:42"}
 {"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-31 21:51:42"}
 {"level":"info","message":"Profile updated for user ID: 1","service":"clinisalud-api","timestamp":"2026-07-31 22:48:16"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:23:56"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:24:12"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:24:13"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:24:18"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:24:18"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:24:28"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:24:31"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:24:32"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:24:37"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:24:38"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:24:42"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 00:24:56"}
+{"level":"warn","message":"SMTP no configurado: el envío de correos está deshabilitado","service":"clinisalud-api","timestamp":"2026-08-01 14:27:30"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 14:43:50"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 14:44:59"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 14:44:59"}
+{"level":"warn","message":"SMTP no configurado: el envío de correos está deshabilitado","service":"clinisalud-api","timestamp":"2026-08-01 14:45:44"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 14:52:11"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 14:52:15"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 14:52:16"}
+{"level":"info","message":"SMTP configurado y conexión verificada correctamente","service":"clinisalud-api","timestamp":"2026-08-01 14:52:21"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 14:55:50"}
+{"level":"info","message":"SMTP configurado y conexión verificada correctamente","service":"clinisalud-api","timestamp":"2026-08-01 14:55:54"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 14:57:50"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 14:57:50"}
+{"level":"info","message":"Contraseña temporal enviada a wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 14:58:11"}
+{"level":"info","message":"Contraseña temporal enviada a wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 14:59:20"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 15:07:41"}
+{"level":"info","message":"SMTP configurado y conexión verificada correctamente","service":"clinisalud-api","timestamp":"2026-08-01 15:07:45"}
+{"level":"warn","message":"SMTP no configurado: el envío de correos está deshabilitado","service":"clinisalud-api","timestamp":"2026-08-01 15:07:59"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 15:10:02"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 15:10:02"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 15:17:40"}
+{"level":"info","message":"SMTP configurado y conexión verificada correctamente","service":"clinisalud-api","timestamp":"2026-08-01 15:17:43"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 15:17:46"}
+{"level":"info","message":"SMTP configurado y conexión verificada correctamente","service":"clinisalud-api","timestamp":"2026-08-01 15:17:50"}
+{"level":"warn","message":"SMTP no configurado: el envío de correos está deshabilitado","service":"clinisalud-api","timestamp":"2026-08-01 15:18:17"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 15:18:36"}
+{"level":"info","message":"SMTP configurado y conexión verificada correctamente","service":"clinisalud-api","timestamp":"2026-08-01 15:18:39"}
+{"level":"warn","message":"SMTP no configurado: el envío de correos está deshabilitado","service":"clinisalud-api","timestamp":"2026-08-01 15:18:43"}
+{"level":"warn","message":"SMTP no configurado: el envío de correos está deshabilitado","service":"clinisalud-api","timestamp":"2026-08-01 15:18:49"}
+{"level":"warn","message":"SMTP no configurado: el envío de correos está deshabilitado","service":"clinisalud-api","timestamp":"2026-08-01 15:21:04"}
+{"level":"info","message":"Contraseña temporal enviada a wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 15:22:29"}
+{"level":"info","message":"Login attempt for email: wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 15:23:51"}
+{"level":"info","message":"User logged in successfully: wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 15:23:51"}
+{"level":"info","message":"Password changed for user ID: 2","service":"clinisalud-api","timestamp":"2026-08-01 15:25:01"}
+{"level":"info","message":"Profile updated for user ID: 2","service":"clinisalud-api","timestamp":"2026-08-01 15:25:01"}
+{"level":"info","message":"Login attempt for email: wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 15:25:29"}
+{"level":"info","message":"User logged in successfully: wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 15:25:30"}
+{"level":"info","message":"Contraseña temporal enviada a wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 15:25:42"}
+{"level":"info","message":"Login attempt for email: wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 15:26:02"}
+{"error":"Credenciales inválidas","level":"error","message":"Login failed for email: wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 15:26:02"}
+{"level":"info","message":"Login attempt for email: wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 15:26:19"}
+{"level":"info","message":"User logged in successfully: wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 15:26:19"}

@@ -16,6 +16,7 @@ import { PASSWORD_CRITERIA, passwordValidator } from '@shared/utils/password-cri
 import { PROFILE_ERROR_RULES } from './profile-form-validator';
 
 type ProfileFormValue = {
+  email: string | null;
   firstName: string | null;
   lastName: string | null;
   phone: string | null;
@@ -44,6 +45,7 @@ export class ProfileDialogComponent {
   public readonly updateError = this.authStore.updateError;
 
   public profileForm = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
     firstName: ['', [Validators.required, Validators.maxLength(100)]],
     lastName: ['', [Validators.required, Validators.maxLength(100)]],
     phone: ['', [Validators.pattern('^[0-9]{7,15}$')]],
@@ -129,6 +131,7 @@ export class ProfileDialogComponent {
   constructor() {
     const user = this.currentUser();
     const vals: Record<string, string | undefined> = {
+      email: user?.email || '',
       firstName: user?.firstName,
       lastName: user?.lastName,
       phone: user?.phone || '',
@@ -216,6 +219,7 @@ export class ProfileDialogComponent {
 
   private submitProfileUpdate(raw: ProfileFormValue): void {
     const normalized: Record<string, string | undefined> = {};
+    normalized['email'] = raw.email ?? undefined;
     if (raw.firstName) normalized['firstName'] = raw.firstName;
     if (raw.lastName) normalized['lastName'] = raw.lastName;
     normalized['phone'] = raw.phone ?? undefined;

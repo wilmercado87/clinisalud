@@ -35,10 +35,6 @@
 
       <div class="profile-dialog__readonly">
         <div class="profile-dialog__field">
-          <span class="profile-dialog__field-label">Correo electrónico</span>
-          <span class="profile-dialog__field-value">{{ currentUser()?.email }}</span>
-        </div>
-        <div class="profile-dialog__field">
           <span class="profile-dialog__field-label">Documento</span>
           <span class="profile-dialog__field-value">{{ currentUser()?.dni }}</span>
         </div>
@@ -48,6 +44,15 @@
 
       <form [formGroup]="profileForm" class="profile-dialog__form">
         <div class="profile-dialog__grid">
+          <mat-form-field appearance="outline" class="profile-dialog__form-field">
+            <mat-label>Correo electrónico</mat-label>
+            <input matInput formControlName="email" type="email" />
+            <mat-icon matSuffix>mail</mat-icon>
+            @if (userErrors().email) {
+              <mat-error>{{ userErrors().email }}</mat-error>
+            }
+          </mat-form-field>
+
           <mat-form-field appearance="outline" class="profile-dialog__form-field">
             <mat-label>Nombres</mat-label>
             <input matInput formControlName="firstName" />

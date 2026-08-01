@@ -13,3 +13,4 @@
 {"error":"Usuario no encontrado","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 14:56:12"}
 {"error":"Usuario no encontrado","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 14:57:45"}
 {"error":"Usuario no encontrado","level":"error","message":"Login failed for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 15:02:01"}
+{"error":"Credenciales inválidas","level":"error","message":"Login failed for email: wmercado8804@gmail.com","service":"clinisalud-api","timestamp":"2026-08-01 15:26:02"}

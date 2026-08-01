@@ -72,7 +72,8 @@ export class UserFormDialogComponent {
   private formSubmitted = false;
 
   public selectedIds = signal<Set<number>>(new Set());
-  public generatedPassword = signal('');
+  public created = signal(false);
+  public emailSent = signal(false);
   public formStatus = toSignal(this.userForm.statusChanges, { initialValue: this.userForm.status });
 
   public userErrors = computed(() => {
@@ -161,8 +162,9 @@ export class UserFormDialogComponent {
 
     effect(() => {
       const res = this.createResult();
-      if (res?.temporaryPassword && this.formSubmitted) {
-        this.generatedPassword.set(res.temporaryPassword);
+      if (res && this.formSubmitted) {
+        this.created.set(true);
+        this.emailSent.set(res.emailSent === true);
         this.toast.success('¡Usuario registrado con éxito!');
       }
     });

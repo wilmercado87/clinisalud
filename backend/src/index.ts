@@ -1,9 +1,11 @@
+import "dotenv/config";
 import app from "./app";
 import { createServer } from "http";
 import sequelize from "./config/database";
 import { runSeeder } from "./seed";
 import { logInfo, logError } from "./utils/Logger";
 import { initSocketGateway } from "./socket/socket.gateway";
+import { EmailService } from "./modules/notifications/email.service";
 
 import "./models/associations";
 
@@ -18,6 +20,9 @@ async function main() {
     console.log("🌱 Corriendo Seeders...");
     await runSeeder();
     console.log("✅ Datos base insertados.");
+
+    const emailService = new EmailService();
+    await emailService.verifyConnection();
 
     const httpServer = createServer(app);
     initSocketGateway(httpServer);

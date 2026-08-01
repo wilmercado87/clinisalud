@@ -64,7 +64,7 @@ describe('UsersService', () => {
       const result = await service.createUser(validData, 'SUPER_ADMIN', 1, 'admin@test.com');
 
       expect(result).toHaveProperty('user');
-      expect(result).toHaveProperty('temporaryPassword');
+      expect(result).toHaveProperty('emailSent');
     });
 
     it('should throw if email already exists', async () => {

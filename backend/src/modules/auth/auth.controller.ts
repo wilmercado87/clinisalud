@@ -48,12 +48,25 @@ export async function login(req: Request, res: Response) {
 export async function updateProfile(req: AuthRequest, res: Response) {
   try {
     const userId = req.user!.id;
-    const { firstName, lastName, phone, address } = req.body;
-    const result = await authService.updateProfile(userId, { firstName, lastName, phone, address });
+    const { email, firstName, lastName, phone, address } = req.body;
+    const result = await authService.updateProfile(userId, { email, firstName, lastName, phone, address });
     logInfo(`Profile updated for user ID: ${userId}`);
     return res.status(HTTP_STATUS.OK).json(result);
   } catch (error: any) {
     logError(`Profile update failed`, { error: error.message });
+    const statusCode = getHttpCode(error);
+    const message = error.message;
+    return res.status(statusCode).json({ message, ...(error.code && { code: error.code }) });
+  }
+}
+
+export async function forgotPassword(req: Request, res: Response) {
+  try {
+    const { email } = req.body;
+    const result = await authService.forgotPassword(email);
+    return res.status(HTTP_STATUS.OK).json(result);
+  } catch (error: any) {
+    logError(`Password recovery failed for email: ${req.body.email}`, { error: error.message });
     const statusCode = getHttpCode(error);
     const message = error.message;
     return res.status(statusCode).json({ message, ...(error.code && { code: error.code }) });

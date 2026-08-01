@@ -24,7 +24,7 @@ export interface RoleResponse {
 
 export interface CreateUserResponse {
   user: UserResponse;
-  temporaryPassword: string;
+  emailSent: boolean;
 }
 
 export interface PermissionOverride {

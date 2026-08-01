@@ -17,7 +17,13 @@ export class AuthService {
       .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
   }
 
-  public updateProfile(data: Partial<{ firstName: string; lastName: string; phone: string; address: string }>): Observable<UserResponse> {
+  public forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http
+      .post<{ message: string }>(`${this.apiUrl}/forgot-password`, { email })
+      .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+  }
+
+  public updateProfile(data: Partial<{ email: string; firstName: string; lastName: string; phone: string; address: string }>): Observable<UserResponse> {
     return this.http.patch<UserResponse>(`${this.apiUrl}/profile`, data).pipe(
       catchError((error: HttpErrorResponse) => this.handleError(error)),
     );

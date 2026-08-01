@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,10 +14,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthStore } from '@core/stores/auth-store/auth.store';
 import { ConfigStore } from '@core/stores/config-store/config.store';
 import { ApiError } from '@shared/utils/status.codes';
+import { ForgotPasswordDialogComponent } from '@features/auth/components/forgot-password-dialog/forgot-password-dialog.component';
 
 @Component({
   selector: 'app-login',
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,6 +27,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authStore = inject(AuthStore);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
   public readonly configStore = inject(ConfigStore);
 
   public readonly isLoggingIn = this.authStore.isLoggingIn;
@@ -57,5 +60,12 @@ export class LoginComponent {
     if (this.loginForm.invalid) return;
 
     this.authStore.login(this.loginForm.getRawValue());
+  }
+
+  public openForgotPassword(): void {
+    this.dialog.open(ForgotPasswordDialogComponent, {
+      width: '460px',
+      disableClose: true,
+    });
   }
 }

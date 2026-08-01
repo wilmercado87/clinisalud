@@ -11,6 +11,11 @@ export const loginValidation = [
 ];
 
 export const updateProfileValidation = [
+  body('email')
+    .optional()
+    .isEmail()
+    .withMessage('El correo electrónico debe ser válido')
+    .normalizeEmail(),
   body('firstName')
     .optional()
     .isLength({ min: 1, max: 100 })
@@ -27,6 +32,13 @@ export const updateProfileValidation = [
     .optional({ values: 'falsy' })
     .isLength({ max: 255 })
     .withMessage('La dirección debe tener máximo 255 caracteres'),
+];
+
+export const forgotPasswordValidation = [
+  body('email')
+    .isEmail()
+    .withMessage('El correo electrónico debe ser válido')
+    .normalizeEmail(),
 ];
 
 export const changePasswordValidation = [

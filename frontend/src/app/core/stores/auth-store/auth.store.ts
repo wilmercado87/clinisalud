@@ -54,6 +54,7 @@ export class AuthStore {
   readonly loginError = this.loginResource.error;
 
   private readonly updateTrigger = signal<{
+    email?: string;
     firstName?: string;
     lastName?: string;
     phone?: string;
@@ -138,7 +139,7 @@ export class AuthStore {
     return !!this.getToken();
   }
 
-  public updateProfile(data: Partial<{ firstName: string; lastName: string; phone: string; address: string }>): void {
+  public updateProfile(data: Partial<{ email: string; firstName: string; lastName: string; phone: string; address: string }>): void {
     this.updateTrigger.set(data);
   }
 
