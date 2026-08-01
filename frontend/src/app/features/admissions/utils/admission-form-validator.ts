@@ -6,6 +6,11 @@ import {
   numericValidator,
   phoneValidator,
 } from '@shared/utils/form-validators';
+export {
+  ErrorRules,
+  extractFieldErrors,
+  FieldErrors,
+} from '@shared/utils/form-field-errors';
 
 export const PATIENT_REQUIRED_KEYS = [
   'firstName',
@@ -57,10 +62,6 @@ export function applyRequiredValidators(
   group.updateValueAndValidity();
 }
 
-export type FieldErrors<R extends Record<string, [string, string][]>> = {
-  [K in keyof R]: string | null;
-};
-
 export const PATIENT_ERROR_RULES = {
   document: [
     ['required', 'El número de documento es requerido'],
@@ -107,17 +108,3 @@ export const AUTH_ERROR_RULES = {
     ['min', 'La cantidad mínima es 1'],
   ],
 } satisfies Record<string, [string, string][]>;
-
-export function extractFieldErrors<R extends Record<string, [string, string][]>>(
-  group: FormGroup,
-  rules: R,
-): FieldErrors<R> {
-  const result: Record<string, string | null> = {};
-  for (const key of Object.keys(rules)) {
-    const control = group.get(key);
-    if (!control) continue;
-    const rule = rules[key].find(([error]) => control.hasError(error));
-    result[key] = rule ? rule[1] : null;
-  }
-  return result as FieldErrors<R>;
-}

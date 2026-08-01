@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { UserService } from '@features/dashboard/services/user.service';
 import { UserResponse, ToggleStatusResponse, PermissionOverride } from '@core/models/user-manager.model';
 
-interface CreatePayload {
+export interface CreatePayload {
   firstName: string;
   lastName: string;
   dni: string;

@@ -4,28 +4,32 @@ export const PHONE_PATTERN = /^[+0-9][0-9\s-]{6,14}$/;
 export const NUMERIC_PATTERN = /^[0-9]+$/;
 export const DISABILITY_PATTERN = /^(SÍ|SI|NO)$/i;
 
+export function isBlank(value: unknown): boolean {
+  return value === null || value === undefined || value === '';
+}
+
 export function phoneValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
-  if (value === null || value === undefined || value === '') return null;
+  if (isBlank(value)) return null;
   return PHONE_PATTERN.test(String(value).trim()) ? null : { invalidPhone: true };
 }
 
 export function numericValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
-  if (value === null || value === undefined || value === '') return null;
+  if (isBlank(value)) return null;
   return NUMERIC_PATTERN.test(String(value).trim()) ? null : { invalidNumeric: true };
 }
 
 export function ageValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
-  if (value === null || value === undefined || value === '') return null;
+  if (isBlank(value)) return null;
   const age = Number(value);
   return Number.isInteger(age) && age >= 0 && age <= 120 ? null : { invalidAge: true };
 }
 
 export function disabilityValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
-  if (value === null || value === undefined || value === '') return null;
+  if (isBlank(value)) return null;
   return DISABILITY_PATTERN.test(String(value).trim()) ? null : { invalidDisability: true };
 }
 

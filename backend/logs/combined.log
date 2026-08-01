@@ -228,3 +228,7 @@
 {"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 16:00:05"}
 {"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 16:04:57"}
 {"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-29 16:04:57"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-07-31 21:51:27"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-31 21:51:42"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-07-31 21:51:42"}
+{"level":"info","message":"Profile updated for user ID: 1","service":"clinisalud-api","timestamp":"2026-07-31 22:48:16"}

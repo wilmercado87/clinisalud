@@ -7,11 +7,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
   }
 
   &__title {
     margin: 0;
+    padding: 0;
     color: v.$navy-500;
     font-size: 1.4rem;
     font-weight: 700;
@@ -26,7 +27,7 @@
     padding: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden;
-    max-height: 70vh;
+    max-height: 92vh;
 
     &::-webkit-scrollbar {
       width: 4px;
@@ -51,21 +52,24 @@
     border-radius: 4px;
     font-size: 10px;
     font-weight: 800;
-    margin: 8px 0 4px;
+    margin: 4px 0 8px;
     width: fit-content;
     letter-spacing: 0.5px;
+
+    &--first {
+      margin: 8px 0 14px;
+    }
   }
 
   &__grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    column-gap: 16px;
-    row-gap: 20px;
+    column-gap: 20px;
+    row-gap: 10px;
   }
 
   &__field {
     width: 100%;
-    height: 48px;
 
     mat-icon[matSuffix] {
       color: v.$navy-500;
@@ -80,13 +84,12 @@
       height: 53px !important;
       padding-top: 0 !important;
     }
+  }
 
-    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-      display: none;
-    }
-
-    &--full-width {
-      grid-column: span 2;
+  ::ng-deep {
+    .mat-mdc-form-field-hint-wrapper,
+    .mat-mdc-form-field-error-wrapper {
+      padding-left: 0;
     }
   }
 
@@ -104,7 +107,7 @@
     border-radius: 8px;
     padding: 10px 12px;
     background: v.$color-gray-50;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
   }
 
   &__permission-item {

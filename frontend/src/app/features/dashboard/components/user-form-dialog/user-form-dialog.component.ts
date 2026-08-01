@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
@@ -13,14 +14,21 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatOptionModule } from '@angular/material/core';
 
-import { UserStore } from '@features/dashboard/store/user-store/user.store';
+import { CreatePayload, UserStore } from '@features/dashboard/store/user-store/user.store';
 import { RoleStore } from '@core/stores/role-store/role.store';
 import { AuthStore } from '@core/stores/auth-store/auth.store';
 import { ToastService } from '@core/services/toast.service';
 import { MenuOption } from '@core/models/auth.model';
-import { ERROR_MAPPING, HTTP_STATUS, ApiError } from '@shared/utils/status.codes';
+import { ERROR_MAPPING, HTTP_STATUS } from '@shared/utils/status.codes';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import { ROLE_CODES } from '@shared/utils/role-constants';
+import { USER_ERROR_RULES } from '@features/dashboard/utils/user-form-validator';
+import { extractFieldErrors } from '@shared/utils/form-field-errors';
+
+const ALREADY_EXISTS_FIELD: Record<string, string> = {
+  EMAIL_EXISTS: 'email',
+  DNI_EXISTS: 'dni',
+};
 
 @Component({
   selector: 'app-user-form-dialog',
@@ -46,7 +54,7 @@ export class UserFormDialogComponent {
   public readonly createError = this.userStore.createError;
 
   public userForm = this.fb.group({
-    documentTypeId: [null as number | null],
+    documentTypeId: [null as number | null, Validators.required],
     firstName: ['', [Validators.required]],
     lastName: ['', [Validators.required]],
     dni: ['', [Validators.required, Validators.pattern('^[0-9]+$')]],
@@ -57,8 +65,8 @@ export class UserFormDialogComponent {
   });
 
   private readonly roleIdSignal = toSignal(
-    this.userForm.controls.roleId.valueChanges,
-    { initialValue: this.userForm.controls.roleId.value }
+    this.userForm.controls['roleId'].valueChanges,
+    { initialValue: this.userForm.controls['roleId'].value }
   );
 
   private formSubmitted = false;
@@ -66,6 +74,11 @@ export class UserFormDialogComponent {
   public selectedIds = signal<Set<number>>(new Set());
   public generatedPassword = signal('');
   public formStatus = toSignal(this.userForm.statusChanges, { initialValue: this.userForm.status });
+
+  public userErrors = computed(() => {
+    this.formStatus();
+    return extractFieldErrors(this.userForm, USER_ERROR_RULES);
+  });
 
   public currentUserRole = computed(() => this.authStore.currentUser()?.role ?? '');
   public isCurrentUserSuperAdmin = computed(() => this.currentUserRole() === ROLE_CODES.SUPER_ADMIN);
@@ -155,7 +168,7 @@ export class UserFormDialogComponent {
     });
 
     effect(() => {
-      const error = this.createError() as ApiError;
+      const error = this.createError();
       if (error) this.handleCreationError(error);
     });
   }
@@ -204,54 +217,48 @@ export class UserFormDialogComponent {
 
   public onSubmit(): void {
     if (!this.canSubmit()) return;
+    const roleId = this.userForm.controls.roleId.value;
+    if (roleId === null) return;
 
     this.formSubmitted = true;
-    this.userStore.createUser(this.buildPayload(this.userForm.getRawValue()));
+    this.userStore.createUser(this.buildPayload(roleId));
   }
 
-  private buildPayload(rawForm: Record<string, unknown>): {
-    firstName: string; lastName: string; dni: string; email: string;
-    phone?: string; address?: string; roleId: number; permissions: number[];
-    documentTypeId?: number;
-  } {
-    const cleanFields = Object.fromEntries(
-      Object.entries(rawForm).map(([key, value]) => [
-        key,
-        value === null ? undefined : value,
-      ])
-    );
-
+  private buildPayload(roleId: number): CreatePayload {
+    const raw = this.userForm.getRawValue();
     return {
-      ...cleanFields as { firstName: string; lastName: string; dni: string; email: string; phone?: string; address?: string; roleId: number; documentTypeId?: number; },
+      documentTypeId: raw.documentTypeId ?? undefined,
+      firstName: raw.firstName ?? '',
+      lastName: raw.lastName ?? '',
+      dni: raw.dni ?? '',
+      email: raw.email ?? '',
+      phone: raw.phone || undefined,
+      address: raw.address || undefined,
+      roleId,
       permissions: Array.from(this.effectiveSelectedIds()),
     };
   }
 
   private handleCreationError(err: unknown): void {
-    const httpErr = err as any;
-    const errorCode = httpErr.error?.code as string | undefined;
-    const statusCode = httpErr.status || HTTP_STATUS.INTERNAL_SERVER_ERROR;
+    const { code, status, message } = this.resolveError(err);
 
-    const codeToField: Record<string, string> = {
-      EMAIL_EXISTS: 'email',
-      DNI_EXISTS: 'dni',
-    };
+    const field = code ? ALREADY_EXISTS_FIELD[code] : undefined;
+    if (field) this.userForm.get(field)?.setErrors({ alreadyExists: true });
 
-    const codeToMessageKey: Record<string, number> = {
-      EMAIL_EXISTS: HTTP_STATUS.EMAIL_ALREADY_EXISTS,
-      DNI_EXISTS: HTTP_STATUS.DNI_ALREADY_EXISTS,
-    };
-
-    const field = errorCode ? codeToField[errorCode] : undefined;
-    if (field) {
-      this.userForm.get(field)?.setErrors({ alreadyExists: true });
-    }
-
-    const messageKey = errorCode ? codeToMessageKey[errorCode] : undefined;
-    const errorMessage = (messageKey && ERROR_MAPPING[messageKey])
-      || ERROR_MAPPING[statusCode]
-      || ERROR_MAPPING[HTTP_STATUS.INTERNAL_SERVER_ERROR];
+    const errorMessage =
+      message ?? ERROR_MAPPING[status] ?? ERROR_MAPPING[HTTP_STATUS.INTERNAL_SERVER_ERROR];
     this.toast.error(errorMessage);
+  }
+
+  private resolveError(err: unknown): { code?: string; status: number; message?: string } {
+    if (err instanceof HttpErrorResponse) {
+      return {
+        code: err.error?.code,
+        status: err.status,
+        message: err.error?.message,
+      };
+    }
+    return { status: HTTP_STATUS.INTERNAL_SERVER_ERROR };
   }
 
   public close(refresh = false): void {

@@ -94,7 +94,7 @@ export class ManagerUsersComponent implements AfterViewInit {
   }
 
   public openCreateDialog(): void {
-    this.dialog.open(UserFormDialogComponent, { width: '700px', disableClose: true })
+    this.dialog.open(UserFormDialogComponent, { width: '820px', disableClose: true })
       .afterClosed()
       .subscribe(result => result && this.userStore.loadUsers());
   }

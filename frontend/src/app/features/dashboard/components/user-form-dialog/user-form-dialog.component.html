@@ -18,7 +18,7 @@
   <mat-dialog-content class="user-form__content">
     @if (!generatedPassword()) {
       <form [formGroup]="userForm" class="user-form__body">
-        <div class="user-form__section-label">IDENTIDAD Y CONTACTO</div>
+        <div class="user-form__section-label user-form__section-label--first">IDENTIDAD Y CONTACTO</div>
         <div class="user-form__grid">
           <app-catalog-select
             class="user-form__field"
@@ -30,35 +30,44 @@
 
           <mat-form-field appearance="outline" class="user-form__field">
             <mat-label>Nombres</mat-label>
-            <input matInput formControlName="firstName" />
+            <input matInput formControlName="firstName" required />
+            @if (userErrors().firstName) {
+              <mat-error>{{ userErrors().firstName }}</mat-error>
+            }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="user-form__field">
             <mat-label>Apellidos</mat-label>
-            <input matInput formControlName="lastName" />
+            <input matInput formControlName="lastName" required />
+            @if (userErrors().lastName) {
+              <mat-error>{{ userErrors().lastName }}</mat-error>
+            }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="user-form__field">
             <mat-label>DNI / Cédula</mat-label>
-            <input matInput formControlName="dni" />
-            @if (userForm.get('dni')?.hasError('alreadyExists')) {
-              <mat-error>Este DNI ya está registrado en Clinisalud</mat-error>
+            <input matInput formControlName="dni" required />
+            @if (userErrors().dni) {
+              <mat-error>{{ userErrors().dni }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="user-form__field">
             <mat-label>Correo Electrónico</mat-label>
-            <input matInput formControlName="email" type="email" />
+            <input matInput formControlName="email" type="email" required />
             <mat-icon matSuffix>mail</mat-icon>
-            @if (userForm.get('email')?.hasError('alreadyExists')) {
-              <mat-error>Este correo ya está en uso</mat-error>
+            @if (userErrors().email) {
+              <mat-error>{{ userErrors().email }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="user-form__field">
             <mat-label>Teléfono (10 dígitos)</mat-label>
-            <input matInput formControlName="phone" maxlength="10" />
+            <input matInput formControlName="phone" maxlength="10" required />
             <mat-icon matSuffix>phone</mat-icon>
+            @if (userErrors().phone) {
+              <mat-error>{{ userErrors().phone }}</mat-error>
+            }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="user-form__field">
@@ -67,17 +76,17 @@
             <mat-icon matSuffix>place</mat-icon>
           </mat-form-field>
 
-          <mat-form-field
-            appearance="outline"
-            class="user-form__field user-form__field--full-width"
-          >
+          <mat-form-field appearance="outline" class="user-form__field">
             <mat-label>Asignar Rol</mat-label>
-            <mat-select formControlName="roleId">
+            <mat-select formControlName="roleId" required>
               @for (role of (availableRoles()); track role.id) {
                 <mat-option [value]="role.id">{{ role.name }}</mat-option>
               }
             </mat-select>
             <mat-icon matSuffix>admin_panel_settings</mat-icon>
+            @if (userErrors().roleId) {
+              <mat-error>{{ userErrors().roleId }}</mat-error>
+            }
           </mat-form-field>
         </div>
 

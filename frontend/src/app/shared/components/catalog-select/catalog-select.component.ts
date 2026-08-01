@@ -14,7 +14,6 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  AbstractControl,
   ControlValueAccessor,
   FormControl,
   NG_VALUE_ACCESSOR,
@@ -28,7 +27,7 @@ import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { ErrorStateMatcher } from '@angular/material/core';
+import { ErrorStateMatcher, MatOption } from '@angular/material/core';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
@@ -92,10 +91,9 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
     isErrorState: () => this.optionInvalid(),
   };
 
-  readonly errorMessage = computed(() => {
-    if (this.optionInvalid()) return 'Ingreso no válido';
-    return null;
-  });
+  readonly errorMessage = computed(() =>
+    this.optionInvalid() ? 'Ingreso no válido' : null,
+  );
 
   private readonly loadTrigger = signal<string | null>(null);
 
@@ -112,7 +110,7 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   readonly items = computed<CatalogDisplayItem[]>(() => {
     const raw = this.itemsResource.value() ?? [];
     const type = this.catalogType();
-    return raw.map((item: any) => mapCatalogItemToDisplay(type, item));
+    return raw.map((item) => mapCatalogItemToDisplay(type, item));
   });
 
   readonly filteredItems = computed(() => {
@@ -124,7 +122,7 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
 
   readonly selectedDescription = computed(() => {
     const id = this.value();
-    if (id === null || id === undefined) return '';
+    if (id === null) return '';
     return this.items().find((i) => i.id === id)?.description ?? '';
   });
 
@@ -137,18 +135,20 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   private onTouched: () => void = () => {};
 
   constructor() {
+    this.registerEffects();
+  }
+
+  ngAfterViewInit(): void {
+    this.watchRequiredState();
+  }
+
+  private registerEffects(): void {
     effect(() => {
       const type = this.catalogType();
       if (type) this.loadTrigger.set(type);
     });
 
-    effect(() => {
-      if (this.disabled()) {
-        this.inputControl.disable({ emitEvent: false });
-      } else {
-        this.inputControl.enable({ emitEvent: false });
-      }
-    });
+    effect(() => this.setInputEnabled(!this.disabled()));
 
     effect(() => {
       this.inputControl.setValue(this.displayText(), { emitEvent: false });
@@ -156,15 +156,21 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
 
     effect(() => {
       const id = this.value();
-      const list = this.items();
-      if (id !== null && id !== undefined && list.length > 0 && !this.searchTerm()) {
-        const item = list.find((i) => i.id === id);
-        if (item) this.searchTerm.set(item.description);
-      }
+      if (id === null || this.searchTerm()) return;
+      const item = this.items().find((i) => i.id === id);
+      if (item) this.searchTerm.set(item.description);
     });
   }
 
-  ngAfterViewInit(): void {
+  private setInputEnabled(enabled: boolean): void {
+    if (enabled) {
+      this.inputControl.enable({ emitEvent: false });
+    } else {
+      this.inputControl.disable({ emitEvent: false });
+    }
+  }
+
+  private watchRequiredState(): void {
     const control = this.ngControl?.control;
     if (!control) return;
     const syncRequired = () =>
@@ -194,31 +200,38 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   onBlur(): void {
     this.onTouched();
     const text = this.searchTerm().trim().toLowerCase();
-    const currentId = this.value();
 
     if (!text) {
-      if (currentId !== null && currentId !== undefined) {
-        this.searchTerm.set(this.selectedDescription());
-      }
+      this.restoreSelectedDescription();
       return;
     }
 
     const match = this.items().find((i) => i.description.trim().toLowerCase() === text);
-    if (match) {
-      if (this.value() !== match.id) {
-        this.value.set(match.id);
-        this.onChange(match.id);
-      }
-      this.searchTerm.set(match.description);
-      this.setOptionError(false);
-    } else {
+    if (!match) {
       this.value.set(null);
       this.onChange(null);
       this.setOptionError(true);
+      return;
     }
+
+    this.applyMatch(match);
   }
 
-  onOptionSelected(option: any): void {
+  private restoreSelectedDescription(): void {
+    if (this.value() === null) return;
+    this.searchTerm.set(this.selectedDescription());
+  }
+
+  private applyMatch(item: CatalogDisplayItem): void {
+    if (this.value() !== item.id) {
+      this.value.set(item.id);
+      this.onChange(item.id);
+    }
+    this.searchTerm.set(item.description);
+    this.setOptionError(false);
+  }
+
+  onOptionSelected(option: MatOption<number>): void {
     const id = option.value;
     this.value.set(id);
     const item = this.items().find((i) => i.id === id);
@@ -236,16 +249,14 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
     this.onTouched();
   }
 
-  writeValue(val: any): void {
-    this.value.set(val ?? null);
-    if (val === null || val === undefined) {
-      if (!this.optionInvalid()) {
-        this.searchTerm.set('');
-        this.setOptionError(false);
-      }
-    } else {
-      this.setOptionError(false);
+  writeValue(val: number | null | undefined): void {
+    const id = val ?? null;
+    this.value.set(id);
+    if (id === null) {
+      if (!this.optionInvalid()) this.searchTerm.set('');
+      return;
     }
+    this.setOptionError(false);
   }
 
   forceReset(): void {
@@ -256,21 +267,23 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
 
   private setOptionError(invalid: boolean): void {
     this.optionInvalid.set(invalid);
-    const control: AbstractControl | null = this.ngControl?.control ?? null;
+    const control = this.ngControl?.control;
     if (!control) return;
     if (invalid) {
       control.setErrors({ ...(control.errors ?? {}), optionNotFound: true });
-    } else if (control.hasError('optionNotFound')) {
-      const { optionNotFound: _removed, ...rest } = control.errors ?? {};
-      control.setErrors(Object.keys(rest).length > 0 ? rest : null);
+      return;
     }
+    if (!control.hasError('optionNotFound')) return;
+    const errors = { ...control.errors };
+    delete errors['optionNotFound'];
+    control.setErrors(Object.keys(errors).length > 0 ? errors : null);
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: (value: number | null) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 

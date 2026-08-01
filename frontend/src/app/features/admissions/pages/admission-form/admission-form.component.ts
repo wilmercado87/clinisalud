@@ -1,4 +1,5 @@
 import { Component, inject, effect, computed, ChangeDetectionStrategy, signal, ViewChildren, QueryList } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -26,15 +27,21 @@ import {
   COMPANION_FORMAT_VALIDATORS,
   COMPANION_REQUIRED_KEYS,
   createPatientFormatValidators,
-  extractFieldErrors,
   PATIENT_ERROR_RULES,
   PATIENT_REQUIRED_KEYS,
 } from '@features/admissions/utils/admission-form-validator';
+import { extractFieldErrors } from '@shared/utils/form-field-errors';
+import {
+  CompanionData,
+  CreateAdmissionData,
+  PatientLookupResult,
+} from '@features/admissions/services/admissions.service';
 import { ToastService } from '@core/services/toast.service';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import {
   ageValidator,
   disabilityValidator,
+  isBlank,
   maxDateValidator,
   numericValidator,
   parseIsoDateString,
@@ -42,8 +49,24 @@ import {
   startOfToday,
   toIsoDateString,
 } from '@shared/utils/form-validators';
+import { HTTP_STATUS } from '@shared/utils/status.codes';
 
 type FormMode = 'IDLE' | 'SEARCHING' | 'FOUND' | 'NOT_FOUND';
+
+const PATIENT_DATA_KEYS = [
+  'firstName',
+  'lastName',
+  'birthDate',
+  'genderId',
+  'age',
+  'disability',
+  'userTypeId',
+  'address',
+  'phone',
+  'email',
+];
+
+const ADMISSION_KEYS = ['epsId', 'roomId', 'observations'];
 
 @Component({
   selector: 'app-admission-form',
@@ -103,6 +126,9 @@ export class AdmissionFormComponent {
   readonly mode = signal<FormMode>('IDLE');
   private lookupRequested = false;
 
+  readonly searchEnabled = computed(() => this.mode() === 'IDLE' || this.mode() === 'NOT_FOUND');
+  readonly dataEnabled = computed(() => this.mode() === 'NOT_FOUND' || this.mode() === 'FOUND');
+
   readonly isCreating = this.store.isCreating;
   readonly createResult = this.store.createResult;
   readonly createError = this.store.createError;
@@ -112,13 +138,20 @@ export class AdmissionFormComponent {
   readonly companionActive = signal(false);
   readonly canSubmit = signal(false);
 
-  patientForm: FormGroup;
-  companionForm: FormGroup;
-  admissionForm: FormGroup;
+  patientForm!: FormGroup;
+  companionForm!: FormGroup;
+  admissionForm!: FormGroup;
 
-  authFormArray: FormGroup[] = [];
+  private authFormArray: FormGroup[] = [];
 
   constructor() {
+    this.createForms();
+    this.applyFormState();
+    this.registerEffects();
+    this.subscribeToFormChanges();
+  }
+
+  private createForms(): void {
     this.patientForm = this.fb.group({
       documentTypeId: [null, Validators.required],
       document: ['', [Validators.required, numericValidator]],
@@ -149,9 +182,21 @@ export class AdmissionFormComponent {
       roomId: [null, Validators.required],
       observations: ['', Validators.required],
     });
+  }
 
-    this.applyFormState();
+  private subscribeToFormChanges(): void {
+    this.companionForm.valueChanges.subscribe(() => this.refreshCompanionValidators());
 
+    this.patientForm.get('birthDate')?.valueChanges.subscribe((date: Date | string | null) => {
+      this.syncAgeFromBirthDate(date);
+    });
+
+    this.patientForm.statusChanges.subscribe(() => this.onFormStatusChange());
+    this.companionForm.statusChanges.subscribe(() => this.onFormStatusChange());
+    this.admissionForm.statusChanges.subscribe(() => this.onFormStatusChange());
+  }
+
+  private registerEffects(): void {
     effect(() => {
       applyRequiredValidators(
         this.patientForm,
@@ -161,69 +206,75 @@ export class AdmissionFormComponent {
       );
     });
 
-    this.companionForm.get('firstName')?.valueChanges.subscribe(() => this.refreshCompanionValidators());
-    this.companionForm.get('lastName')?.valueChanges.subscribe(() => this.refreshCompanionValidators());
-
-    this.patientForm.get('birthDate')?.valueChanges.subscribe((date: Date | string | null) => {
-      const age = this.calculateAge(date);
-      this.patientForm.get('age')?.setValue(age, { emitEvent: false });
-    });
-
     effect(() => this.refreshCanSubmit());
 
-    this.patientForm.statusChanges.subscribe(() => this.onFormStatusChange());
-    this.companionForm.statusChanges.subscribe(() => this.onFormStatusChange());
-    this.admissionForm.statusChanges.subscribe(() => this.onFormStatusChange());
+    effect(() => this.watchPatientLookup());
+    effect(() => this.watchCreateResult());
+    effect(() => this.watchCreateError());
+  }
 
-    effect(() => {
-      const loading = this.store.isLookingUp;
-      const patient = this.store.patientFound();
-      const err = this.store.lookupError();
-      if (!this.lookupRequested || loading()) return;
-      this.lookupRequested = false;
+  private watchPatientLookup(): void {
+    if (!this.lookupRequested || this.store.isLookingUp()) return;
+    this.lookupRequested = false;
 
-      if (err) {
-        if ((err as any)?.status === 404) {
-          this.mode.set('NOT_FOUND');
-        } else {
-          this.mode.set('IDLE');
-          this.toast.error((err as any)?.error?.message || 'Error al buscar el paciente');
-        }
-      } else if (patient) {
-        this.mode.set('FOUND');
-        this.patientForm.patchValue({
-          firstName: patient.firstName,
-          lastName: patient.lastName,
-          birthDate: parseIsoDateString(patient.birthDate) ?? null,
-          genderId: patient.genderId,
-          age: patient.age,
-          disability: patient.disability,
-          userTypeId: patient.userTypeId,
-          address: patient.address,
-          phone: patient.phone,
-          email: patient.email,
-        });
-        this.admissionForm.patchValue({ epsId: patient.epsId ?? null });
-      } else {
-        this.mode.set('NOT_FOUND');
-      }
+    const err = this.store.lookupError();
+    if (err) {
+      this.handleLookupError(err);
+      return;
+    }
+
+    const patient = this.store.patientFound();
+    if (patient) {
+      this.fillPatientData(patient);
+      return;
+    }
+
+    this.mode.set('NOT_FOUND');
+    this.applyFormState();
+  }
+
+  private handleLookupError(err: unknown): void {
+    if (this.getErrorStatus(err) === HTTP_STATUS.NOT_FOUND) {
+      this.mode.set('NOT_FOUND');
       this.applyFormState();
-    });
+      return;
+    }
+    this.mode.set('IDLE');
+    this.toast.error(this.getErrorMessage(err, 'Error al buscar el paciente'));
+    this.applyFormState();
+  }
 
-    effect(() => {
-      const result = this.createResult();
-      if (result && 'admissionNumber' in result) {
-        this.toast.success(`Admisión ${result.admissionNumber} registrada correctamente`);
-        this.resetAll();
-      }
+  private fillPatientData(patient: PatientLookupResult): void {
+    this.mode.set('FOUND');
+    this.patientForm.patchValue({
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      birthDate: parseIsoDateString(patient.birthDate) ?? null,
+      genderId: patient.genderId,
+      age: patient.age,
+      disability: patient.disability,
+      userTypeId: patient.userTypeId,
+      address: patient.address,
+      phone: patient.phone,
+      email: patient.email,
     });
+    this.admissionForm.patchValue({ epsId: patient.epsId ?? null });
+    this.applyFormState();
+  }
 
-    effect(() => {
-      const err = this.createError();
-      if (err) {
-        this.toast.error((err as any).error?.message || 'Error al registrar admisión');
-      }
-    });
+  private watchCreateResult(): void {
+    const result = this.createResult();
+    if (result && 'admissionNumber' in result) {
+      this.toast.success(`Admisión ${result.admissionNumber} registrada correctamente`);
+      this.resetAll();
+    }
+  }
+
+  private watchCreateError(): void {
+    const err = this.createError();
+    if (err) {
+      this.toast.error(this.getErrorMessage(err, 'Error al registrar admisión'));
+    }
   }
 
   onSearchPatient(): void {
@@ -254,7 +305,7 @@ export class AdmissionFormComponent {
   }
 
   onSubmit(): void {
-    if (this.mode() !== 'NOT_FOUND' && this.mode() !== 'FOUND') {
+    if (!this.dataEnabled()) {
       this.toast.info('Busque primero el paciente');
       return;
     }
@@ -265,8 +316,6 @@ export class AdmissionFormComponent {
     }
 
     const patient = this.patientForm.getRawValue();
-    const companion = this.companionForm.getRawValue();
-    const admission = this.admissionForm.getRawValue();
     const isNew = this.mode() === 'NOT_FOUND';
 
     if (isNew && (!patient.firstName || !patient.lastName)) {
@@ -274,38 +323,20 @@ export class AdmissionFormComponent {
       return;
     }
 
-    const birthDateValue = patient.birthDate;
-    const birthDate =
-      birthDateValue instanceof Date ? toIsoDateString(birthDateValue) : (birthDateValue || undefined);
+    this.store.createAdmission(this.buildAdmissionPayload(isNew));
+  }
 
-    const hasCompanion = Object.values(companion).some(
-      (v) => v !== null && v !== undefined && v !== '',
-    );
-    const companionData = hasCompanion
-      ? {
-          firstName: companion.firstName,
-          lastName: companion.lastName,
-          documentTypeId: companion.documentTypeId,
-          document: companion.document,
-          address: companion.address,
-          relationshipId: companion.relationshipId,
-          phone: companion.phone,
-        }
-      : undefined;
+  private buildAdmissionPayload(isNew: boolean): CreateAdmissionData {
+    const patient = this.patientForm.getRawValue();
+    const admission = this.admissionForm.getRawValue();
 
-    const authorizations = this.showAuthorizations()
-      ? this.authFormArray
-          .filter((fg) => fg.valid)
-          .map((fg) => fg.value)
-      : undefined;
-
-    this.store.createAdmission({
+    return {
       isNewPatient: isNew,
       documentTypeId: patient.documentTypeId,
       document: patient.document,
       firstName: patient.firstName || undefined,
       lastName: patient.lastName || undefined,
-      birthDate,
+      birthDate: this.toApiBirthDate(patient.birthDate),
       genderId: patient.genderId || undefined,
       age: patient.age || undefined,
       disability: patient.disability || undefined,
@@ -316,9 +347,35 @@ export class AdmissionFormComponent {
       epsId: admission.epsId,
       roomId: admission.roomId,
       observations: admission.observations || undefined,
-      companion: companionData,
-      authorizations,
-    });
+      companion: this.buildCompanionPayload(),
+      authorizations: this.buildAuthorizationsPayload(),
+    };
+  }
+
+  private toApiBirthDate(value: Date | string | null): string | undefined {
+    if (!value) return undefined;
+    return value instanceof Date ? toIsoDateString(value) : value;
+  }
+
+  private buildCompanionPayload(): CreateAdmissionData['companion'] {
+    const companion = this.companionForm.getRawValue();
+    const hasCompanion = Object.values(companion).some((v) => !isBlank(v));
+    if (!hasCompanion) return undefined;
+
+    return {
+      firstName: companion.firstName,
+      lastName: companion.lastName,
+      documentTypeId: companion.documentTypeId,
+      document: companion.document,
+      address: companion.address,
+      relationshipId: companion.relationshipId,
+      phone: companion.phone,
+    } as CompanionData;
+  }
+
+  private buildAuthorizationsPayload(): CreateAdmissionData['authorizations'] {
+    if (!this.showAuthorizations()) return undefined;
+    return this.authFormArray.filter((fg) => fg.valid).map((fg) => fg.value);
   }
 
   addAuthEntry(): void {
@@ -345,6 +402,10 @@ export class AdmissionFormComponent {
     this.refreshCanSubmit();
   }
 
+  private syncAgeFromBirthDate(date: Date | string | null): void {
+    this.patientForm.get('age')?.setValue(this.calculateAge(date), { emitEvent: false });
+  }
+
   private calculateAge(birthDate: Date | string | null | undefined): string {
     if (!birthDate) return '';
     const birth = birthDate instanceof Date ? birthDate : new Date(birthDate);
@@ -359,34 +420,19 @@ export class AdmissionFormComponent {
   }
 
   private applyFormState(): void {
-    const m = this.mode();
-    const searchEnabled = m === 'IDLE' || m === 'NOT_FOUND';
-    const dataEnabled = m === 'NOT_FOUND' || m === 'FOUND';
+    const searchEnabled = this.searchEnabled();
+    const dataEnabled = this.dataEnabled();
 
     this.setControl(this.patientForm, 'documentTypeId', searchEnabled);
     this.setControl(this.patientForm, 'document', searchEnabled);
 
-    const patientKeys = [
-      'firstName',
-      'lastName',
-      'birthDate',
-      'genderId',
-      'age',
-      'disability',
-      'userTypeId',
-      'address',
-      'phone',
-      'email',
-    ];
-    patientKeys.forEach((k) => this.setControl(this.patientForm, k, dataEnabled));
+    PATIENT_DATA_KEYS.forEach((key) => this.setControl(this.patientForm, key, dataEnabled));
 
-    Object.keys(this.companionForm.controls).forEach((k) =>
-      this.setControl(this.companionForm, k, dataEnabled),
+    Object.keys(this.companionForm.controls).forEach((key) =>
+      this.setControl(this.companionForm, key, dataEnabled),
     );
 
-    ['epsId', 'roomId', 'observations'].forEach((k) =>
-      this.setControl(this.admissionForm, k, dataEnabled),
-    );
+    ADMISSION_KEYS.forEach((key) => this.setControl(this.admissionForm, key, dataEnabled));
   }
 
   private setControl(group: FormGroup, key: string, enabled: boolean): void {
@@ -413,16 +459,23 @@ export class AdmissionFormComponent {
   }
 
   private refreshCanSubmit(): void {
+    const formsValid =
+      this.patientForm.valid && this.companionForm.valid && this.admissionForm.valid;
     const authorizationsValid =
       !this.showAuthorizations() || this.authFormArray.every((fg) => fg.valid);
     this.canSubmit.set(
-      (this.mode() === 'NOT_FOUND' || this.mode() === 'FOUND') &&
-        this.patientForm.valid &&
-        this.companionForm.valid &&
-        this.admissionForm.valid &&
-        authorizationsValid &&
-        !this.isCreating(),
+      this.dataEnabled() && formsValid && authorizationsValid && !this.isCreating(),
     );
+  }
+
+  private getErrorStatus(err: unknown): number | undefined {
+    return err instanceof HttpErrorResponse ? err.status : undefined;
+  }
+
+  private getErrorMessage(err: unknown, fallback: string): string {
+    return err instanceof HttpErrorResponse && err.error?.message
+      ? err.error.message
+      : fallback;
   }
 
   private resetAll(): void {
