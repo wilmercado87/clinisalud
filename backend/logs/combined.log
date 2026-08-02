@@ -391,3 +391,22 @@
 {"level":"info","message":"SMTP configurado y conexión verificada correctamente","service":"clinisalud-api","timestamp":"2026-08-01 18:38:24"}
 {"level":"warn","message":"SMTP no configurado: el envío de correos está deshabilitado","service":"clinisalud-api","timestamp":"2026-08-01 18:38:47"}
 {"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 18:38:48"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 18:41:48"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 18:41:48"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 18:42:03"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 18:42:03"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 18:54:55"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 18:54:55"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 19:11:04"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 19:11:04"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 19:31:08"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 19:31:08"}
+{"level":"info","message":"SMTP configurado y conexión verificada correctamente","service":"clinisalud-api","timestamp":"2026-08-01 19:31:14"}
+{"level":"warn","message":"SMTP no configurado: el envío de correos está deshabilitado","service":"clinisalud-api","timestamp":"2026-08-01 19:31:59"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-01 19:31:59"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 19:33:21"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 19:33:21"}
+{"level":"info","message":"Login attempt for email: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 19:38:30"}
+{"level":"info","message":"User logged in successfully: admin@clinisalud.com","service":"clinisalud-api","timestamp":"2026-08-01 19:38:30"}
+{"level":"info","message":"Express app configured successfully","service":"clinisalud-api","timestamp":"2026-08-02 08:53:56"}
+{"level":"info","message":"SMTP configurado y conexión verificada correctamente","service":"clinisalud-api","timestamp":"2026-08-02 08:54:02"}

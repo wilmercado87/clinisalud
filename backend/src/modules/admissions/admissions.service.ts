@@ -157,7 +157,7 @@ export class AdmissionsService {
         age: data.age ?? existingPatient.age,
         address: data.address !== undefined ? data.address : existingPatient.address,
         phone: data.phone !== undefined ? data.phone : existingPatient.phone,
-        email: data.email !== undefined ? data.email : existingPatient.email,
+        email: data.email !== undefined ? data.email || null : existingPatient.email,
         disability: data.disability?.trim() || existingPatient.disability,
         userTypeId: data.userTypeId ?? existingPatient.userTypeId,
         birthDate: data.birthDate?.trim() || existingPatient.birthDate,

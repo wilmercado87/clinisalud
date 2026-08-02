@@ -6,7 +6,6 @@ import { AdmissionFormComponent } from './admission-form.component';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import { AdmissionStore } from '@features/admissions/store/admission.store';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
-import { ToastService } from '@core/services/toast.service';
 import { PatientLookupResponse } from '@features/admissions/models/admissions.model';
 
 @Component({
@@ -52,6 +51,7 @@ class MockAdmissionStore {
 
   lookupPatient = jasmine.createSpy('lookupPatient');
   createAdmission = jasmine.createSpy('createAdmission');
+  clearCreateResult = jasmine.createSpy('clearCreateResult');
 }
 
 describe('AdmissionFormComponent', () => {
@@ -59,11 +59,6 @@ describe('AdmissionFormComponent', () => {
   let fixture: ComponentFixture<AdmissionFormComponent>;
   let store: MockAdmissionStore;
   let catalogStore: { invalidateCatalog: jasmine.Spy };
-  let toast: {
-    success: jasmine.Spy;
-    error: jasmine.Spy;
-    info: jasmine.Spy;
-  };
 
   const patient: PatientLookupResponse = {
     id: 7,
@@ -92,19 +87,16 @@ describe('AdmissionFormComponent', () => {
 
   beforeEach(async () => {
     store = new MockAdmissionStore();
+    store.clearCreateResult = jasmine.createSpy('clearCreateResult').and.callFake(() => {
+      store.createResult.set(null);
+    });
     catalogStore = { invalidateCatalog: jasmine.createSpy('invalidateCatalog') };
-    toast = {
-      success: jasmine.createSpy('success'),
-      error: jasmine.createSpy('error'),
-      info: jasmine.createSpy('info'),
-    };
 
     await TestBed.configureTestingModule({
       imports: [AdmissionFormComponent],
       providers: [
         { provide: AdmissionStore, useValue: store },
         { provide: CatalogStore, useValue: catalogStore },
-        { provide: ToastService, useValue: toast },
       ],
     })
       .overrideComponent(AdmissionFormComponent, {
@@ -134,7 +126,10 @@ describe('AdmissionFormComponent', () => {
     it('warns when document fields are missing', () => {
       component.onSearchPatient();
       expect(store.lookupPatient).not.toHaveBeenCalled();
-      expect(toast.info).toHaveBeenCalledWith('Seleccione tipo de documento e ingrese número');
+      expect(component.feedback()).toEqual({
+        type: 'info',
+        message: 'Seleccione tipo de documento e ingrese número',
+      });
     });
 
     it('fills the patient data when found', async () => {
@@ -169,7 +164,7 @@ describe('AdmissionFormComponent', () => {
       expect(component.patientForm.controls.firstName.enabled).toBeTrue();
     });
 
-    it('shows an error toast on unexpected lookup errors', async () => {
+    it('shows an inline error on unexpected lookup errors', async () => {
       component.patientForm.patchValue({ documentTypeId: 1, document: '1020304050' });
       component.onSearchPatient();
       store.isLookingUp.set(true);
@@ -178,7 +173,38 @@ describe('AdmissionFormComponent', () => {
       await flushEffects();
 
       expect(component.mode()).toBe('IDLE');
-      expect(toast.error).toHaveBeenCalledWith('Error al buscar el paciente');
+      expect(component.feedback()).toEqual({
+        type: 'error',
+        message: 'Error al buscar el paciente',
+      });
+    });
+
+    it('enables the submit button after filling the admission fields for an existing patient', async () => {
+      component.patientForm.patchValue({ documentTypeId: 1, document: '1020304050' });
+      component.onSearchPatient();
+      store.isLookingUp.set(true);
+      store.isLookingUp.set(false);
+      store.patientFound.set(patient);
+      await flushEffects();
+
+      expect(component.mode()).toBe('FOUND');
+      expect(component.patientForm.controls.firstName.value).toBe('Ana');
+
+      component.admissionForm.patchValue({ roomId: 5, observations: 'Ingreso por urgencias' });
+      await flushEffects();
+
+      expect(component['patientStatus']()).toBe('VALID');
+      expect(component['admissionStatus']()).toBe('VALID');
+      expect(component.canSubmit()).toBeTrue();
+
+      component.onSubmit();
+      expect(store.createAdmission).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          isNewPatient: false,
+          documentTypeId: 1,
+          document: '1020304050',
+        }),
+      );
     });
   });
 
@@ -287,9 +313,10 @@ describe('AdmissionFormComponent', () => {
       component.onSubmit();
 
       expect(store.createAdmission).not.toHaveBeenCalled();
-      expect(toast.info).toHaveBeenCalledWith(
-        'Complete los campos requeridos para registrar la admisión',
-      );
+      expect(component.feedback()).toEqual({
+        type: 'info',
+        message: 'Complete los campos requeridos para registrar la admisión',
+      });
     });
 
     it('resets the form and invalidates the beds catalog on success', async () => {
@@ -304,11 +331,38 @@ describe('AdmissionFormComponent', () => {
       });
       await flushEffects();
 
-      expect(toast.success).toHaveBeenCalledWith('Admisión 2026-000001 registrada correctamente');
+      expect(component.feedback()).toEqual({
+        type: 'success',
+        message: 'Admisión 2026-000001 registrada correctamente',
+      });
+      expect(store.clearCreateResult).toHaveBeenCalled();
       expect(catalogStore.invalidateCatalog).toHaveBeenCalledWith('beds');
       expect(component.mode()).toBe('IDLE');
       expect(component.patientForm.controls.document.value).toBe('');
       expect(component.showAuthorizations()).toBeFalse();
+    });
+
+    it('does not re-fire the success feedback nor reset the form on a later patient search', async () => {
+      await fillValidForm();
+      store.isCreating.set(true);
+      component.onSubmit();
+      store.isCreating.set(false);
+      store.createResult.set({
+        admissionNumber: '2026-000001',
+        patient: { id: 7, documentTypeId: 1, document: '1020304050' },
+        admission: { id: 11 },
+      });
+      await flushEffects();
+
+      store.clearCreateResult.calls.reset();
+      component.patientForm.patchValue({ documentTypeId: 1, document: '555666777' });
+      component.onSearchPatient();
+      await flushEffects();
+
+      expect(component.feedback()).toBeNull();
+      expect(store.clearCreateResult).toHaveBeenCalledTimes(0);
+      expect(component.mode()).toBe('SEARCHING');
+      expect(component.patientForm.controls.document.value).toBe('555666777');
     });
 
     it('shows the server error on failure', async () => {
@@ -325,7 +379,10 @@ describe('AdmissionFormComponent', () => {
       );
       await flushEffects();
 
-      expect(toast.error).toHaveBeenCalledWith('La cama seleccionada no está disponible');
+      expect(component.feedback()).toEqual({
+        type: 'error',
+        message: 'La cama seleccionada no está disponible',
+      });
     });
   });
 });

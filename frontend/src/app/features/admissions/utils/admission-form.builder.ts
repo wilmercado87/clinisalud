@@ -73,7 +73,7 @@ export function buildAdmissionRequest(params: {
     userTypeId: patient.userTypeId ?? undefined,
     address: patient.address || undefined,
     phone: patient.phone || undefined,
-    email: patient.email || undefined,
+    email: patient.email ?? undefined,
     epsId: admission.epsId ?? 0,
     roomId: admission.roomId ?? 0,
     observations: admission.observations || undefined,

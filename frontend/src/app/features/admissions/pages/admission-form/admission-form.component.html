@@ -347,6 +347,15 @@
     </mat-card>
   </form>
 
+  @if (feedback(); as fb) {
+    <div class="admission-form__feedback admission-form__feedback--{{ fb.type }}" role="status">
+      <mat-icon>
+        {{ fb.type === 'success' ? 'check_circle' : fb.type === 'error' ? 'error' : 'info' }}
+      </mat-icon>
+      <span>{{ fb.message }}</span>
+    </div>
+  }
+
   <div class="admission-form__actions">
     <button
       mat-stroked-button

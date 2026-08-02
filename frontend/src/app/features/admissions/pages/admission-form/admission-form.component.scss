@@ -127,6 +127,39 @@
     margin-bottom: 12px;
   }
 
+  &__feedback {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    &--success {
+      background: var(--mat-sys-secondary-container, #e0f2e0);
+      color: var(--mat-sys-on-secondary-container, #0d3d0d);
+    }
+
+    &--error {
+      background: var(--mat-sys-error-container, #ffe0df);
+      color: var(--mat-sys-on-error-container, #5c0e0e);
+    }
+
+    &--info {
+      background: var(--mat-sys-surface-container-high, #fff1c2);
+      color: var(--mat-sys-on-surface, #4d3a00);
+    }
+  }
+
   &__actions {
     display: flex;
     justify-content: flex-end;

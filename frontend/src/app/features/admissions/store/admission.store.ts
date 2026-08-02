@@ -52,6 +52,10 @@ export class AdmissionStore {
     this.createTrigger.set({ data });
   }
 
+  clearCreateResult(): void {
+    this.createTrigger.set(null);
+  }
+
   reloadCensus(): void {
     this.censusResource.reload();
   }

@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, of, shareReplay, tap } from 'rxjs';
+import { Observable, of, shareReplay, tap, map } from 'rxjs';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { CatalogService } from '@core/services/catalog.service';
 import { CatalogSourceItem } from '@core/models/catalog.model';
@@ -10,6 +10,11 @@ export class CatalogStore {
 
   private cache = new Map<string, CatalogSourceItem[]>();
   private observables = new Map<string, Observable<CatalogSourceItem[]>>();
+  private readonly versions = signal<Record<string, number>>({});
+
+  versionOf(type: string): number {
+    return this.versions()[type] ?? 0;
+  }
 
   getCatalog(type: string): CatalogSourceItem[] {
     return this.cache.get(type) ?? [];
@@ -21,7 +26,7 @@ export class CatalogStore {
 
     if (!this.observables.has(type)) {
       const source: Observable<CatalogSourceItem[]> = type === 'beds'
-        ? this.catalogApi.getBeds(0)
+        ? this.catalogApi.getBeds(0).pipe(map((page) => page.items))
         : this.catalogApi.getCatalog(type);
       this.observables.set(
         type,
@@ -110,6 +115,7 @@ export class CatalogStore {
   invalidateCatalog(type: string): void {
     this.cache.delete(type);
     this.observables.delete(type);
+    this.versions.update((v) => ({ ...v, [type]: (v[type] ?? 0) + 1 }));
   }
 
   clearCache(): void {

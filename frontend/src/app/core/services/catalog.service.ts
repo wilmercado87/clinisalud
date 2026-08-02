@@ -7,6 +7,7 @@ import {
   MunicipioResponse,
   ContratoResponse,
   CamaResponse,
+  BedsPageResponse,
   DiagnosticoResponse,
   CupsResponse,
 } from '@core/models/catalog.model';
@@ -32,10 +33,10 @@ export class CatalogService {
     return this.http.get<ContratoResponse[]>(`${this.apiUrl}/contracts`, { params });
   }
 
-  getBeds(bedStatus?: number): Observable<CamaResponse[]> {
+  getBeds(bedStatus?: number): Observable<BedsPageResponse> {
     let params = new HttpParams();
     if (bedStatus !== undefined) params = params.set('status', bedStatus);
-    return this.http.get<CamaResponse[]>(`${this.apiUrl}/beds`, { params });
+    return this.http.get<BedsPageResponse>(`${this.apiUrl}/beds`, { params });
   }
 
   searchDiagnostics(q: string): Observable<DiagnosticoResponse[]> {

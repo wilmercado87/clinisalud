@@ -21,6 +21,11 @@ export interface CamaResponse {
   tipoCama: string;
 }
 
+export interface BedsPageResponse {
+  items: CamaResponse[];
+  total: number;
+}
+
 export interface EpsResponse {
   idEps: number;
   epsCode: string;

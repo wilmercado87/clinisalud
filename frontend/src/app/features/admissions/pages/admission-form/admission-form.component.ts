@@ -27,7 +27,6 @@ import {
 } from '@features/admissions/utils/admission-form-validator';
 import { extractFieldErrors } from '@shared/utils/form-field-errors';
 import { PatientLookupResponse } from '@features/admissions/models/admissions.model';
-import { ToastService } from '@core/services/toast.service';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { startOfToday } from '@shared/utils/form-validators';
@@ -56,6 +55,11 @@ import {
   buildAdmissionRequest,
 } from '@features/admissions/utils/admission-form.builder';
 
+export type FormFeedback = {
+  type: 'success' | 'error' | 'info';
+  message: string;
+};
+
 @Component({
   selector: 'app-admission-form',
   imports: [
@@ -81,7 +85,6 @@ import {
 export class AdmissionFormComponent {
   private readonly store = inject(AdmissionStore);
   private readonly catalogStore = inject(CatalogStore);
-  private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
   @ViewChildren(CatalogSelectComponent) private readonly catalogSelects!: QueryList<CatalogSelectComponent>;
@@ -99,6 +102,8 @@ export class AdmissionFormComponent {
   readonly isCreating = this.store.isCreating;
   readonly createResult = this.store.createResult;
   readonly createError = this.store.createError;
+
+  readonly feedback = signal<FormFeedback | null>(null);
 
   readonly showAuthorizations = signal(false);
   readonly authEntries = signal<AuthFormGroup[]>([]);
@@ -186,6 +191,12 @@ export class AdmissionFormComponent {
     effect(() => this.watchPatientLookup());
     effect(() => this.watchCreateResult());
     effect(() => this.watchCreateError());
+    effect(() => {
+      this.mode();
+      this.patientForm.updateValueAndValidity();
+      this.companionForm.updateValueAndValidity();
+      this.admissionForm.updateValueAndValidity();
+    });
   }
 
   private watchPatientLookup(): void {
@@ -217,7 +228,7 @@ export class AdmissionFormComponent {
       return;
     }
     this.mode.set('IDLE');
-    this.toast.error(getHttpErrorMessage(err, 'Error al buscar el paciente'));
+    this.setFeedback('error', getHttpErrorMessage(err, 'Error al buscar el paciente'));
     this.applyFormState();
   }
 
@@ -231,16 +242,17 @@ export class AdmissionFormComponent {
   private watchCreateResult(): void {
     const result = this.createResult();
     if (result && 'admissionNumber' in result) {
-      this.toast.success(`Admisión ${result.admissionNumber} registrada correctamente`);
+      this.setFeedback('success', `Admisión ${result.admissionNumber} registrada correctamente`);
       this.catalogStore.invalidateCatalog('beds');
       this.resetAll();
+      this.store.clearCreateResult();
     }
   }
 
   private watchCreateError(): void {
     const err = this.createError();
     if (err) {
-      this.toast.error(getHttpErrorMessage(err, 'Error al registrar admisión'));
+      this.setFeedback('error', getHttpErrorMessage(err, 'Error al registrar admisión'));
     }
   }
 
@@ -248,10 +260,11 @@ export class AdmissionFormComponent {
     const docTypeId = this.patientForm.controls.documentTypeId.value;
     const doc = this.patientForm.controls.document.value?.trim();
     if (!docTypeId || !doc) {
-      this.toast.info('Seleccione tipo de documento e ingrese número');
+      this.setFeedback('info', 'Seleccione tipo de documento e ingrese número');
       return;
     }
 
+    this.clearFeedback();
     this.mode.set('SEARCHING');
     this.applyFormState();
     this.lookupRequested = true;
@@ -268,15 +281,17 @@ export class AdmissionFormComponent {
   }
 
   onCancel(): void {
+    this.clearFeedback();
     this.resetAll();
   }
 
   onSubmit(): void {
     if (!this.canSubmit()) {
-      this.toast.info('Complete los campos requeridos para registrar la admisión');
+      this.setFeedback('info', 'Complete los campos requeridos para registrar la admisión');
       return;
     }
 
+    this.clearFeedback();
     const isNew = this.mode() === 'NOT_FOUND';
     this.store.createAdmission(
       buildAdmissionRequest({
@@ -349,5 +364,13 @@ export class AdmissionFormComponent {
     this.bumpAuthRevision();
     this.mode.set('IDLE');
     this.applyFormState();
+  }
+
+  private setFeedback(type: FormFeedback['type'], message: string): void {
+    this.feedback.set({ type, message });
+  }
+
+  private clearFeedback(): void {
+    this.feedback.set(null);
   }
 }

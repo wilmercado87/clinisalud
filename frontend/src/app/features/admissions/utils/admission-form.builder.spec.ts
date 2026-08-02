@@ -154,7 +154,7 @@ describe('admission-form.builder', () => {
     it('omits optional fields when blank', () => {
       const request = buildAdmissionRequest({
         isNewPatient: false,
-        patient: { ...patient, firstName: '', birthDate: null, genderId: null, email: '' },
+        patient: { ...patient, firstName: '', birthDate: null, genderId: null },
         admission,
         companion: emptyCompanion,
         authForms: [],
@@ -174,13 +174,26 @@ describe('admission-form.builder', () => {
         userTypeId: 1,
         address: 'Calle 1',
         phone: '3001234567',
-        email: undefined,
+        email: 'ana@correo.com',
         epsId: 3,
         roomId: 4,
         observations: 'Ingreso por urgencias',
         companion: undefined,
         authorizations: undefined,
       });
+    });
+
+    it('sends an empty email when the user clears it', () => {
+      const request = buildAdmissionRequest({
+        isNewPatient: false,
+        patient: { ...patient, email: '' },
+        admission,
+        companion: emptyCompanion,
+        authForms: [],
+        authorizationsEnabled: false,
+      });
+
+      expect(request.email).toBe('');
     });
   });
 

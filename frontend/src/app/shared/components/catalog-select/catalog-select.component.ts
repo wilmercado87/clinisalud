@@ -97,11 +97,17 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
 
   private readonly loadTrigger = signal<string | null>(null);
 
+  private readonly requestKey = computed<{ type: string; version: number } | null>(() => {
+    const type = this.loadTrigger();
+    if (!type) return null;
+    return { type, version: this.catalogStore.versionOf(type) };
+  });
+
   private readonly itemsResource = rxResource({
-    request: () => this.loadTrigger(),
+    request: () => this.requestKey(),
     loader: ({ request }) => {
       if (!request) return of([]);
-      return this.catalogStore.loadCatalog(request);
+      return this.catalogStore.loadCatalog(request.type);
     },
   });
 
@@ -218,7 +224,10 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   }
 
   private restoreSelectedDescription(): void {
-    if (this.value() === null) return;
+    if (this.value() === null) {
+      this.setOptionError(false);
+      return;
+    }
     this.searchTerm.set(this.selectedDescription());
   }
 
@@ -252,11 +261,8 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   writeValue(val: number | null | undefined): void {
     const id = val ?? null;
     this.value.set(id);
-    if (id === null) {
-      if (!this.optionInvalid()) this.searchTerm.set('');
-      return;
-    }
     this.setOptionError(false);
+    if (id === null) this.searchTerm.set('');
   }
 
   forceReset(): void {
