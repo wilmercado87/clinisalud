@@ -59,7 +59,7 @@ export function applyRequiredValidators(
     control.setValidators(required ? [Validators.required, ...format] : format);
     control.updateValueAndValidity({ emitEvent: false });
   });
-  group.updateValueAndValidity();
+  group.updateValueAndValidity({ emitEvent: false });
 }
 
 export const PATIENT_ERROR_RULES = {

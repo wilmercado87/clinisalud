@@ -39,9 +39,22 @@
 src/modules/{nombreModulo}/
   {nombre}.routes.ts     → define rutas del módulo montadas bajo /api/v1/{resource}
   {nombre}.controller.ts → handlers que validan y llaman al servicio
-  {nombre}.service.ts    → lógica de negocio
-  {nombre}.types.ts      → interfaces DTO
+  {nombre}.service.ts    → lógica de negocio (orquestación + métodos privados por responsabilidad)
+  {nombre}.validations.ts→ reglas express-validator (validación de entrada)
+  {nombre}.types.ts      → interfaces DTO Request/Response
 ```
+
+## Convención DTO (Request/Response)
+
+- **Archivo:** `{module}.types.ts` dentro de cada módulo.
+- **Request:** `<Verbo>SustantivoRequest` — entrada del cliente (`CreateAdmissionRequest`, `LoginRequest`, `UpdateProfileRequest`).
+- **Response:** `<Sustantivo>Response` — salida hacia el cliente (`AdmissionResponse`, `UserResponse`, `NotificationResponse`, `CatalogItemResponse`).
+- **Reglas:**
+  - Los servicios reciben/retornan DTOs tipados (sin `any`); nunca reciben `req.body` sin tipar (el controller arma el DTO).
+  - Los DTOs reflejan el contrato JSON camelCase del frontend; la validación de entrada vive en `{module}.validations.ts`, no en el servicio.
+  - Mapeos de filas BD → respuesta mediante funciones `toXxxResponse` explícitas (evitar casts `as any`).
+  - `src/utils/user.mapper.ts` centraliza el sanitizado de usuario (quitar `password`).
+- **Nombres híbridos:** lógica en inglés (`toSafeUserJson`, `loadGrantedMenuIdsByRole`), mensajes y datos BD en español.
 
 ## Endpoints actuales
 

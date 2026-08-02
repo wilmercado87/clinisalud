@@ -3,13 +3,14 @@ import { AdmissionsService } from "./admissions.service";
 import { getHttpCode } from "../../utils/StatusCodes";
 import { HTTP_STATUS } from "../../constants";
 import { AuthRequest } from "../../middlewares/AuthMiddleware";
+import { logError } from "../../utils/Logger";
 
 const admissionsService = new AdmissionsService();
 
 const handleError = (error: any, res: Response, context: string) => {
   const statusCode = getHttpCode(error);
   if (statusCode === HTTP_STATUS.INTERNAL_SERVER_ERROR) {
-    console.error(`Error ${context}:`, error);
+    logError(`Error ${context}`, { error: error.message });
   }
   return res.status(statusCode).json({ message: error.message, ...(error.code && { code: error.code }) });
 };

@@ -111,7 +111,7 @@ describe("CatalogsService", () => {
     it("should filter by status and paginate", async () => {
       jest.spyOn(Cama, "findAndCountAll").mockResolvedValue({
         count: 25,
-        rows: [{ roomId: 1, bedCode: "CAMA-01", bedStatus: 0 }],
+        rows: [{ roomId: 1, bedCode: "CAMA-01", bedStatus: 0, toJSON: () => ({ roomId: 1, bedCode: "CAMA-01", bedStatus: 0 }) }],
       } as any);
 
       const result = await service.getBeds(0, 1, 10);

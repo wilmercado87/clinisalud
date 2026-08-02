@@ -1,19 +1,21 @@
 import { Injectable, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RoleService } from '@core/services/roles.service';
-import { MenuOption } from '@core/models/auth.model';
-import { RoleResponse } from '@core/models/user-manager.model';
+import { MenuService } from '@core/services/menu.service';
+import { MenuOption } from '@core/models/user.model';
+import { RoleResponse } from '@core/models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class RoleStore {
   private readonly roleService = inject(RoleService);
+  private readonly menuService = inject(MenuService);
 
   private readonly rolesResource = rxResource({
     loader: () => this.roleService.getRoles(),
   });
 
   private readonly menuOptionsResource = rxResource({
-    loader: () => this.roleService.getMenuOptions(),
+    loader: () => this.menuService.getMenuOptions(),
   });
 
   readonly roles = this.rolesResource.value.asReadonly();

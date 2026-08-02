@@ -1,4 +1,4 @@
-import { Op, literal } from "sequelize";
+import { Model, ModelStatic, Order, Op } from "sequelize";
 import TipoDocumento from "../../models/TipoDocumento";
 import TipoGenero from "../../models/TipoGenero";
 import TipoUsuario from "../../models/TipoUsuario";
@@ -19,10 +19,11 @@ import Cama from "../../models/Cama";
 import Diagnostico from "../../models/Diagnostico";
 import Cups from "../../models/Cups";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
+import { BedsPageResponse, CatalogItemResponse } from "./catalogs.types";
 
 interface CatalogDef {
-  model: any;
-  order: any[];
+  model: ModelStatic<Model>;
+  order: Order;
 }
 
 const STATIC_CATALOGS: Record<string, CatalogDef> = {
@@ -43,31 +44,33 @@ const STATIC_CATALOGS: Record<string, CatalogDef> = {
 };
 
 export class CatalogsService {
-  async findByType(type: string): Promise<any[]> {
+  async findByType(type: string): Promise<CatalogItemResponse[]> {
     const catalog = STATIC_CATALOGS[type];
     if (!catalog) {
       throw ApiError.notFound(`Catálogo no encontrado: ${type}`);
     }
-    return await catalog.model.findAll({ order: catalog.order });
+    return (await catalog.model.findAll({ order: catalog.order })).map(
+      (row) => row.toJSON() as CatalogItemResponse,
+    );
   }
 
-  async getMunicipalities(departmentId?: string): Promise<any[]> {
+  async getMunicipalities(departmentId?: string): Promise<CatalogItemResponse[]> {
     const where = departmentId ? { dptoId: departmentId } : {};
-    return await Municipio.findAll({
+    return (await Municipio.findAll({
       where,
       order: [["municipalityName", "ASC"]],
-    });
+    })).map((row) => row.toJSON() as CatalogItemResponse);
   }
 
-  async getContracts(epsId?: number): Promise<any[]> {
+  async getContracts(epsId?: number): Promise<CatalogItemResponse[]> {
     const where = epsId ? { epsId } : {};
-    return await Contrato.findAll({
+    return (await Contrato.findAll({
       where,
       order: [["contractNumber", "ASC"]],
-    });
+    })).map((row) => row.toJSON() as CatalogItemResponse);
   }
 
-  async getBeds(status?: number, page = 1, pageSize = 10): Promise<{ items: any[]; total: number }> {
+  async getBeds(status?: number, page = 1, pageSize = 10): Promise<BedsPageResponse> {
     const where = status !== undefined ? { bedStatus: status } : {};
     const { count, rows } = await Cama.findAndCountAll({
       where,
@@ -75,15 +78,18 @@ export class CatalogsService {
       limit: pageSize,
       offset: (page - 1) * pageSize,
     });
-    return { items: rows, total: count };
+    return {
+      items: rows.map((row) => row.toJSON() as CatalogItemResponse),
+      total: count,
+    };
   }
 
-  async searchDiagnostics(q: string, limit = 20): Promise<any[]> {
+  async searchDiagnostics(q: string, limit = 20): Promise<CatalogItemResponse[]> {
     if (!q || q.trim().length === 0) {
       return [];
     }
     const term = `%${q.trim()}%`;
-    return await Diagnostico.findAll({
+    return (await Diagnostico.findAll({
       where: {
         [Op.or]: [
           { code: { [Op.like]: term } },
@@ -92,15 +98,15 @@ export class CatalogsService {
       },
       limit,
       order: [["code", "ASC"]],
-    });
+    })).map((row) => row.toJSON() as CatalogItemResponse);
   }
 
-  async searchCups(q: string, limit = 20): Promise<any[]> {
+  async searchCups(q: string, limit = 20): Promise<CatalogItemResponse[]> {
     if (!q || q.trim().length === 0) {
       return [];
     }
     const term = `%${q.trim()}%`;
-    return await Cups.findAll({
+    return (await Cups.findAll({
       where: {
         [Op.or]: [
           { mapiissCode: { [Op.like]: term } },
@@ -109,6 +115,6 @@ export class CatalogsService {
       },
       limit,
       order: [["mapiissCode", "ASC"]],
-    });
+    })).map((row) => row.toJSON() as CatalogItemResponse);
   }
 }

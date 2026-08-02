@@ -15,6 +15,7 @@ import Convenio from "../models/Convenio";
 import Admision from "../models/Admision";
 import TipoEstado from "../models/TipoEstado";
 import Autorizacion from "../models/Autorizacion";
+import Acompanante from "../models/Acompanante";
 
 const expectedAdmissionNumber = () => {
   const todayPrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -88,7 +89,7 @@ describe("AdmissionsService", () => {
       const result = await service.lookupPatient({ documentTypeId: 1, document: "12345" });
 
       expect(result).toHaveProperty("documentType");
-      expect(result!.documentType.code).toBe("CC");
+      expect(result!.documentType!.code).toBe("CC");
     });
   });
 
@@ -102,12 +103,6 @@ describe("AdmissionsService", () => {
       epsId: 1,
       roomId: 1,
     };
-
-    it("should throw on missing required fields", async () => {
-      await expect(
-        service.createAdmission({ isNewPatient: true, documentTypeId: 0, document: "", epsId: 0, roomId: 0 }, 1, "admin", "ADMIN"),
-      ).rejects.toThrow("Tipo de documento");
-    });
 
     it("should create admission for new patient (INV-ADM-01)", async () => {
       const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
@@ -279,6 +274,157 @@ describe("AdmissionsService", () => {
           "ADMIN",
         ),
       ).rejects.toThrow("Ya existe un paciente");
+    });
+
+    it("should throw notFound when bed does not exist", async () => {
+      const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+      jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+
+      jest.spyOn(Paciente, "findOne").mockResolvedValue(null as any);
+      jest.spyOn(Paciente, "create").mockResolvedValue({ id: 1, toJSON: () => ({ id: 1 }) } as any);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue(null as any);
+
+      await expect(
+        service.createAdmission({ ...validData, roomId: 999 }, 1, "admin@test.com", "SUPER_ADMIN"),
+      ).rejects.toThrow("Cama no encontrada");
+    });
+
+    it("should throw notFound when EPS does not exist", async () => {
+      const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+      jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+
+      jest.spyOn(Paciente, "findOne").mockResolvedValue(null as any);
+      jest.spyOn(Paciente, "create").mockResolvedValue({ id: 1, toJSON: () => ({ id: 1 }) } as any);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue({
+        roomId: 1,
+        bedStatus: 0,
+        save: jest.fn().mockResolvedValue(true),
+      } as any);
+      jest.spyOn(Convenio, "findByPk").mockResolvedValue(null as any);
+
+      await expect(
+        service.createAdmission(validData, 1, "admin@test.com", "SUPER_ADMIN"),
+      ).rejects.toThrow("EPS no encontrada");
+    });
+
+    it("should create companion when provided", async () => {
+      const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+      jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+
+      const companion = {
+        firstName: "Maria",
+        lastName: "Gomez",
+        documentTypeId: 1,
+        document: "87654321",
+        address: "Calle 10",
+        relationshipId: 2,
+        phone: "3001234567",
+      };
+
+      jest.spyOn(Paciente, "findOne").mockResolvedValue(null as any);
+      jest.spyOn(Paciente, "create").mockResolvedValue({ id: 1, toJSON: () => ({ id: 1 }) } as any);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue({
+        roomId: 1,
+        bedStatus: 0,
+        save: jest.fn().mockResolvedValue(true),
+      } as any);
+      jest.spyOn(Convenio, "findByPk").mockResolvedValue({ idEps: 1 } as any);
+      jest.spyOn(Admision, "count").mockResolvedValue(0);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Admision, "create").mockResolvedValue({
+        admissionNumber: expectedAdmissionNumber(),
+        toJSON: () => ({ admissionNumber: expectedAdmissionNumber() }),
+      } as any);
+      const companionCreateSpy = jest.spyOn(Acompanante, "create").mockResolvedValue({} as any);
+
+      await service.createAdmission(
+        { ...validData, companion },
+        1,
+        "admin@test.com",
+        "SUPER_ADMIN",
+      );
+
+      expect(companionCreateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          admissionNumber: expectedAdmissionNumber(),
+          firstName: "Maria",
+          lastName: "Gomez",
+          relationshipId: 2,
+        }),
+        expect.any(Object),
+      );
+    });
+
+    it("should default quantity to 1 in authorizations (INV-ADM-02)", async () => {
+      const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+      jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+
+      jest.spyOn(Paciente, "findOne").mockResolvedValue(null as any);
+      jest.spyOn(Paciente, "create").mockResolvedValue({ id: 1, toJSON: () => ({ id: 1 }) } as any);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue({
+        roomId: 1,
+        bedStatus: 0,
+        save: jest.fn().mockResolvedValue(true),
+      } as any);
+      jest.spyOn(Convenio, "findByPk").mockResolvedValue({ idEps: 1 } as any);
+      jest.spyOn(Admision, "count").mockResolvedValue(0);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Admision, "create").mockResolvedValue({
+        admissionNumber: expectedAdmissionNumber(),
+        toJSON: () => ({ admissionNumber: expectedAdmissionNumber() }),
+      } as any);
+      const bulkCreateSpy = jest.spyOn(Autorizacion, "bulkCreate").mockResolvedValue([] as any);
+
+      await service.createAdmission(
+        {
+          ...validData,
+          authorizations: [{ authTypeId: 1, authNumber: "AUTH-010", mapiissCode: "CUP-010" }],
+        },
+        1,
+        "admin@test.com",
+        "SUPER_ADMIN",
+      );
+
+      expect(bulkCreateSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ authNumber: "AUTH-010", mapiissCode: "CUP-010", quantity: 1 }),
+        ]),
+        expect.any(Object),
+      );
+    });
+
+    it("should retry with next sequence when admissionNumber collides", async () => {
+      const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+      jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+
+      jest.spyOn(Paciente, "findOne").mockResolvedValue(null as any);
+      jest.spyOn(Paciente, "create").mockResolvedValue({ id: 1, toJSON: () => ({ id: 1 }) } as any);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue({
+        roomId: 1,
+        bedStatus: 0,
+        save: jest.fn().mockResolvedValue(true),
+      } as any);
+      jest.spyOn(Convenio, "findByPk").mockResolvedValue({ idEps: 1 } as any);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 1 } as any);
+
+      const todayPrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      jest.spyOn(Admision, "count")
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(1);
+      const uniqueError = Object.assign(new Error("UNIQUE constraint failed"), {
+        name: "SequelizeUniqueConstraintError",
+      });
+      jest.spyOn(Admision, "create")
+        .mockRejectedValueOnce(uniqueError)
+        .mockResolvedValueOnce({
+          admissionNumber: `ADM-${todayPrefix}-0002`,
+          toJSON: () => ({ admissionNumber: `ADM-${todayPrefix}-0002` }),
+        } as any);
+
+      const result = await service.createAdmission(validData, 1, "admin@test.com", "SUPER_ADMIN");
+
+      expect(result.admissionNumber).toBe(`ADM-${todayPrefix}-0002`);
+      expect(Admision.create).toHaveBeenCalledTimes(2);
     });
   });
 

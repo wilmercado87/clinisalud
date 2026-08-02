@@ -1,12 +1,7 @@
-import { Component, inject, effect, computed, ChangeDetectionStrategy, signal, ViewChildren, QueryList } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, effect, computed, ChangeDetectionStrategy, signal, ViewChildren, QueryList, DestroyRef, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -31,42 +26,35 @@ import {
   PATIENT_REQUIRED_KEYS,
 } from '@features/admissions/utils/admission-form-validator';
 import { extractFieldErrors } from '@shared/utils/form-field-errors';
-import {
-  CompanionData,
-  CreateAdmissionData,
-  PatientLookupResult,
-} from '@features/admissions/services/admissions.service';
+import { PatientLookupResponse } from '@features/admissions/models/admissions.model';
 import { ToastService } from '@core/services/toast.service';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
-import {
-  ageValidator,
-  disabilityValidator,
-  isBlank,
-  maxDateValidator,
-  numericValidator,
-  parseIsoDateString,
-  phoneValidator,
-  startOfToday,
-  toIsoDateString,
-} from '@shared/utils/form-validators';
+import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
+import { startOfToday } from '@shared/utils/form-validators';
 import { HTTP_STATUS } from '@shared/utils/status.codes';
-
-type FormMode = 'IDLE' | 'SEARCHING' | 'FOUND' | 'NOT_FOUND';
-
-const PATIENT_DATA_KEYS = [
-  'firstName',
-  'lastName',
-  'birthDate',
-  'genderId',
-  'age',
-  'disability',
-  'userTypeId',
-  'address',
-  'phone',
-  'email',
-];
-
-const ADMISSION_KEYS = ['epsId', 'roomId', 'observations'];
+import { getHttpErrorMessage, getHttpErrorStatus } from '@shared/utils/http-error';
+import { patientToFormValue } from '@features/admissions/utils/admission.mapper';
+import { calculateAge } from '@shared/utils/date-utils';
+import {
+  AdmissionForm,
+  AdmissionFormValue,
+  AuthFormGroup,
+  CompanionForm,
+  CompanionFormValue,
+  FormMode,
+  PatientForm,
+  PatientFormValue,
+} from '@features/admissions/utils/admission-form.types';
+import {
+  createAdmissionForm,
+  createAuthEntryForm,
+  createCompanionForm,
+  createPatientForm,
+} from '@features/admissions/utils/admission-form.factory';
+import {
+  applyAdmissionFormState,
+  buildAdmissionRequest,
+} from '@features/admissions/utils/admission-form.builder';
 
 @Component({
   selector: 'app-admission-form',
@@ -91,37 +79,16 @@ const ADMISSION_KEYS = ['epsId', 'roomId', 'observations'];
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdmissionFormComponent {
-  private readonly fb = inject(FormBuilder);
   private readonly store = inject(AdmissionStore);
+  private readonly catalogStore = inject(CatalogStore);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChildren(CatalogSelectComponent) private readonly catalogSelects!: QueryList<CatalogSelectComponent>;
 
   readonly today = startOfToday();
 
   private readonly patientFormatValidators = createPatientFormatValidators(this.today);
-
-  private readonly errorsTrigger = signal(0);
-
-  readonly patientErrors = computed(() => {
-    this.errorsTrigger();
-    return extractFieldErrors(this.patientForm, PATIENT_ERROR_RULES);
-  });
-
-  readonly companionErrors = computed(() => {
-    this.errorsTrigger();
-    return extractFieldErrors(this.companionForm, COMPANION_ERROR_RULES);
-  });
-
-  readonly admissionErrors = computed(() => {
-    this.errorsTrigger();
-    return extractFieldErrors(this.admissionForm, ADMISSION_ERROR_RULES);
-  });
-
-  readonly authErrors = computed(() => {
-    this.errorsTrigger();
-    return this.authEntries().map((fg) => extractFieldErrors(fg, AUTH_ERROR_RULES));
-  });
 
   readonly mode = signal<FormMode>('IDLE');
   private lookupRequested = false;
@@ -134,66 +101,76 @@ export class AdmissionFormComponent {
   readonly createError = this.store.createError;
 
   readonly showAuthorizations = signal(false);
-  readonly authEntries = signal<FormGroup[]>([]);
+  readonly authEntries = signal<AuthFormGroup[]>([]);
   readonly companionActive = signal(false);
-  readonly canSubmit = signal(false);
 
-  patientForm!: FormGroup;
-  companionForm!: FormGroup;
-  admissionForm!: FormGroup;
+  private readonly authRevision = signal(0);
 
-  private authFormArray: FormGroup[] = [];
+  readonly patientForm: PatientForm = createPatientForm(this.today);
+  readonly companionForm: CompanionForm = createCompanionForm();
+  readonly admissionForm: AdmissionForm = createAdmissionForm();
+
+  private authFormArray: AuthFormGroup[] = [];
+
+  private readonly patientStatus: Signal<string>;
+  private readonly patientValue: Signal<Partial<PatientFormValue>>;
+  private readonly companionStatus: Signal<string>;
+  private readonly companionValue: Signal<Partial<CompanionFormValue>>;
+  private readonly admissionStatus: Signal<string>;
+  private readonly admissionValue: Signal<Partial<AdmissionFormValue>>;
+
+  readonly patientErrors = computed(() => {
+    this.patientStatus();
+    this.patientValue();
+    return extractFieldErrors(this.patientForm, PATIENT_ERROR_RULES);
+  });
+
+  readonly companionErrors = computed(() => {
+    this.companionStatus();
+    this.companionValue();
+    return extractFieldErrors(this.companionForm, COMPANION_ERROR_RULES);
+  });
+
+  readonly admissionErrors = computed(() => {
+    this.admissionStatus();
+    this.admissionValue();
+    return extractFieldErrors(this.admissionForm, ADMISSION_ERROR_RULES);
+  });
+
+  readonly authErrors = computed(() => {
+    this.authRevision();
+    return this.authEntries().map((fg) => extractFieldErrors(fg, AUTH_ERROR_RULES));
+  });
+
+  readonly canSubmit = computed(() =>
+    this.dataEnabled() &&
+    this.patientStatus() === 'VALID' &&
+    this.companionStatus() === 'VALID' &&
+    this.admissionStatus() === 'VALID' &&
+    (!this.showAuthorizations() || this.authFormArray.every((fg) => fg.valid)) &&
+    !this.isCreating()
+  );
 
   constructor() {
-    this.createForms();
+    this.patientStatus = toSignal(this.patientForm.statusChanges, { initialValue: this.patientForm.status });
+    this.patientValue = toSignal(this.patientForm.valueChanges, { initialValue: this.patientForm.getRawValue() });
+    this.companionStatus = toSignal(this.companionForm.statusChanges, { initialValue: this.companionForm.status });
+    this.companionValue = toSignal(this.companionForm.valueChanges, { initialValue: this.companionForm.getRawValue() });
+    this.admissionStatus = toSignal(this.admissionForm.statusChanges, { initialValue: this.admissionForm.status });
+    this.admissionValue = toSignal(this.admissionForm.valueChanges, { initialValue: this.admissionForm.getRawValue() });
     this.applyFormState();
     this.registerEffects();
     this.subscribeToFormChanges();
   }
 
-  private createForms(): void {
-    this.patientForm = this.fb.group({
-      documentTypeId: [null, Validators.required],
-      document: ['', [Validators.required, numericValidator]],
-      firstName: [''],
-      lastName: [''],
-      birthDate: [null, [maxDateValidator(this.today)]],
-      genderId: [null],
-      age: ['', ageValidator],
-      disability: ['', disabilityValidator],
-      userTypeId: [null],
-      address: [''],
-      phone: ['', phoneValidator],
-      email: ['', Validators.email],
-    });
-
-    this.companionForm = this.fb.group({
-      firstName: [''],
-      lastName: [''],
-      documentTypeId: [null],
-      document: ['', numericValidator],
-      address: [''],
-      relationshipId: [null],
-      phone: ['', phoneValidator],
-    });
-
-    this.admissionForm = this.fb.group({
-      epsId: [null, Validators.required],
-      roomId: [null, Validators.required],
-      observations: ['', Validators.required],
-    });
-  }
-
   private subscribeToFormChanges(): void {
-    this.companionForm.valueChanges.subscribe(() => this.refreshCompanionValidators());
+    this.companionForm.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.refreshCompanionValidators());
 
-    this.patientForm.get('birthDate')?.valueChanges.subscribe((date: Date | string | null) => {
-      this.syncAgeFromBirthDate(date);
-    });
-
-    this.patientForm.statusChanges.subscribe(() => this.onFormStatusChange());
-    this.companionForm.statusChanges.subscribe(() => this.onFormStatusChange());
-    this.admissionForm.statusChanges.subscribe(() => this.onFormStatusChange());
+    this.patientForm.controls.birthDate.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((date: Date | string | null) => this.syncAgeFromBirthDate(date));
   }
 
   private registerEffects(): void {
@@ -206,24 +183,24 @@ export class AdmissionFormComponent {
       );
     });
 
-    effect(() => this.refreshCanSubmit());
-
     effect(() => this.watchPatientLookup());
     effect(() => this.watchCreateResult());
     effect(() => this.watchCreateError());
   }
 
   private watchPatientLookup(): void {
-    if (!this.lookupRequested || this.store.isLookingUp()) return;
+    const isLookingUp = this.store.isLookingUp();
+    const err = this.store.lookupError();
+    const patient = this.store.patientFound();
+
+    if (!this.lookupRequested || isLookingUp) return;
     this.lookupRequested = false;
 
-    const err = this.store.lookupError();
     if (err) {
       this.handleLookupError(err);
       return;
     }
 
-    const patient = this.store.patientFound();
     if (patient) {
       this.fillPatientData(patient);
       return;
@@ -234,30 +211,19 @@ export class AdmissionFormComponent {
   }
 
   private handleLookupError(err: unknown): void {
-    if (this.getErrorStatus(err) === HTTP_STATUS.NOT_FOUND) {
+    if (getHttpErrorStatus(err) === HTTP_STATUS.NOT_FOUND) {
       this.mode.set('NOT_FOUND');
       this.applyFormState();
       return;
     }
     this.mode.set('IDLE');
-    this.toast.error(this.getErrorMessage(err, 'Error al buscar el paciente'));
+    this.toast.error(getHttpErrorMessage(err, 'Error al buscar el paciente'));
     this.applyFormState();
   }
 
-  private fillPatientData(patient: PatientLookupResult): void {
+  private fillPatientData(patient: PatientLookupResponse): void {
     this.mode.set('FOUND');
-    this.patientForm.patchValue({
-      firstName: patient.firstName,
-      lastName: patient.lastName,
-      birthDate: parseIsoDateString(patient.birthDate) ?? null,
-      genderId: patient.genderId,
-      age: patient.age,
-      disability: patient.disability,
-      userTypeId: patient.userTypeId,
-      address: patient.address,
-      phone: patient.phone,
-      email: patient.email,
-    });
+    this.patientForm.patchValue(patientToFormValue(patient));
     this.admissionForm.patchValue({ epsId: patient.epsId ?? null });
     this.applyFormState();
   }
@@ -266,6 +232,7 @@ export class AdmissionFormComponent {
     const result = this.createResult();
     if (result && 'admissionNumber' in result) {
       this.toast.success(`Admisión ${result.admissionNumber} registrada correctamente`);
+      this.catalogStore.invalidateCatalog('beds');
       this.resetAll();
     }
   }
@@ -273,13 +240,13 @@ export class AdmissionFormComponent {
   private watchCreateError(): void {
     const err = this.createError();
     if (err) {
-      this.toast.error(this.getErrorMessage(err, 'Error al registrar admisión'));
+      this.toast.error(getHttpErrorMessage(err, 'Error al registrar admisión'));
     }
   }
 
   onSearchPatient(): void {
-    const docTypeId = this.patientForm.get('documentTypeId')?.value;
-    const doc = this.patientForm.get('document')?.value?.trim();
+    const docTypeId = this.patientForm.controls.documentTypeId.value;
+    const doc = this.patientForm.controls.document.value?.trim();
     if (!docTypeId || !doc) {
       this.toast.info('Seleccione tipo de documento e ingrese número');
       return;
@@ -293,7 +260,7 @@ export class AdmissionFormComponent {
 
   onDocumentBlur(): void {
     if (this.mode() !== 'IDLE') return;
-    const doc = this.patientForm.get('document')?.value?.trim();
+    const doc = this.patientForm.controls.document.value?.trim();
     if (!doc) return;
     setTimeout(() => {
       if (this.mode() === 'IDLE') this.onSearchPatient();
@@ -305,149 +272,62 @@ export class AdmissionFormComponent {
   }
 
   onSubmit(): void {
-    if (!this.dataEnabled()) {
-      this.toast.info('Busque primero el paciente');
+    if (!this.canSubmit()) {
+      this.toast.info('Complete los campos requeridos para registrar la admisión');
       return;
     }
 
-    if (this.admissionForm.invalid) {
-      this.toast.info('Complete los campos requeridos de admisión');
-      return;
-    }
-
-    const patient = this.patientForm.getRawValue();
     const isNew = this.mode() === 'NOT_FOUND';
-
-    if (isNew && (!patient.firstName || !patient.lastName)) {
-      this.toast.info('Nombre y apellido son requeridos para nuevo paciente');
-      return;
-    }
-
-    this.store.createAdmission(this.buildAdmissionPayload(isNew));
-  }
-
-  private buildAdmissionPayload(isNew: boolean): CreateAdmissionData {
-    const patient = this.patientForm.getRawValue();
-    const admission = this.admissionForm.getRawValue();
-
-    return {
-      isNewPatient: isNew,
-      documentTypeId: patient.documentTypeId,
-      document: patient.document,
-      firstName: patient.firstName || undefined,
-      lastName: patient.lastName || undefined,
-      birthDate: this.toApiBirthDate(patient.birthDate),
-      genderId: patient.genderId || undefined,
-      age: patient.age || undefined,
-      disability: patient.disability || undefined,
-      userTypeId: patient.userTypeId || undefined,
-      address: patient.address || undefined,
-      phone: patient.phone || undefined,
-      email: patient.email || undefined,
-      epsId: admission.epsId,
-      roomId: admission.roomId,
-      observations: admission.observations || undefined,
-      companion: this.buildCompanionPayload(),
-      authorizations: this.buildAuthorizationsPayload(),
-    };
-  }
-
-  private toApiBirthDate(value: Date | string | null): string | undefined {
-    if (!value) return undefined;
-    return value instanceof Date ? toIsoDateString(value) : value;
-  }
-
-  private buildCompanionPayload(): CreateAdmissionData['companion'] {
-    const companion = this.companionForm.getRawValue();
-    const hasCompanion = Object.values(companion).some((v) => !isBlank(v));
-    if (!hasCompanion) return undefined;
-
-    return {
-      firstName: companion.firstName,
-      lastName: companion.lastName,
-      documentTypeId: companion.documentTypeId,
-      document: companion.document,
-      address: companion.address,
-      relationshipId: companion.relationshipId,
-      phone: companion.phone,
-    } as CompanionData;
-  }
-
-  private buildAuthorizationsPayload(): CreateAdmissionData['authorizations'] {
-    if (!this.showAuthorizations()) return undefined;
-    return this.authFormArray.filter((fg) => fg.valid).map((fg) => fg.value);
+    this.store.createAdmission(
+      buildAdmissionRequest({
+        isNewPatient: isNew,
+        patient: this.patientForm.getRawValue(),
+        admission: this.admissionForm.getRawValue(),
+        companion: this.companionForm.getRawValue(),
+        authForms: this.authFormArray,
+        authorizationsEnabled: this.showAuthorizations(),
+      }),
+    );
   }
 
   addAuthEntry(): void {
-    const fg = this.fb.group({
-      authTypeId: [null, Validators.required],
-      authNumber: ['', Validators.required],
-      mapiissCode: ['', Validators.required],
-      quantity: [1, [Validators.required, numericValidator, Validators.min(1)]],
-    });
-    fg.statusChanges.subscribe(() => this.onFormStatusChange());
+    const fg = createAuthEntryForm();
+    fg.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.bumpAuthRevision());
+    fg.statusChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.bumpAuthRevision());
     this.authFormArray.push(fg);
     this.authEntries.set([...this.authFormArray]);
-    this.refreshCanSubmit();
+    this.bumpAuthRevision();
   }
 
   removeAuthEntry(index: number): void {
     this.authFormArray.splice(index, 1);
     this.authEntries.set([...this.authFormArray]);
-    this.refreshCanSubmit();
+    this.bumpAuthRevision();
   }
 
-  private onFormStatusChange(): void {
-    this.errorsTrigger.update((n) => n + 1);
-    this.refreshCanSubmit();
+  toggleAuthorizations(checked: boolean): void {
+    this.showAuthorizations.set(checked);
+    this.bumpAuthRevision();
+  }
+
+  private bumpAuthRevision(): void {
+    this.authRevision.update((n) => n + 1);
   }
 
   private syncAgeFromBirthDate(date: Date | string | null): void {
-    this.patientForm.get('age')?.setValue(this.calculateAge(date), { emitEvent: false });
-  }
-
-  private calculateAge(birthDate: Date | string | null | undefined): string {
-    if (!birthDate) return '';
-    const birth = birthDate instanceof Date ? birthDate : new Date(birthDate);
-    if (isNaN(birth.getTime())) return '';
-    const now = new Date();
-    let years = now.getFullYear() - birth.getFullYear();
-    const monthDiff = now.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
-      years--;
-    }
-    return years >= 0 ? String(years) : '';
+    this.patientForm.controls.age.setValue(calculateAge(date), { emitEvent: false });
   }
 
   private applyFormState(): void {
-    const searchEnabled = this.searchEnabled();
-    const dataEnabled = this.dataEnabled();
-
-    this.setControl(this.patientForm, 'documentTypeId', searchEnabled);
-    this.setControl(this.patientForm, 'document', searchEnabled);
-
-    PATIENT_DATA_KEYS.forEach((key) => this.setControl(this.patientForm, key, dataEnabled));
-
-    Object.keys(this.companionForm.controls).forEach((key) =>
-      this.setControl(this.companionForm, key, dataEnabled),
+    applyAdmissionFormState(
+      { patient: this.patientForm, companion: this.companionForm, admission: this.admissionForm },
+      this.mode(),
     );
-
-    ADMISSION_KEYS.forEach((key) => this.setControl(this.admissionForm, key, dataEnabled));
-  }
-
-  private setControl(group: FormGroup, key: string, enabled: boolean): void {
-    const control = group.get(key);
-    if (!control) return;
-    if (enabled) {
-      control.enable({ emitEvent: false });
-    } else {
-      control.disable({ emitEvent: false });
-    }
   }
 
   private refreshCompanionValidators(): void {
-    const firstName = this.companionForm.get('firstName')?.value?.trim();
-    const lastName = this.companionForm.get('lastName')?.value?.trim();
+    const firstName = this.companionForm.controls.firstName.value?.trim();
+    const lastName = this.companionForm.controls.lastName.value?.trim();
     const active = Boolean(firstName || lastName);
     this.companionActive.set(active);
     applyRequiredValidators(
@@ -458,26 +338,6 @@ export class AdmissionFormComponent {
     );
   }
 
-  private refreshCanSubmit(): void {
-    const formsValid =
-      this.patientForm.valid && this.companionForm.valid && this.admissionForm.valid;
-    const authorizationsValid =
-      !this.showAuthorizations() || this.authFormArray.every((fg) => fg.valid);
-    this.canSubmit.set(
-      this.dataEnabled() && formsValid && authorizationsValid && !this.isCreating(),
-    );
-  }
-
-  private getErrorStatus(err: unknown): number | undefined {
-    return err instanceof HttpErrorResponse ? err.status : undefined;
-  }
-
-  private getErrorMessage(err: unknown, fallback: string): string {
-    return err instanceof HttpErrorResponse && err.error?.message
-      ? err.error.message
-      : fallback;
-  }
-
   private resetAll(): void {
     this.patientForm.reset();
     this.companionForm.reset();
@@ -486,6 +346,7 @@ export class AdmissionFormComponent {
     this.showAuthorizations.set(false);
     this.authFormArray = [];
     this.authEntries.set([]);
+    this.bumpAuthRevision();
     this.mode.set('IDLE');
     this.applyFormState();
   }

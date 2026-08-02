@@ -8,7 +8,7 @@ class ParagrafoAplicacion extends Model {
   public id!: number;
   public feeScheduleId!: number;
   public mapiissCode!: string;
-  public diagnosticId!: number;
+  public diagnosticId!: string;
 
   public feeSchedule?: Tarifario;
   public cups?: Cups;
@@ -29,7 +29,7 @@ ParagrafoAplicacion.init(
       field: "FK_CODIGO_MAPIISS"
     },
     diagnosticId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(20),
       allowNull: false,
       field: "FK_DIAGNOSTICO"
     },

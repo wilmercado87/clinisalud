@@ -1,42 +1,41 @@
-export interface CatalogDisplayItem {
+import { CatalogSourceItem } from '@core/models/catalog.model';
+
+export interface CatalogOptionUI {
   id: number;
   description: string;
   code?: string;
   detail?: string;
 }
 
-interface CatalogSourceItem {
-  id?: number;
-  name?: string;
-  description?: string;
-  roomId?: number;
-  bedCode?: string;
-  bedStatus?: number;
-  tipoCama?: string;
-  idEps?: number;
-  epsName?: string;
-}
-
-export function mapCatalogItemToDisplay(
+export function mapCatalogItemToOption(
   catalogType: string,
   item: CatalogSourceItem,
-): CatalogDisplayItem {
+): CatalogOptionUI {
   switch (catalogType) {
-    case 'beds':
+    case 'beds': {
+      if ('bedCode' in item) {
+        const code = String(item.bedCode).trim();
+        return {
+          id: item.roomId,
+          code,
+          description: `${code} - ${String(item.tipoCama).trim()}`,
+          detail: item.bedStatus === 0 ? 'Disponible' : 'Ocupada',
+        };
+      }
+      return { id: 0, description: '' };
+    }
+    case 'eps': {
+      if ('epsName' in item) {
+        return { id: item.idEps, description: String(item.epsName).trim() };
+      }
+      return { id: 0, description: '' };
+    }
+    default: {
+      if ('bedCode' in item || 'epsName' in item) return { id: 0, description: '' };
       return {
-        id: item.roomId ?? 0,
-        code: String(item.bedCode ?? '').trim(),
-        description: `${String(item.bedCode ?? '').trim()} - ${String(item.tipoCama ?? '').trim()}`,
-        detail: item.bedStatus === 0 ? 'Disponible' : 'Ocupada',
-      };
-    case 'user-types':
-      return { id: item.id ?? 0, description: String(item.name ?? '').trim() };
-    case 'eps':
-      return { id: item.idEps ?? 0, description: String(item.epsName ?? '').trim() };
-    default:
-      return {
-        id: item.id ?? 0,
+        id: item.id,
         description: String(item.description || item.name || '').trim(),
       };
+    }
   }
 }

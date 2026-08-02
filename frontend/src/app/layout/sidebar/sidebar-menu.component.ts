@@ -9,7 +9,7 @@ import { RouterModule } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MenuOption } from '@core/models/auth.model';
+import { MenuOption } from '@core/models/user.model';
 
 @Component({
   selector: 'app-sidebar-menu',

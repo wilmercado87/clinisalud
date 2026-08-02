@@ -65,7 +65,8 @@ async function resetDatabaseTables() {
     CentroCosto, Municipio, Diagnostico, TriagePrioridad, Convenio, Contrato,
     Cups, Paciente, Triage, Admision, Autorizacion, DiagnosticoPaciente,
     Articulado, TipoParagrafo, ParagrafoAplicacion, ParagrafoEdad,
-    ParagrafoInclusion, ParagrafoValor, TipoAcceso, ViaAcceso
+    ParagrafoInclusion, ParagrafoValor, TipoAcceso, ViaAcceso, TipoParentesco,
+    Acompanante
   ];
 
   for (const model of allModels) {

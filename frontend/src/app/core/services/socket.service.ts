@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '@env/environment';
-import { NotificationResponse } from '@core/models/notification-dto.model';
+import { NotificationResponse } from '@core/models/notification.model';
 
 @Injectable({
   providedIn: 'root',

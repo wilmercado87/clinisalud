@@ -77,7 +77,7 @@ export async function changePassword(req: AuthRequest, res: Response) {
   try {
     const userId = req.user!.id;
     const { currentPassword, newPassword } = req.body;
-    const result = await authService.changePassword(userId, currentPassword, newPassword);
+    const result = await authService.changePassword(userId, { currentPassword, newPassword });
     logInfo(`Password changed for user ID: ${userId}`);
     return res.status(HTTP_STATUS.OK).json(result);
   } catch (error: any) {

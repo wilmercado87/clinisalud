@@ -31,7 +31,7 @@ import { ErrorStateMatcher, MatOption } from '@angular/material/core';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
-import { CatalogDisplayItem, mapCatalogItemToDisplay } from '@shared/utils/catalog-mapper';
+import { CatalogOptionUI, mapCatalogItemToOption } from '@shared/utils/catalog-mapper';
 
 @Component({
   selector: 'app-catalog-select',
@@ -107,10 +107,10 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
 
   readonly isLoading = this.itemsResource.isLoading;
 
-  readonly items = computed<CatalogDisplayItem[]>(() => {
+  readonly items = computed<CatalogOptionUI[]>(() => {
     const raw = this.itemsResource.value() ?? [];
     const type = this.catalogType();
-    return raw.map((item) => mapCatalogItemToDisplay(type, item));
+    return raw.map((item) => mapCatalogItemToOption(type, item));
   });
 
   readonly filteredItems = computed(() => {
@@ -222,7 +222,7 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
     this.searchTerm.set(this.selectedDescription());
   }
 
-  private applyMatch(item: CatalogDisplayItem): void {
+  private applyMatch(item: CatalogOptionUI): void {
     if (this.value() !== item.id) {
       this.value.set(item.id);
       this.onChange(item.id);

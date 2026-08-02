@@ -22,14 +22,26 @@ export interface RoleResponse {
   permissions?: PermissionOverride[];
 }
 
-export interface CreateUserResponse {
-  user: UserResponse;
-  emailSent: boolean;
-}
-
 export interface PermissionOverride {
   menuOptionId: number;
   hasAccess: boolean;
+}
+
+export interface CreateUserRequest {
+  firstName: string;
+  lastName: string;
+  dni: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  roleId: number;
+  permissions: number[];
+  documentTypeId?: number;
+}
+
+export interface CreateUserResponse {
+  user: UserResponse;
+  emailSent: boolean;
 }
 
 export interface PermissionsRequest {
@@ -40,4 +52,15 @@ export interface ToggleStatusResponse {
   id: number;
   isActive: boolean;
   message: string;
+}
+
+export interface MenuOption {
+  id: number;
+  label: string;
+  icon: string;
+  path: string | null;
+  order: number;
+  parentId: number | null;
+  isActive: boolean;
+  children: MenuOption[];
 }

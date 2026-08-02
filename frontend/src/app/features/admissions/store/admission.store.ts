@@ -1,12 +1,8 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import {
-  AdmissionsService,
-  PatientLookupResult,
-  CreateAdmissionData,
-  AdmissionCensusRow,
-} from '@features/admissions/services/admissions.service';
+import { AdmissionsService } from '@features/admissions/services/admissions.service';
+import { CreateAdmissionRequest } from '@features/admissions/models/admissions.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdmissionStore {
@@ -18,7 +14,7 @@ export class AdmissionStore {
     request: () => this.lookupTrigger(),
     loader: ({ request }) => {
       if (!request) return of(null);
-      return this.api.lookupPatient(request.documentTypeId, request.document);
+      return this.api.lookupPatient(request);
     },
   });
 
@@ -26,7 +22,7 @@ export class AdmissionStore {
   readonly isLookingUp = this.lookupResource.isLoading;
   readonly lookupError = this.lookupResource.error;
 
-  private readonly createTrigger = signal<{ data: CreateAdmissionData } | null>(null);
+  private readonly createTrigger = signal<{ data: CreateAdmissionRequest } | null>(null);
 
   private readonly createResource = rxResource({
     request: () => this.createTrigger(),
@@ -52,7 +48,7 @@ export class AdmissionStore {
     this.lookupTrigger.set({ documentTypeId, document });
   }
 
-  createAdmission(data: CreateAdmissionData): void {
+  createAdmission(data: CreateAdmissionRequest): void {
     this.createTrigger.set({ data });
   }
 

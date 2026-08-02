@@ -57,8 +57,10 @@ export class EmailService {
     try {
       await transporter.verify();
       logInfo("SMTP configurado y conexión verificada correctamente");
-    } catch (error: any) {
-      logError("SMTP configurado pero la conexión falló", { error: error.message });
+    } catch (error) {
+      logError("SMTP configurado pero la conexión falló", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -112,8 +114,10 @@ export class EmailService {
         text,
       });
       logInfo(`Contraseña temporal enviada a ${to}`);
-    } catch (error: any) {
-      logError(`Fallo al enviar contraseña temporal a ${to}`, { error: error.message });
+    } catch (error) {
+      logError(`Fallo al enviar contraseña temporal a ${to}`, {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   }

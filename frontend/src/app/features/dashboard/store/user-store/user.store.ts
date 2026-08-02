@@ -2,19 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { UserService } from '@features/dashboard/services/user.service';
-import { UserResponse, ToggleStatusResponse, PermissionOverride } from '@core/models/user-manager.model';
-
-export interface CreatePayload {
-  firstName: string;
-  lastName: string;
-  dni: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  roleId: number;
-  permissions: number[];
-  documentTypeId?: number;
-}
+import { UserResponse, ToggleStatusResponse, PermissionOverride, CreateUserRequest } from '@core/models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserStore {
@@ -48,7 +36,7 @@ export class UserStore {
   readonly isToggling = this.toggleResource.isLoading;
   readonly toggleError = this.toggleResource.error;
 
-  private readonly createTrigger = signal<{ data: CreatePayload } | null>(null);
+  private readonly createTrigger = signal<{ data: CreateUserRequest } | null>(null);
 
   private readonly createResource = rxResource({
     request: () => this.createTrigger(),
@@ -88,7 +76,7 @@ export class UserStore {
     this.toggleTrigger.set({ id });
   }
 
-  createUser(data: CreatePayload): void {
+  createUser(data: CreateUserRequest): void {
     this.createTrigger.set({ data });
   }
 

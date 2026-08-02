@@ -22,5 +22,10 @@ export const createAdmissionValidation = [
   body("companion.document").optional({ values: "falsy" }).isLength({ max: 30 }).withMessage("Documento del acompañante inválido"),
   body("companion.address").optional({ values: "falsy" }).isString().withMessage("Dirección del acompañante inválida"),
   body("companion.relationshipId").optional().isInt({ min: 1 }).withMessage("Parentesco del acompañante inválido"),
-  body("companion.phone").optional({ values: "falsy" }).isString().withMessage("Teléfono del acompañante inválido"),
+  body("companion.phone").optional({ values: "falsy" }).isNumeric().withMessage("Teléfono del acompañante inválido"),
+  body("authorizations").optional().isArray().withMessage("Autorizaciones debe ser un arreglo"),
+  body("authorizations.*.authTypeId").isInt({ min: 1 }).withMessage("Tipo de autorización es requerido"),
+  body("authorizations.*.authNumber").isLength({ min: 1, max: 50 }).withMessage("Número de autorización es requerido"),
+  body("authorizations.*.mapiissCode").isLength({ min: 1, max: 30 }).withMessage("Código MAPIISS es requerido"),
+  body("authorizations.*.quantity").optional().isInt({ min: 1 }).withMessage("Cantidad debe ser mayor o igual a 1"),
 ];

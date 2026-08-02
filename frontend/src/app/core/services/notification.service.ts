@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { NotificationResponse, UnreadCountResponse } from '@core/models/notification-dto.model';
+import { NotificationResponse, UnreadCountResponse } from '@core/models/notification.model';
 
 @Injectable({
   providedIn: 'root',

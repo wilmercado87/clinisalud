@@ -45,5 +45,18 @@ export const JWT_CONFIG = {
   ALGORITHM: 'HS256',
 } as const;
 
+export const PATIENT_STATUS = {
+  ACTIVE: 'ACTIVO',
+  INACTIVE: 'INACTIVO',
+} as const;
+
+export const ADMISSION_STATUS = {
+  REGISTERED: 'REGISTRADA',
+  IN_CARE: 'EN_ATENCION',
+  WITH_EPICRISIS: 'CON_EPICRISIS',
+  BILLED: 'FACTURADA',
+  DISCHARGED: 'EGRESADA',
+} as const;
+
 export const API_VERSION = 'v1';
 export const API_PREFIX = '/api/v1';

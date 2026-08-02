@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { UserResponse, CreateUserResponse, PermissionsRequest, ToggleStatusResponse } from '@core/models/user-manager.model';
+import { CreateUserRequest, UserResponse, CreateUserResponse, PermissionsRequest, ToggleStatusResponse } from '@core/models/user.model';
 import { environment } from '@env/environment';
 
 @Injectable({
@@ -15,7 +15,7 @@ export class UserService {
     return this.http.get<UserResponse[]>(this.apiUrl);
   }
 
-  public createUser(userData: Partial<UserResponse>): Observable<CreateUserResponse> {
+  public createUser(userData: CreateUserRequest): Observable<CreateUserResponse> {
     return this.http.post<CreateUserResponse>(this.apiUrl, userData);
   }
 

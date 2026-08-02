@@ -13,7 +13,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthStore } from '@core/stores/auth-store/auth.store';
 import { ConfigStore } from '@core/stores/config-store/config.store';
-import { ApiError } from '@shared/utils/status.codes';
 import { ForgotPasswordDialogComponent } from '@features/auth/components/forgot-password-dialog/forgot-password-dialog.component';
 
 @Component({
@@ -44,8 +43,8 @@ export class LoginComponent {
   );
 
   public errorMessage = computed(() => {
-    const err = this.authStore.loginError() as ApiError;
-    return err;
+    const err = this.authStore.loginError();
+    return typeof err === 'string' ? err : null;
   });
 
   constructor() {

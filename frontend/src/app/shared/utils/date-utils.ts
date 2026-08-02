@@ -22,6 +22,19 @@ export function formatNotificationDate(dateSource: string | Date): string {
   });
 }
 
+export function calculateAge(birthDate: Date | string | null | undefined): string {
+  if (!birthDate) return '';
+  const birth = birthDate instanceof Date ? birthDate : new Date(birthDate);
+  if (isNaN(birth.getTime())) return '';
+  const now = new Date();
+  let years = now.getFullYear() - birth.getFullYear();
+  const monthDiff = now.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+    years--;
+  }
+  return years >= 0 ? String(years) : '';
+}
+
 export const MILLISECONDS_PER_DAY = 86400000;
 export const MILLISECONDS_PER_MINUTE = 60000;
 export  const MINUTES_NOW = 1;

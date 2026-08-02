@@ -3,12 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import {
-  CatalogItem,
-  MunicipioItem,
-  ContratoItem,
-  CamaItem,
-  DiagnosticoItem,
-  CupsItem,
+  CatalogItemResponse,
+  MunicipioResponse,
+  ContratoResponse,
+  CamaResponse,
+  DiagnosticoResponse,
+  CupsResponse,
 } from '@core/models/catalog.model';
 
 @Injectable({ providedIn: 'root' })
@@ -16,36 +16,36 @@ export class CatalogService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/catalogs`;
 
-  getCatalog(type: string): Observable<CatalogItem[]> {
-    return this.http.get<CatalogItem[]>(`${this.apiUrl}/${type}`);
+  getCatalog(type: string): Observable<CatalogItemResponse[]> {
+    return this.http.get<CatalogItemResponse[]>(`${this.apiUrl}/${type}`);
   }
 
-  getMunicipalities(departmentId?: string): Observable<MunicipioItem[]> {
+  getMunicipalities(departmentId?: string): Observable<MunicipioResponse[]> {
     let params = new HttpParams();
     if (departmentId) params = params.set('departmentId', departmentId);
-    return this.http.get<MunicipioItem[]>(`${this.apiUrl}/municipalities`, { params });
+    return this.http.get<MunicipioResponse[]>(`${this.apiUrl}/municipalities`, { params });
   }
 
-  getContracts(epsId?: number): Observable<ContratoItem[]> {
+  getContracts(epsId?: number): Observable<ContratoResponse[]> {
     let params = new HttpParams();
     if (epsId !== undefined) params = params.set('epsId', epsId);
-    return this.http.get<ContratoItem[]>(`${this.apiUrl}/contracts`, { params });
+    return this.http.get<ContratoResponse[]>(`${this.apiUrl}/contracts`, { params });
   }
 
-  getBeds(bedStatus?: number): Observable<CamaItem[]> {
+  getBeds(bedStatus?: number): Observable<CamaResponse[]> {
     let params = new HttpParams();
     if (bedStatus !== undefined) params = params.set('status', bedStatus);
-    return this.http.get<CamaItem[]>(`${this.apiUrl}/beds`, { params });
+    return this.http.get<CamaResponse[]>(`${this.apiUrl}/beds`, { params });
   }
 
-  searchDiagnostics(q: string): Observable<DiagnosticoItem[]> {
-    return this.http.get<DiagnosticoItem[]>(`${this.apiUrl}/diagnostics/search`, {
+  searchDiagnostics(q: string): Observable<DiagnosticoResponse[]> {
+    return this.http.get<DiagnosticoResponse[]>(`${this.apiUrl}/diagnostics/search`, {
       params: new HttpParams().set('q', q),
     });
   }
 
-  searchCups(q: string): Observable<CupsItem[]> {
-    return this.http.get<CupsItem[]>(`${this.apiUrl}/cups/search`, {
+  searchCups(q: string): Observable<CupsResponse[]> {
+    return this.http.get<CupsResponse[]>(`${this.apiUrl}/cups/search`, {
       params: new HttpParams().set('q', q),
     });
   }

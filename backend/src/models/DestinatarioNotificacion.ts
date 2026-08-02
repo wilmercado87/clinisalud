@@ -1,5 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
+import Notificacion from "./Notificacion";
 
 class DestinatarioNotificacion extends Model {
   public id!: number;
@@ -7,6 +8,8 @@ class DestinatarioNotificacion extends Model {
   public userId!: number;
   public isRead!: boolean;
   public readAt!: Date | null;
+
+  public notification?: Notificacion;
 }
 
 DestinatarioNotificacion.init(

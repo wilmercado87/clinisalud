@@ -122,7 +122,7 @@ export function initAssociations() {
   Diagnostico.belongsTo(TipoOrigen, { foreignKey: "originTypeId", as: "originType" });
   DiagnosticoPaciente.belongsTo(Admision, { foreignKey: "admissionNumber", as: "admission" });
   DiagnosticoPaciente.belongsTo(Diagnostico, { foreignKey: "diagnosticId", as: "diagnostic" });
-  ParagrafoAplicacion.belongsTo(Diagnostico, { foreignKey: "diagnosticId", as: "diagnostic" });
+  ParagrafoAplicacion.belongsTo(Diagnostico, { foreignKey: "diagnosticId", targetKey: "code", as: "diagnostic" });
   TriagePrioridad.belongsTo(TipoTriage, { foreignKey: "triageId", as: "triage" });
   Municipio.belongsTo(Departamento, { foreignKey: "dptoId", as: "department" });
 

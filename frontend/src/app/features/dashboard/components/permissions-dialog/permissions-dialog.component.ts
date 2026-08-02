@@ -11,10 +11,16 @@ import { RoleStore } from '@core/stores/role-store/role.store';
 import { UserStore } from '@features/dashboard/store/user-store/user.store';
 import { AuthStore } from '@core/stores/auth-store/auth.store';
 import { ToastService } from '@core/services/toast.service';
-import { MenuOption } from '@core/models/auth.model';
-import { UserResponse, PermissionOverride } from '@core/models/user-manager.model';
+import { MenuOption, UserResponse } from '@core/models/user.model';
 import { ROLE_CODES } from '@shared/utils/role-constants';
-import { ApiError } from '@shared/utils/status.codes';
+import { getHttpErrorMessage } from '@shared/utils/http-error';
+import {
+  allMenuOptionIds,
+  buildPermissionOverrides,
+  isUserManagerGroup,
+  toggleChildSelection,
+  toggleParentSelection,
+} from '@features/dashboard/utils/menu-selection-utils';
 
 export interface PermissionsDialogData {
   user: UserResponse;
@@ -52,15 +58,12 @@ export class PermissionsDialogComponent {
     const rawMenus = this.menuOptions() ?? [];
     return rawMenus.map((menuGroup) => ({
       ...menuGroup,
-      isUserManager: menuGroup.label.toUpperCase() === 'GESTOR USUARIOS',
+      isUserManager: isUserManagerGroup(menuGroup),
     }));
   });
 
   public totalMenuOptionsCount = computed(() =>
-    this.permissionMenuGroups().reduce(
-      (accumulatedCount, group) => accumulatedCount + 1 + (group.children?.length || 0),
-      0,
-    ),
+    allMenuOptionIds(this.permissionMenuGroups()).length,
   );
 
   public currentUserRole = computed(() => this.authStore.currentUser()?.role ?? '');
@@ -75,10 +78,10 @@ export class PermissionsDialogComponent {
     if (this.isEditRestricted()) return false;
     if (this.isTargetUserAdmin()) return false;
 
-    const maxSelectableCountForNonAdmin = this.permissionMenuGroups().reduce((accumulatedCount, group) => {
-      if (group.isUserManager) return accumulatedCount;
-      return accumulatedCount + 1 + (group.children?.length || 0);
-    }, 0);
+    const selectableGroups = this.permissionMenuGroups().filter(
+      (group) => !group.isUserManager,
+    );
+    const maxSelectableCountForNonAdmin = allMenuOptionIds(selectableGroups).length;
 
     return (
       this.assignedMenuOptionIds().size > maxSelectableCountForNonAdmin &&
@@ -183,70 +186,32 @@ export class PermissionsDialogComponent {
   public toggleMenuGroupSelection(menuGroup: PermissionMenuNode, isChecked: boolean): void {
     if (menuGroup.isUserManager || this.isEditRestricted() || this.isUpdatingPermissions()) return;
 
-    const updatedIdsSet = new Set(this.assignedMenuOptionIds());
-    const groupKey = Number(menuGroup.id);
-    const subMenuIds = menuGroup.children?.map((child) => Number(child.id)) || [];
-
-    if (isChecked) {
-      updatedIdsSet.add(groupKey);
-      subMenuIds.forEach((id) => updatedIdsSet.add(id));
-    } else {
-      updatedIdsSet.delete(groupKey);
-      subMenuIds.forEach((id) => updatedIdsSet.delete(id));
-    }
-    this.assignedMenuOptionIds.set(updatedIdsSet);
+    this.assignedMenuOptionIds.set(
+      toggleParentSelection(this.assignedMenuOptionIds(), menuGroup, isChecked),
+    );
   }
 
   public toggleSubMenuSelection(subMenuId: number, parentMenuGroup: PermissionMenuNode): void {
     if (parentMenuGroup.isUserManager || this.isEditRestricted() || this.isUpdatingPermissions()) return;
 
-    const updatedIdsSet = new Set(this.assignedMenuOptionIds());
-    const parentKey = Number(parentMenuGroup.id);
-    const childKey = Number(subMenuId);
-    const siblingMenuIds = parentMenuGroup.children?.map((child) => Number(child.id)) || [];
-
-    if (updatedIdsSet.has(childKey)) {
-      updatedIdsSet.delete(childKey);
-      const hasActiveSiblings = siblingMenuIds.some(
-        (id) => id !== childKey && updatedIdsSet.has(id),
-      );
-      if (!hasActiveSiblings) {
-        updatedIdsSet.delete(parentKey);
-      }
-    } else {
-      updatedIdsSet.add(childKey);
-      updatedIdsSet.add(parentKey);
-    }
-
-    this.assignedMenuOptionIds.set(updatedIdsSet);
+    this.assignedMenuOptionIds.set(
+      toggleChildSelection(this.assignedMenuOptionIds(), parentMenuGroup, subMenuId),
+    );
   }
 
   public submitPermissionOverrides(): void {
     if (!this.canSubmitPermissions()) return;
 
-    const generatedOverrides: PermissionOverride[] = this.permissionMenuGroups().flatMap(
-      (menuGroup) => {
-        const groupKey = Number(menuGroup.id);
-        return [
-          {
-            menuOptionId: groupKey,
-            hasAccess: this.assignedMenuOptionIds().has(groupKey),
-          },
-          ...(menuGroup.children?.map((child) => ({
-            menuOptionId: Number(child.id),
-            hasAccess: this.assignedMenuOptionIds().has(Number(child.id)),
-          })) || []),
-        ];
-      },
+    const generatedOverrides = buildPermissionOverrides(
+      this.permissionMenuGroups(),
+      this.assignedMenuOptionIds(),
     );
 
     this.userStore.updatePermissions(this.targetUserData.user.id, generatedOverrides);
   }
 
   private handlePermissionSyncError(error: unknown): void {
-    const apiErr = error as ApiError;
-    const feedbackMessage = apiErr.error?.message || 'Ocurrió un error en la operación';
-    this.toast.error(feedbackMessage);
+    this.toast.error(getHttpErrorMessage(error, 'Ocurrió un error en la operación'));
   }
 
   public onCancel(): void {

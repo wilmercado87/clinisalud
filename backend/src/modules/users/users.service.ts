@@ -13,35 +13,55 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { EmailService } from "../notifications/email.service";
 import { generateTempPassword } from "../../utils/Password.util";
 import { logError } from "../../utils/Logger";
+import { toSafeUserJson } from "../../utils/user.mapper";
+import {
+  CreateUserRequest,
+  CreateUserResult,
+  ManageableUserResponse,
+  MenuOptionResponse,
+  PermissionOverride,
+  ToggleStatusResponse,
+} from "./users.types";
 
-interface CreateUserData {
-  email: string;
-  dni: string;
-  documentTypeId: number;
+interface RoleHierarchyMessages {
+  superAdmin: string;
+  admin: string;
+}
+
+interface ManageableUserRecord {
+  id: number;
   firstName: string;
   lastName: string;
+  documentTypeId: number;
+  dni: string;
+  email: string;
   phone?: string;
   address?: string;
+  isActive: boolean;
   roleId: number;
-  permissions: number[];
+  createdAt: Date;
+  updatedAt: Date;
+  roleData?: { id: number; name: string; code: string } | null;
+  menuOverrides?: Array<{ menuOptionId: number; hasAccess: boolean }> | null;
 }
 
 export class UsersService {
   private readonly notificationsService = new NotificationsService();
   private readonly emailService = new EmailService();
+
   public async findAllRoles(): Promise<Rol[]> {
     return await Rol.findAll({ order: [["name", "ASC"]] });
   }
 
-  public async findAllMenuOptions(): Promise<any[]> {
+  public async findAllMenuOptions(): Promise<MenuOptionResponse[]> {
     const options = await OpcionMenu.findAll({
       where: { isActive: true },
-      order: [["order", "ASC"]]
+      order: [["order", "ASC"]],
     });
-    return buildMenuTree(options.map(opt => opt.toJSON()));
+    return buildMenuTree(options.map((opt) => opt.toJSON() as MenuOptionResponse));
   }
 
-  public async findAllManageableUsers() {
+  public async findAllManageableUsers(): Promise<ManageableUserResponse[]> {
     const users = await Usuario.findAll({
       attributes: { exclude: ["password"] },
       include: [
@@ -51,121 +71,130 @@ export class UsersService {
       order: [["createdAt", "DESC"]],
     });
 
-    const roleIds = [...new Set(users.map(u => (u.toJSON() as any).roleData?.id).filter(Boolean))];
-    const allRolePerms = roleIds.length > 0
-      ? await PermisoRolMenu.findAll({ where: { roleId: roleIds } })
-      : [];
-
-    const permsByRole = new Map<number, PermisoRolMenu[]>();
-    for (const p of allRolePerms) {
-      if (!permsByRole.has(p.roleId)) permsByRole.set(p.roleId, []);
-      permsByRole.get(p.roleId)!.push(p);
-    }
-
-    return users.map(user => {
-      const userJson = user.toJSON() as any;
-      if (userJson.roleData) {
-        userJson.role = userJson.roleData.code;
-        const roleId = userJson.roleData.id;
-        const rolePerms = permsByRole.get(roleId) || [];
-        userJson.roleData.permissions = this.resolvePermissionsFromArrays(rolePerms, userJson.menuOverrides || []);
-        delete userJson.menuOverrides;
-      }
-      return userJson;
-    });
+    const grantedMenuIdsByRole = await this.loadGrantedMenuIdsByRole(users);
+    return users.map((user) => this.toManageableUser(user, grantedMenuIdsByRole));
   }
 
-  private resolvePermissionsFromArrays(rolePerms: PermisoRolMenu[], overrides: any[]): { menuOptionId: number; hasAccess: boolean }[] {
+  private async loadGrantedMenuIdsByRole(users: Usuario[]): Promise<Map<number, number[]>> {
+    const roleIds = [
+      ...new Set(
+        users
+          .map((u) => (u.toJSON() as ManageableUserRecord).roleData?.id)
+          .filter((id): id is number => typeof id === "number"),
+      ),
+    ];
+    if (roleIds.length === 0) return new Map();
+
+    const rolePerms = await PermisoRolMenu.findAll({ where: { roleId: roleIds } });
+    const grantedByRole = new Map<number, number[]>();
+    for (const perm of rolePerms) {
+      const ids = grantedByRole.get(perm.roleId) ?? [];
+      ids.push(perm.menuOptionId);
+      grantedByRole.set(perm.roleId, ids);
+    }
+    return grantedByRole;
+  }
+
+  private toManageableUser(
+    user: Usuario,
+    grantedMenuIdsByRole: Map<number, number[]>,
+  ): ManageableUserResponse {
+    const json = user.toJSON() as ManageableUserRecord;
+    const { menuOverrides, roleData, ...rest } = json;
+    if (!roleData) return { ...rest, role: undefined, roleData: undefined };
+
+    return {
+      ...rest,
+      role: roleData.code,
+      roleData: {
+        ...roleData,
+        permissions: this.resolvePermissionsFromArrays(
+          grantedMenuIdsByRole.get(roleData.id) ?? [],
+          menuOverrides ?? [],
+        ),
+      },
+    };
+  }
+
+  private resolvePermissionsFromArrays(
+    grantedMenuIds: number[],
+    overrides: Array<{ menuOptionId: number; hasAccess: boolean }>,
+  ): PermissionOverride[] {
     const overrideMap = new Map<number, boolean>(
-      overrides.map(o => [Number(o.menuOptionId), Boolean(o.hasAccess)])
+      overrides.map((o) => [Number(o.menuOptionId), Boolean(o.hasAccess)]),
     );
 
-    const allMenuIds = new Set<number>([
-      ...rolePerms.map(p => Number(p.menuOptionId)),
-      ...overrides.map(o => Number(o.menuOptionId)),
-    ]);
+    const allMenuIds = new Set<number>([...grantedMenuIds, ...overrideMap.keys()]);
 
     return Array.from(allMenuIds)
       .sort((a, b) => a - b)
-      .map(menuOptionId => ({
+      .map((menuOptionId) => ({
         menuOptionId,
         hasAccess: overrideMap.has(menuOptionId)
           ? overrideMap.get(menuOptionId)!
-          : rolePerms.some(p => Number(p.menuOptionId) === menuOptionId),
+          : grantedMenuIds.includes(menuOptionId),
       }))
-      .filter(p => p.hasAccess);
+      .filter((p) => p.hasAccess);
   }
 
-  public async createUser(data: CreateUserData, requestingUserRole: string, requestingUserId: number, requestingUserName: string) {
-      const targetRole = await Rol.findByPk(data.roleId);
-      const isTargetAdmin = targetRole?.code === "ADMIN" || targetRole?.code === "SUPER_ADMIN";
-      if (isTargetAdmin && requestingUserRole !== "SUPER_ADMIN") {
-        throw ApiError.forbidden(ERROR_MESSAGES.CREATE_ADMIN_FORBIDDEN);
-      }
+  public async createUser(
+    data: CreateUserRequest,
+    requestingUserRole: string,
+    requestingUserId: number,
+    requestingUserName: string,
+  ): Promise<CreateUserResult> {
+    const targetRole = await Rol.findByPk(data.roleId);
+    const isTargetAdmin = targetRole?.code === "ADMIN" || targetRole?.code === "SUPER_ADMIN";
+    if (isTargetAdmin && requestingUserRole !== "SUPER_ADMIN") {
+      throw ApiError.forbidden(ERROR_MESSAGES.CREATE_ADMIN_FORBIDDEN);
+    }
 
-      const existingUser = await this.findExistingUser(data.email, data.dni);
-      if (existingUser) this.throwDuplicateError(existingUser, data);
+    await this.assertNoDuplicate(data);
 
-      const ccDocument = await TipoDocumento.findOne({ where: { code: "CC" } });
-      const defaultDocumentTypeId = ccDocument ? ccDocument.id : 3;
-      const tempPassword = generateTempPassword();
-      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    const tempPassword = generateTempPassword();
+    const newUser = await this.createUserRecord(data, tempPassword);
+    await this.createPermissionOverrides(newUser.id, data.roleId, data.permissions);
 
-      const newUser = await Usuario.create({
-        ...data,
-        documentTypeId: data.documentTypeId || defaultDocumentTypeId,
-        password: hashedPassword,
-        isActive: true,
-      });
+    const userJson = toSafeUserJson(newUser);
+    this.notifyUserCreated(data, targetRole?.name ?? null, requestingUserRole, requestingUserId, requestingUserName);
+    const emailSent = await this.sendWelcomeEmailWithLog(data, newUser.id, tempPassword);
 
-      await this.createPermissions(newUser.id, data.roleId, data.permissions);
-      const userJson = newUser.toJSON();
-      delete userJson.password;
-
-      this.notificationsService.createAndDispatch(
-        "USER_CREATED",
-        "Nuevo usuario registrado",
-        `${requestingUserName} (${requestingUserRole}) creó al usuario ${data.firstName} ${data.lastName} (${targetRole?.name || "Sin rol"})`,
-        requestingUserId,
-        requestingUserName,
-        requestingUserRole,
-        "/dashboard/users",
-        "Ver usuarios",
-      ).catch(() => {});
-
-      let emailSent = false;
-      try {
-        await this.emailService.sendTemporaryPassword(data.email, `${data.firstName} ${data.lastName}`, tempPassword);
-        emailSent = true;
-      } catch (error: any) {
-        logError("No se pudo enviar la contraseña temporal al usuario creado", {
-          userId: newUser.id,
-          email: data.email,
-          error: error.message,
-        });
-      }
-
-      return { user: userJson, emailSent };
+    return { user: userJson, emailSent };
   }
 
-  private async findExistingUser(email: string, dni: string) {
-    return await Usuario.findOne({ where: { [Op.or]: [{ email }, { dni }] } });
-  }
-
-  private throwDuplicateError(existingUser: Usuario, data: CreateUserData) {
+  private async assertNoDuplicate(data: CreateUserRequest): Promise<void> {
+    const existingUser = await Usuario.findOne({ where: { [Op.or]: [{ email: data.email }, { dni: data.dni }] } });
+    if (!existingUser) return;
     if (existingUser.email === data.email) throw ApiError.emailExists(ERROR_MESSAGES.EMAIL_EXISTS);
     if (existingUser.dni === data.dni) throw ApiError.conflict(ERROR_MESSAGES.DNI_EXISTS);
   }
 
-  private async createPermissions(userId: number, roleId: number, permissions: number[]) {
+  private async createUserRecord(data: CreateUserRequest, tempPassword: string): Promise<Usuario> {
+    const ccDocument = await TipoDocumento.findOne({ where: { code: "CC" } });
+    const defaultDocumentTypeId = ccDocument ? ccDocument.id : 3;
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    return await Usuario.create({
+      ...data,
+      documentTypeId: data.documentTypeId || defaultDocumentTypeId,
+      password: hashedPassword,
+      isActive: true,
+    });
+  }
+
+  private async createPermissionOverrides(
+    userId: number,
+    roleId: number,
+    permissions: number[],
+  ): Promise<void> {
     const rolePerms = await PermisoRolMenu.findAll({ where: { roleId } });
     const selectedSet = new Set(permissions);
     const allMenuIds = new Set([
-      ...rolePerms.map(p => p.menuOptionId),
+      ...rolePerms.map((p) => p.menuOptionId),
       ...permissions,
     ]);
 
-    const overrides = Array.from(allMenuIds).map(menuOptionId => ({
+    const overrides = Array.from(allMenuIds).map((menuOptionId) => ({
       userId,
       menuOptionId,
       hasAccess: selectedSet.has(menuOptionId),
@@ -176,28 +205,63 @@ export class UsersService {
     }
   }
 
+  private notifyUserCreated(
+    data: CreateUserRequest,
+    targetRoleName: string | null,
+    requestingUserRole: string,
+    requestingUserId: number,
+    requestingUserName: string,
+  ): void {
+    this.notificationsService
+      .createAndDispatch({
+        type: "USER_CREATED",
+        title: "Nuevo usuario registrado",
+        message: `${requestingUserName} (${requestingUserRole}) creó al usuario ${data.firstName} ${data.lastName} (${targetRoleName ?? "Sin rol"})`,
+        actorId: requestingUserId,
+        actorName: requestingUserName,
+        actorRole: requestingUserRole,
+        actionUrl: "/dashboard/users",
+        actionLabel: "Ver usuarios",
+      })
+      .catch(() => {});
+  }
+
+  private async sendWelcomeEmailWithLog(
+    data: CreateUserRequest,
+    userId: number,
+    tempPassword: string,
+  ): Promise<boolean> {
+    try {
+      await this.emailService.sendTemporaryPassword(data.email, `${data.firstName} ${data.lastName}`, tempPassword);
+      return true;
+    } catch (error) {
+      logError("No se pudo enviar la contraseña temporal al usuario creado", {
+        userId,
+        email: data.email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
+  }
+
   public async updateUserPermissions(
     targetUserId: number,
-    permissions: { menuOptionId: number; hasAccess: boolean }[],
+    permissions: PermissionOverride[],
     requestingUserRole: string,
   ) {
     const targetUser = await Usuario.findByPk(targetUserId, {
       include: [{ model: Rol, as: "roleData" }],
     });
-
     if (!targetUser) throw ApiError.notFound(ERROR_MESSAGES.USER_NOT_FOUND);
 
-    const targetCode = targetUser.roleData?.code;
-    if (targetCode === "SUPER_ADMIN") {
-      throw ApiError.forbidden(ERROR_MESSAGES.PERMISSIONS_SUPER_ADMIN_FORBIDDEN);
-    }
-    if (targetCode === "ADMIN" && requestingUserRole !== "SUPER_ADMIN") {
-      throw ApiError.forbidden(ERROR_MESSAGES.PERMISSIONS_ADMIN_FORBIDDEN);
-    }
+    this.assertTargetRoleEditable(targetUser.roleData?.code, requestingUserRole, {
+      superAdmin: ERROR_MESSAGES.PERMISSIONS_SUPER_ADMIN_FORBIDDEN,
+      admin: ERROR_MESSAGES.PERMISSIONS_ADMIN_FORBIDDEN,
+    });
 
     await SobreescrituraMenuUsuario.destroy({ where: { userId: targetUserId } });
 
-    const overrideData = permissions.map(p => ({
+    const overrideData = permissions.map((p) => ({
       userId: targetUserId,
       menuOptionId: p.menuOptionId,
       hasAccess: p.hasAccess,
@@ -206,40 +270,54 @@ export class UsersService {
     return await SobreescrituraMenuUsuario.bulkCreate(overrideData);
   }
 
-  public async toggleUserStatus(userId: number, requestingUserRole: string, requestingUserId: number, requestingUserName: string) {
+  public async toggleUserStatus(
+    userId: number,
+    requestingUserRole: string,
+    requestingUserId: number,
+    requestingUserName: string,
+  ): Promise<ToggleStatusResponse> {
     const user = await Usuario.findByPk(userId, {
       include: [{ model: Rol, as: "roleData" }],
     });
-
     if (!user) throw ApiError.notFound(ERROR_MESSAGES.USER_NOT_FOUND);
 
-    const targetCode = user.roleData?.code;
-    if (targetCode === "SUPER_ADMIN") {
-      throw ApiError.forbidden(ERROR_MESSAGES.STATUS_SUPER_ADMIN_FORBIDDEN);
-    }
-    if (targetCode === "ADMIN" && requestingUserRole !== "SUPER_ADMIN") {
-      throw ApiError.forbidden(ERROR_MESSAGES.STATUS_ADMIN_FORBIDDEN);
-    }
+    this.assertTargetRoleEditable(user.roleData?.code, requestingUserRole, {
+      superAdmin: ERROR_MESSAGES.STATUS_SUPER_ADMIN_FORBIDDEN,
+      admin: ERROR_MESSAGES.STATUS_ADMIN_FORBIDDEN,
+    });
 
     user.isActive = !user.isActive;
     await user.save();
 
     const action = user.isActive ? "activado" : "desactivado";
-    this.notificationsService.createAndDispatch(
-      "USER_TOGGLED",
-      `Usuario ${action}`,
-      `${requestingUserName} (${requestingUserRole}) ${action} al usuario ${user.firstName} ${user.lastName}`,
-      requestingUserId,
-      requestingUserName,
-      requestingUserRole,
-      "/dashboard/users",
-      "Ver usuarios",
-    ).catch(() => {});
+    this.notificationsService
+      .createAndDispatch({
+        type: "USER_TOGGLED",
+        title: `Usuario ${action}`,
+        message: `${requestingUserName} (${requestingUserRole}) ${action} al usuario ${user.firstName} ${user.lastName}`,
+        actorId: requestingUserId,
+        actorName: requestingUserName,
+        actorRole: requestingUserRole,
+        actionUrl: "/dashboard/users",
+        actionLabel: "Ver usuarios",
+      })
+      .catch(() => {});
 
     return {
       id: user.id,
       isActive: user.isActive,
       message: `Usuario ${user.isActive ? "activado" : "desactivado"} correctamente.`,
     };
+  }
+
+  private assertTargetRoleEditable(
+    targetRoleCode: string | null | undefined,
+    requestingRole: string,
+    messages: RoleHierarchyMessages,
+  ): void {
+    if (targetRoleCode === "SUPER_ADMIN") throw ApiError.forbidden(messages.superAdmin);
+    if (targetRoleCode === "ADMIN" && requestingRole !== "SUPER_ADMIN") {
+      throw ApiError.forbidden(messages.admin);
+    }
   }
 }

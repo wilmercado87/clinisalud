@@ -3,8 +3,8 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
 import { AuthResponse, LoginRequest } from '@core/models/auth.model';
 import { environment } from '@env/environment';
-import { UserResponse } from '@core/models/user-manager.model';
-import { ERROR_MAPPING, HTTP_STATUS } from '@shared/utils/status.codes';
+import { UserResponse } from '@core/models/user.model';
+import { getBusinessErrorMessage } from '@shared/utils/http-error';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -36,18 +36,6 @@ export class AuthService {
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {
-    const businessMessage = this.getErrorValidation(error);
-    return throwError(() => businessMessage);
-  }
-
-  private getErrorValidation(error: HttpErrorResponse): string {
-    const { status, error: body } = error;
-
-    if (status === HTTP_STATUS.VALIDATION_ERROR) {
-      const detail = body?.errors?.[0]?.message;
-      if (detail) return detail;
-    }
-
-    return ERROR_MAPPING[status] || body?.message || 'Error inesperado en el servidor';
+    return throwError(() => getBusinessErrorMessage(error));
   }
 }

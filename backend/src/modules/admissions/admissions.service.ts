@@ -1,4 +1,4 @@
-import { Op, Transaction } from "sequelize";
+import { Op, Transaction, UniqueConstraintError } from "sequelize";
 import sequelize from "../../config/database";
 import Admision from "../../models/Admision";
 import Paciente from "../../models/Paciente";
@@ -8,69 +8,37 @@ import TipoEstado from "../../models/TipoEstado";
 import Autorizacion from "../../models/Autorizacion";
 import Acompanante from "../../models/Acompanante";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
+import { ADMISSION_STATUS, PATIENT_STATUS } from "../../constants";
 import { NotificationsService } from "../notifications/notifications.service";
+import {
+  AdmissionResponse,
+  AuthorizationData,
+  CensusRowResponse,
+  CompanionData,
+  CreateAdmissionRequest,
+  CreateAdmissionResponse,
+  PatientLookupRequest,
+  PatientLookupResponse,
+} from "./admissions.types";
 
-interface PatientLookupQuery {
-  documentTypeId: number;
-  document: string;
-}
+const ADMISSION_NUMBER_ATTEMPTS = 2;
 
-interface CompanionData {
-  firstName: string;
-  lastName: string;
-  documentTypeId: number;
-  document: string;
-  address: string;
-  relationshipId: number;
-  phone: string;
-}
-
-interface CreateAdmissionData {
-  isNewPatient: boolean;
-  documentTypeId: number;
-  document: string;
-  firstName?: string;
-  lastName?: string;
-  birthDate?: string;
-  genderId?: number;
-  age?: string;
-  disability?: string;
-  userTypeId?: number;
-  address?: string;
-  phone?: string;
-  email?: string;
-  epsId: number;
-  roomId?: number;
-  observations?: string;
-  companion?: CompanionData;
-  authorizations?: {
-    authTypeId: number;
-    authNumber: string;
-    mapiissCode: string;
-    quantity?: number;
-  }[];
-}
-
-interface CreateAdmissionResult {
-  admissionNumber: string;
-  patient: any;
-  admission: any;
-}
-
-interface AdmissionCensusRow {
-  admissionNumber: string;
-  patient: any;
-  room: any;
-  eps: any;
-  admissionDate: string;
-  observations: string | null;
-  statusId: number;
-}
+const isUniqueConstraintError = (error: unknown): boolean => {
+  if (error instanceof UniqueConstraintError) return true;
+  if (typeof error !== "object" || error === null) return false;
+  const candidate = error as { name?: unknown };
+  return candidate.name === "SequelizeUniqueConstraintError";
+};
 
 export class AdmissionsService {
   private readonly notificationsService = new NotificationsService();
 
-  public async lookupPatient(query: PatientLookupQuery) {
+  private async getStatusIdByDescription(description: string, t?: Transaction): Promise<number> {
+    const status = await TipoEstado.findOne({ where: { description }, transaction: t });
+    return status ? status.id : 1;
+  }
+
+  public async lookupPatient(query: PatientLookupRequest): Promise<PatientLookupResponse> {
     const patient = await Paciente.findOne({
       where: { documentTypeId: query.documentTypeId, document: query.document },
       include: [
@@ -86,188 +54,244 @@ export class AdmissionsService {
       order: [["admissionDate", "DESC"]],
     });
 
-    const result = patient.toJSON() as any;
-    result.epsId = latestAdmission ? latestAdmission.epsId : null;
-    return result;
+    return this.toPatientLookupResponse(patient, latestAdmission?.epsId ?? null);
+  }
+
+  private toPatientLookupResponse(patient: Paciente, epsId: number | null): PatientLookupResponse {
+    const json = patient.toJSON() as PatientLookupResponse;
+    return { ...json, id: patient.id, epsId };
   }
 
   public async createAdmission(
-    data: CreateAdmissionData,
+    data: CreateAdmissionRequest,
     userId: number,
     userName: string,
     userRole: string,
-  ): Promise<CreateAdmissionResult> {
-    const errors: string[] = [];
+  ): Promise<CreateAdmissionResponse> {
+    return await sequelize.transaction(async (t: Transaction) => {
+      const patientId = await this.ensurePatient(data, userId, t);
+      await this.occupyBed(data.roomId, t);
+      await this.assertEpsExists(data.epsId, t);
 
-    if (!data.documentTypeId) errors.push("Tipo de documento es requerido");
-    if (!data.document) errors.push("Número de documento es requerido");
-    if (!data.epsId) errors.push("EPS es requerida");
+      const registeredStatusId = await this.getStatusIdByDescription(ADMISSION_STATUS.REGISTERED, t);
+      const admission = await this.createAdmissionRecord(data, patientId, userId, registeredStatusId, t);
+      const admissionNumber = admission.admissionNumber;
 
-    if (errors.length > 0) {
-      throw ApiError.badRequest(errors.join("; "));
+      await this.createCompanionIfPresent(admissionNumber, data.companion, t);
+      await this.createAuthorizationsIfPresent(admissionNumber, data.authorizations, userId, t);
+      this.notifyAdmissionCreated(admissionNumber, data, userId, userName, userRole);
+
+      return {
+        admissionNumber,
+        patient: { id: patientId, documentTypeId: data.documentTypeId, document: data.document },
+        admission: this.toAdmissionResponse(admission),
+      };
+    });
+  }
+
+  private async ensurePatient(
+    data: CreateAdmissionRequest,
+    userId: number,
+    t: Transaction,
+  ): Promise<number> {
+    if (data.isNewPatient) return await this.createNewPatient(data, userId, t);
+    return await this.updateExistingPatient(data, t);
+  }
+
+  private async createNewPatient(
+    data: CreateAdmissionRequest,
+    userId: number,
+    t: Transaction,
+  ): Promise<number> {
+    if (!data.firstName) throw ApiError.badRequest("Nombre del paciente es requerido");
+    if (!data.lastName) throw ApiError.badRequest("Apellido del paciente es requerido");
+
+    const existingPatient = await Paciente.findOne({
+      where: { documentTypeId: data.documentTypeId, document: data.document },
+      transaction: t,
+    });
+    if (existingPatient) {
+      throw ApiError.conflict("Ya existe un paciente con ese tipo y número de documento");
     }
 
-    return await sequelize.transaction(async (t: Transaction) => {
-      let patientId: number;
+    const activeStatusId = await this.getStatusIdByDescription(PATIENT_STATUS.ACTIVE, t);
 
-      if (data.isNewPatient) {
-        if (!data.firstName) throw ApiError.badRequest("Nombre del paciente es requerido");
-        if (!data.lastName) throw ApiError.badRequest("Apellido del paciente es requerido");
+    const newPatient = await Paciente.create(
+      {
+        documentTypeId: data.documentTypeId,
+        document: data.document,
+        firstName: data.firstName || "",
+        lastName: data.lastName || "",
+        age: data.age || "",
+        address: data.address || "",
+        phone: data.phone || "",
+        email: data.email || null,
+        disability: data.disability || "NO",
+        userTypeId: data.userTypeId || 1,
+        birthDate: data.birthDate || "",
+        genderId: data.genderId || 1,
+        statusId: activeStatusId,
+        systemUserId: userId,
+      },
+      { transaction: t },
+    );
+    return newPatient.id;
+  }
 
-        const existingPatient = await Paciente.findOne({
-          where: { documentTypeId: data.documentTypeId, document: data.document },
-          transaction: t,
-        });
-        if (existingPatient) {
-          throw ApiError.conflict("Ya existe un paciente con ese tipo y número de documento");
-        }
+  private async updateExistingPatient(
+    data: CreateAdmissionRequest,
+    t: Transaction,
+  ): Promise<number> {
+    const existingPatient = await Paciente.findOne({
+      where: { documentTypeId: data.documentTypeId, document: data.document },
+      transaction: t,
+    });
+    if (!existingPatient) {
+      throw ApiError.notFound("Paciente no encontrado con los datos proporcionados");
+    }
 
-        const activeStatus = await TipoEstado.findOne({ where: { id: 1 }, transaction: t });
-        const statusId = activeStatus ? activeStatus.id : 1;
+    await existingPatient.update(
+      {
+        firstName: data.firstName?.trim() || existingPatient.firstName,
+        lastName: data.lastName?.trim() || existingPatient.lastName,
+        age: data.age ?? existingPatient.age,
+        address: data.address !== undefined ? data.address : existingPatient.address,
+        phone: data.phone !== undefined ? data.phone : existingPatient.phone,
+        email: data.email !== undefined ? data.email : existingPatient.email,
+        disability: data.disability?.trim() || existingPatient.disability,
+        userTypeId: data.userTypeId ?? existingPatient.userTypeId,
+        birthDate: data.birthDate?.trim() || existingPatient.birthDate,
+        genderId: data.genderId ?? existingPatient.genderId,
+      },
+      { transaction: t },
+    );
+    return existingPatient.id;
+  }
 
-        const newPatient = await Paciente.create(
-          {
-            documentTypeId: data.documentTypeId,
-            document: data.document,
-            firstName: data.firstName || "",
-            lastName: data.lastName || "",
-            age: data.age || "",
-            address: data.address || "",
-            phone: data.phone || "",
-            email: data.email || null,
-            disability: data.disability || "NO",
-            userTypeId: data.userTypeId || 1,
-            birthDate: data.birthDate || "",
-            genderId: data.genderId || 1,
-            statusId,
-            systemUserId: userId,
-          },
-          { transaction: t },
-        );
-        patientId = newPatient.id;
-      } else {
-        const existingPatient = await Paciente.findOne({
-          where: { documentTypeId: data.documentTypeId, document: data.document },
-          transaction: t,
-        });
-        if (!existingPatient) {
-          throw ApiError.notFound("Paciente no encontrado con los datos proporcionados");
-        }
-        patientId = existingPatient.id;
+  private async occupyBed(roomId: number, t: Transaction): Promise<void> {
+    const bed = await Cama.findByPk(roomId, { transaction: t });
+    if (!bed) throw ApiError.notFound("Cama no encontrada");
+    if (bed.bedStatus !== 0) {
+      throw ApiError.conflict("La cama seleccionada no está disponible");
+    }
+    bed.bedStatus = 1;
+    await bed.save({ transaction: t });
+  }
 
-        await existingPatient.update(
-          {
-            firstName: data.firstName?.trim() || existingPatient.firstName,
-            lastName: data.lastName?.trim() || existingPatient.lastName,
-            age: data.age ?? existingPatient.age,
-            address: data.address !== undefined ? data.address : existingPatient.address,
-            phone: data.phone !== undefined ? data.phone : existingPatient.phone,
-            email: data.email !== undefined ? data.email : existingPatient.email,
-            disability: data.disability?.trim() || existingPatient.disability,
-            userTypeId: data.userTypeId ?? existingPatient.userTypeId,
-            birthDate: data.birthDate?.trim() || existingPatient.birthDate,
-            genderId: data.genderId ?? existingPatient.genderId,
-          },
-          { transaction: t },
-        );
-      }
+  private async assertEpsExists(epsId: number, t: Transaction): Promise<void> {
+    const eps = await Convenio.findByPk(epsId, { transaction: t });
+    if (!eps) throw ApiError.notFound("EPS no encontrada");
+  }
 
-      if (data.roomId) {
-        const bed = await Cama.findByPk(data.roomId, { transaction: t });
-        if (!bed) throw ApiError.notFound("Cama no encontrada");
-        if (bed.bedStatus !== 0) {
-          throw ApiError.conflict("La cama seleccionada no está disponible");
-        }
-        bed.bedStatus = 1;
-        await bed.save({ transaction: t });
-      }
+  private async createAdmissionRecord(
+    data: CreateAdmissionRequest,
+    patientId: number,
+    userId: number,
+    registeredStatusId: number,
+    t: Transaction,
+  ): Promise<Admision> {
+    const today = new Date().toISOString().slice(0, 10);
+    const todayPrefix = today.replace(/-/g, "");
 
-      const eps = await Convenio.findByPk(data.epsId, { transaction: t });
-      if (!eps) throw ApiError.notFound("EPS no encontrada");
-
-      const today = new Date().toISOString().slice(0, 10);
-      const todayPrefix = today.replace(/-/g, "");
+    for (let attempt = 1; ; attempt++) {
       const todayCount = await Admision.count({
         where: { admissionDate: { [Op.startsWith]: today } },
         transaction: t,
       });
       const seq = String(todayCount + 1).padStart(4, "0");
       const admissionNumber = `ADM-${todayPrefix}-${seq}`;
-
-      const activeStatus = await TipoEstado.findOne({ where: { id: 1 }, transaction: t });
-      const statusId = activeStatus ? activeStatus.id : 1;
-
-      const admission = await Admision.create(
-        {
-          admissionNumber,
-          patientId,
-          admissionDate: today,
-          roomId: data.roomId,
-          epsId: data.epsId,
-          observations: data.observations || null,
-          statusId,
-          systemUserId: userId,
-        },
-        { transaction: t },
-      );
-
-      if (data.companion) {
-        await Acompanante.create(
+      try {
+        return await Admision.create(
           {
             admissionNumber,
-            firstName: data.companion.firstName,
-            lastName: data.companion.lastName,
-            documentTypeId: data.companion.documentTypeId,
-            document: data.companion.document,
-            address: data.companion.address,
-            relationshipId: data.companion.relationshipId,
-            phone: data.companion.phone,
+            patientId,
+            admissionDate: today,
+            roomId: data.roomId,
+            epsId: data.epsId,
+            observations: data.observations || null,
+            statusId: registeredStatusId,
+            systemUserId: userId,
           },
           { transaction: t },
         );
+      } catch (error) {
+        if (attempt < ADMISSION_NUMBER_ATTEMPTS && isUniqueConstraintError(error)) continue;
+        throw error;
       }
-
-      if (data.authorizations && data.authorizations.length > 0) {
-        const authData = data.authorizations.map((a) => ({
-          admissionNumber,
-          authTypeId: a.authTypeId,
-          authNumber: a.authNumber,
-          mapiissCode: a.mapiissCode,
-          quantity: a.quantity || 1,
-          systemUserId: userId,
-        }));
-        await Autorizacion.bulkCreate(authData, { transaction: t });
-      }
-
-      const admissionJson = admission.toJSON() as any;
-
-      this.notificationsService
-        .createAndDispatch(
-          "ADMISSION_CREATED",
-          "Nueva admisión registrada",
-          `Se registró la admisión ${admissionNumber} para paciente ${data.firstName || ""} ${data.lastName || ""}`,
-          userId,
-          userName,
-          userRole,
-          `/dashboard/admission`,
-          "Ver admisiones",
-        )
-        .catch(() => {});
-
-      return {
-        admissionNumber,
-        patient: { id: patientId, documentTypeId: data.documentTypeId, document: data.document },
-        admission: admissionJson,
-      };
-    });
+    }
   }
 
-  public async getCensus(): Promise<AdmissionCensusRow[]> {
-    const activeStatus = await TipoEstado.findOne({ where: { id: 1 } });
-    const statusId = activeStatus ? activeStatus.id : 1;
+  private async createCompanionIfPresent(
+    admissionNumber: string,
+    companion: CompanionData | undefined,
+    t: Transaction,
+  ): Promise<void> {
+    if (!companion) return;
+    await Acompanante.create(
+      {
+        admissionNumber,
+        firstName: companion.firstName,
+        lastName: companion.lastName,
+        documentTypeId: companion.documentTypeId,
+        document: companion.document,
+        address: companion.address,
+        relationshipId: companion.relationshipId,
+        phone: companion.phone,
+      },
+      { transaction: t },
+    );
+  }
+
+  private async createAuthorizationsIfPresent(
+    admissionNumber: string,
+    authorizations: AuthorizationData[] | undefined,
+    userId: number,
+    t: Transaction,
+  ): Promise<void> {
+    if (!authorizations || authorizations.length === 0) return;
+
+    const authData = authorizations.map((a) => ({
+      admissionNumber,
+      authTypeId: a.authTypeId,
+      authNumber: a.authNumber,
+      mapiissCode: a.mapiissCode,
+      quantity: a.quantity || 1,
+      systemUserId: userId,
+    }));
+    await Autorizacion.bulkCreate(authData, { transaction: t });
+  }
+
+  private toAdmissionResponse(admission: Admision): AdmissionResponse {
+    return admission.toJSON() as AdmissionResponse;
+  }
+
+  private notifyAdmissionCreated(
+    admissionNumber: string,
+    data: CreateAdmissionRequest,
+    userId: number,
+    userName: string,
+    userRole: string,
+  ): void {
+    this.notificationsService
+      .createAndDispatch({
+        type: "ADMISSION_CREATED",
+        title: "Nueva admisión registrada",
+        message: `Se registró la admisión ${admissionNumber} para paciente ${data.firstName || ""} ${data.lastName || ""}`,
+        actorId: userId,
+        actorName: userName,
+        actorRole: userRole,
+        actionUrl: "/dashboard/admission",
+        actionLabel: "Ver admisiones",
+      })
+      .catch(() => {});
+  }
+
+  public async getCensus(): Promise<CensusRowResponse[]> {
+    const dischargedStatus = await TipoEstado.findOne({ where: { description: ADMISSION_STATUS.DISCHARGED } });
+    const where = dischargedStatus ? { statusId: { [Op.notIn]: [dischargedStatus.id] } } : {};
 
     const admissions = await Admision.findAll({
-      where: { statusId },
+      where,
       include: [
         { association: "patient", include: [
           { association: "documentType", attributes: ["id", "code", "description"] },
@@ -279,15 +303,15 @@ export class AdmissionsService {
     });
 
     return admissions.map((adm) => {
-      const a = adm.toJSON() as any;
+      const json = adm.toJSON() as CensusRowResponse;
       return {
-        admissionNumber: a.admissionNumber,
-        patient: a.patient,
-        room: a.room,
-        eps: a.eps,
-        admissionDate: a.admissionDate,
-        observations: a.observations,
-        statusId: a.statusId,
+        admissionNumber: json.admissionNumber,
+        patient: json.patient,
+        room: json.room,
+        eps: json.eps,
+        admissionDate: json.admissionDate,
+        observations: json.observations,
+        statusId: json.statusId,
       };
     });
   }

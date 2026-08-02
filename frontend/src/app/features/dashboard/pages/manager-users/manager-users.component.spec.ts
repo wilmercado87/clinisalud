@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 import { ManagerUsersComponent } from './manager-users.component';
 
@@ -8,7 +9,8 @@ describe('ManagerUsersComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ManagerUsersComponent]
+      imports: [ManagerUsersComponent],
+      providers: [provideHttpClient()]
     })
     .compileComponents();
     

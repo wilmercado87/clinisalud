@@ -16,7 +16,7 @@
           <app-catalog-select
             catalogType="document-types"
             label="Tipo Documento"
-            [formControl]="$any(patientForm.controls)['documentTypeId']"
+            formControlName="documentTypeId"
             class="admission-form__field--small"
           />
           <mat-form-field appearance="outline" class="admission-form__field--medium">
@@ -106,7 +106,7 @@
           <app-catalog-select
             catalogType="genders"
             label="Género"
-            [formControl]="$any(patientForm.controls)['genderId']"
+            formControlName="genderId"
           />
           <mat-form-field appearance="outline">
             <mat-label>Edad</mat-label>
@@ -127,7 +127,7 @@
           <app-catalog-select
             catalogType="user-types"
             label="Tipo Usuario"
-            [formControl]="$any(patientForm.controls)['userTypeId']"
+            formControlName="userTypeId"
           />
           <mat-form-field appearance="outline">
             <mat-label>Dirección</mat-label>
@@ -191,7 +191,7 @@
           <app-catalog-select
             catalogType="document-types"
             label="Tipo Documento"
-            [formControl]="$any(companionForm.controls)['documentTypeId']"
+            formControlName="documentTypeId"
           />
           <mat-form-field appearance="outline">
             <mat-label>Documento</mat-label>
@@ -220,7 +220,7 @@
           <app-catalog-select
             catalogType="parentescos"
             label="Parentesco"
-            [formControl]="$any(companionForm.controls)['relationshipId']"
+            formControlName="relationshipId"
           />
           <mat-form-field appearance="outline">
             <mat-label>Teléfono</mat-label>
@@ -249,12 +249,12 @@
           <app-catalog-select
             catalogType="eps"
             label="EPS"
-            [formControl]="$any(admissionForm.controls)['epsId']"
+            formControlName="epsId"
           />
           <app-catalog-select
             catalogType="beds"
             label="Cama"
-            [formControl]="$any(admissionForm.controls)['roomId']"
+            formControlName="roomId"
           />
           <mat-form-field appearance="outline" class="admission-form__field--full">
             <mat-label>Observaciones</mat-label>
@@ -279,7 +279,7 @@
           Autorizaciones
           <mat-slide-toggle
             [checked]="showAuthorizations()"
-            (change)="showAuthorizations.set(!showAuthorizations())"
+            (change)="toggleAuthorizations($event.checked)"
             class="admission-form__toggle"
           >
             Agregar

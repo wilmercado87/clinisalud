@@ -8,8 +8,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
 
 import { NotificationStore } from '@core/stores/notification-store/notification.store';
-import { NotificationUI } from '@features/dashboard/models/notification.model';
-import { toNotificationUI } from '@shared/utils/mapper-utils';
+import { NotificationUI } from '@core/models/notification.model';
+import { toNotificationUI } from '@core/utils/notification.mapper';
 
 @Component({
   selector: 'app-notification-bell',

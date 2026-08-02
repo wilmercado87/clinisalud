@@ -2,11 +2,12 @@ import { Injectable, signal, inject, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of, tap } from 'rxjs';
-import { UserResponse } from '@core/models/user-manager.model';
-import { MenuOption, AuthResponse, LoginRequest } from '@core/models/auth.model';
+import { UserResponse, MenuOption } from '@core/models/user.model';
+import { AuthResponse, LoginRequest } from '@core/models/auth.model';
 import { AuthService } from '@core/services/auth.service';
 import { SocketService } from '@core/services/socket.service';
 import { RoleService } from '@core/services/roles.service';
+import { MenuService } from '@core/services/menu.service';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { RoleStore } from '@core/stores/role-store/role.store';
 import { UserStore } from '@features/dashboard/store/user-store/user.store';
@@ -25,6 +26,7 @@ export class AuthStore {
   private readonly socketService = inject(SocketService);
 
   private get roleService() { return this.injector.get(RoleService); }
+  private get menuService() { return this.injector.get(MenuService); }
   private get catalogStore() { return this.injector.get(CatalogStore); }
   private get roleStore() { return this.injector.get(RoleStore); }
   private get userStore() { return this.injector.get(UserStore); }
@@ -129,7 +131,7 @@ export class AuthStore {
 
     this.socketService.disconnect();
     this.roleService.clearCache();
-    this.roleService.clearMenuCache();
+    this.menuService.clearMenuCache();
     this.catalogStore.clearCache();
     this.clear();
     this.router.navigate(['/login']);

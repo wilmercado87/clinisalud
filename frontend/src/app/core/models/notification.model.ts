@@ -1,4 +1,22 @@
-import { NotificationResponse } from '@core/models/notification-dto.model';
+export interface NotificationResponse {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  actorId: number;
+  actorName: string;
+  actorRole: string;
+  actionUrl?: string | null;
+  actionLabel?: string | null;
+  createdAt: string;
+  isRead: boolean;
+  readAt: string | null;
+  recipientId: number;
+}
+
+export interface UnreadCountResponse {
+  count: number;
+}
 
 export interface NotificationUI extends NotificationResponse {
   timeAgo: string;

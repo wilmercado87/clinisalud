@@ -2,25 +2,25 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Observable, of, shareReplay, tap } from 'rxjs';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { CatalogService } from '@core/services/catalog.service';
-import { CatalogItem, MunicipioItem, ContratoItem, CamaItem, DiagnosticoItem, CupsItem } from '@core/models/catalog.model';
+import { CatalogSourceItem } from '@core/models/catalog.model';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogStore {
   private readonly catalogApi = inject(CatalogService);
 
-  private cache = new Map<string, CatalogItem[]>();
-  private observables = new Map<string, Observable<CatalogItem[]>>();
+  private cache = new Map<string, CatalogSourceItem[]>();
+  private observables = new Map<string, Observable<CatalogSourceItem[]>>();
 
-  getCatalog(type: string): CatalogItem[] {
+  getCatalog(type: string): CatalogSourceItem[] {
     return this.cache.get(type) ?? [];
   }
 
-  loadCatalog(type: string): Observable<CatalogItem[]> {
+  loadCatalog(type: string): Observable<CatalogSourceItem[]> {
     const cached = this.cache.get(type);
     if (cached) return of(cached);
 
     if (!this.observables.has(type)) {
-      const source: Observable<any[]> = type === 'beds'
+      const source: Observable<CatalogSourceItem[]> = type === 'beds'
         ? this.catalogApi.getBeds(0)
         : this.catalogApi.getCatalog(type);
       this.observables.set(
@@ -105,6 +105,11 @@ export class CatalogStore {
 
   loadContracts(epsId?: number): void {
     this.contractsTrigger.set({ epsId });
+  }
+
+  invalidateCatalog(type: string): void {
+    this.cache.delete(type);
+    this.observables.delete(type);
   }
 
   clearCache(): void {

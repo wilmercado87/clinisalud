@@ -11,12 +11,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { NotificationResponse } from '@core/models/notification-dto.model';
+import { NotificationResponse } from '@core/models/notification.model';
 import {
   NotificationUI,
   NotificationsListData,
   NotificationsListEvent,
-} from '@features/dashboard/models/notification.model';
+} from '@core/models/notification.model';
 import { createNotificationFilter } from '@shared/utils/notification-filter-utils';
 
 @Component({

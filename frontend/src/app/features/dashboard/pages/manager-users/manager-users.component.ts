@@ -15,7 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { UserStore } from '@features/dashboard/store/user-store/user.store';
-import { UserResponse } from '@core/models/user-manager.model';
+import { UserUI, toUserUI } from '@features/dashboard/utils/user.mapper';
 import { ROLE_CODES } from '@shared/utils/role-constants';
 import { PAGINATION } from '@shared/utils/pagination-constants';
 import { ApiError } from '@shared/utils/status.codes';
@@ -42,7 +42,7 @@ export class ManagerUsersComponent implements AfterViewInit {
   public readonly isLoadingUsers = this.userStore.isLoadingUsers;
   public readonly isToggling = this.userStore.isToggling;
 
-  public readonly usersTable = createTableUtils<UserResponse>(this.filterPredicate);
+  public readonly usersTable = createTableUtils<UserUI>(this.filterPredicate);
   public togglingUserId = signal<number | null>(null);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -53,7 +53,7 @@ export class ManagerUsersComponent implements AfterViewInit {
 
     effect(() => {
       const users = this.userStore.users();
-      if (users) this.usersTable.setData(users);
+      if (users) this.usersTable.setData(users.map(toUserUI));
     });
 
     effect(() => {
@@ -82,11 +82,11 @@ export class ManagerUsersComponent implements AfterViewInit {
     this.usersTable.connectPaginatorSort(this.paginator, this.sort);
   }
 
-  public isSuperAdmin(user: UserResponse): boolean {
-    return user.roleData?.code === ROLE_CODES.SUPER_ADMIN;
+  public isSuperAdmin(user: UserUI): boolean {
+    return user.roleCode === ROLE_CODES.SUPER_ADMIN;
   }
 
-  public toggleUserStatus(user: UserResponse): void {
+  public toggleUserStatus(user: UserUI): void {
     if (!this.isToggling()) {
       this.togglingUserId.set(user.id);
       this.userStore.toggleStatus(user.id);
@@ -99,21 +99,20 @@ export class ManagerUsersComponent implements AfterViewInit {
       .subscribe(result => result && this.userStore.loadUsers());
   }
 
-  public openPermissionsDialog(user: UserResponse): void {
+  public openPermissionsDialog(user: UserUI): void {
     this.userStore.resetUpdatePermissions();
-    this.dialog.open(PermissionsDialogComponent, { width: '600px', disableClose: true, data: { user } })
+    this.dialog.open(PermissionsDialogComponent, { width: '600px', disableClose: true, data: { user: user.source } })
       .afterClosed()
       .subscribe(result => result?.success && this.userStore.loadUsers());
   }
 
-  private filterPredicate(data: UserResponse, filter: string): boolean {
+  private filterPredicate(data: UserUI, filter: string): boolean {
     const searchTerms = [
-      data.firstName,
-      data.lastName,
+      data.fullName,
       data.dni,
       data.email,
-      data.roleData?.name,
-      data.isActive ? 'activo' : 'inactivo',
+      data.roleName,
+      data.isActiveLabel.toLowerCase(),
     ].join(' ').toLowerCase();
 
     return filter

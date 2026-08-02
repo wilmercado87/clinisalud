@@ -11,59 +11,64 @@ import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import { generateTempPassword } from "../../utils/Password.util";
 import { EmailService } from "../notifications/email.service";
 import { logError } from "../../utils/Logger";
+import { toSafeUserJson } from "../../utils/user.mapper";
+import { MenuOptionResponse } from "../users/users.types";
+import { ChangePasswordRequest, LoginResponse, UpdateProfileRequest } from "./auth.types";
 
 export class AuthService {
+  private readonly emailService = new EmailService();
 
-  public async forgotPassword(email: string) {
+  public async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await Usuario.findOne({ where: { email } });
-
     if (user) {
-      const tempPassword = generateTempPassword();
-      user.password = await bcrypt.hash(tempPassword, 10);
-      await user.save();
-
-      const emailService = new EmailService();
-      try {
-        await emailService.sendTemporaryPassword(email, `${user.firstName} ${user.lastName}`, tempPassword);
-      } catch (error: any) {
-        logError("No se pudo enviar la contraseña temporal recuperada", {
-          userId: user.id,
-          email,
-          error: error.message,
-        });
-      }
+      await this.resetPasswordAndNotify(user);
     }
-
     return { message: "Si el correo existe, recibirás una contraseña temporal para iniciar sesión" };
   }
 
-  public async login(email: string, pass: string) {
+  private async resetPasswordAndNotify(user: Usuario): Promise<void> {
+    const tempPassword = generateTempPassword();
+    user.password = await bcrypt.hash(tempPassword, 10);
+    await user.save();
+
+    try {
+      await this.emailService.sendTemporaryPassword(
+        user.email,
+        `${user.firstName} ${user.lastName}`,
+        tempPassword,
+      );
+    } catch (error) {
+      logError("No se pudo enviar la contraseña temporal recuperada", {
+        userId: user.id,
+        email: user.email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  public async login(email: string, pass: string): Promise<LoginResponse> {
     const user = await Usuario.findOne({
       where: { email },
       include: [{ model: Rol, as: "roleData" }],
     });
 
     if (!user) throw ApiError.unauthorized("Usuario no encontrado");
-    if (!await bcrypt.compare(pass, user.password)) throw ApiError.unauthorized("Credenciales inválidas");
+    if (!(await bcrypt.compare(pass, user.password))) throw ApiError.unauthorized("Credenciales inválidas");
     if (!user.isActive) throw ApiError.forbidden("Usuario inactivo");
 
-    const tokenPromise = Promise.resolve(this.generateToken(user));
     const [menu, token] = await Promise.all([
       this.getAuthorizedMenu(user.id, user.roleId),
-      tokenPromise,
+      this.generateToken(user),
     ]);
 
-    const userJson = user.toJSON();
-    delete userJson.password;
-
     return {
-      user: { ...userJson, role: user.roleData?.code },
+      user: { ...toSafeUserJson(user), role: user.roleData?.code },
       menu,
       token,
     };
   }
 
-  private async getAuthorizedMenu(userId: number, roleId: number) {
+  private async getAuthorizedMenu(userId: number, roleId: number): Promise<MenuOptionResponse[]> {
     const role = await Rol.findByPk(roleId);
     const isAdmin = role?.code === "ADMIN" || role?.code === "SUPER_ADMIN";
 
@@ -72,13 +77,13 @@ export class AuthService {
       SobreescrituraMenuUsuario.findAll({ where: { userId } }),
     ]);
 
-    const authorizedIds = new Set(rolePermissions.map(p => p.menuOptionId));
+    const authorizedIds = new Set(rolePermissions.map((p) => p.menuOptionId));
 
-    for (const ov of overrides) {
-      if (ov.hasAccess) {
-        authorizedIds.add(ov.menuOptionId);
+    for (const override of overrides) {
+      if (override.hasAccess) {
+        authorizedIds.add(override.menuOptionId);
       } else {
-        authorizedIds.delete(ov.menuOptionId);
+        authorizedIds.delete(override.menuOptionId);
       }
     }
 
@@ -100,64 +105,71 @@ export class AuthService {
     return buildMenuTree(Array.from(menuMap.values()));
   }
 
-  private buildOptionMap(options: OpcionMenu[]) {
-    const map = new Map<number, ReturnType<OpcionMenu['get']>>();
+  private buildOptionMap(options: OpcionMenu[]): Map<number, MenuOptionResponse> {
+    const map = new Map<number, MenuOptionResponse>();
     for (const opt of options) {
-      map.set(opt.id, opt.get({ plain: true }));
+      map.set(opt.id, opt.get({ plain: true }) as MenuOptionResponse);
     }
     return map;
   }
 
-  private async ensureParentHierarchy(map: Map<number, any>) {
+  private async ensureParentHierarchy(map: Map<number, MenuOptionResponse>): Promise<void> {
     const parentIdsMissing = Array.from(map.values())
-      .filter(opt => opt.parentId && !map.has(opt.parentId))
-      .map(opt => opt.parentId as number);
+      .filter((opt) => opt.parentId && !map.has(opt.parentId))
+      .map((opt) => opt.parentId as number);
 
     if (parentIdsMissing.length === 0) return;
 
     const missingParents = await OpcionMenu.findAll({ where: { id: parentIdsMissing } });
     for (const parent of missingParents) {
-      map.set(parent.id, parent.get({ plain: true }));
+      map.set(parent.id, parent.get({ plain: true }) as MenuOptionResponse);
     }
 
     await this.ensureParentHierarchy(map);
   }
 
-  public async updateProfile(userId: number, data: Partial<{ email: string; firstName: string; lastName: string; phone: string; address: string }>) {
+  public async updateProfile(userId: number, data: UpdateProfileRequest) {
     const user = await Usuario.findByPk(userId);
     if (!user) throw ApiError.notFound("Usuario no encontrado");
 
-    if (data.email !== undefined && data.email !== user.email) {
-      const existing = await Usuario.findOne({ where: { email: data.email } });
-      if (existing) throw ApiError.emailExists();
-    }
+    await this.assertEmailAvailable(data.email, user.email);
 
-    const allowedFields: (keyof typeof data)[] = ["email", "firstName", "lastName", "phone", "address"];
-    for (const field of allowedFields) {
-      if (data[field] !== undefined) {
-        (user as any)[field] = data[field];
-      }
-    }
-
+    this.applyProfileUpdates(user, data);
     await user.save();
-    const userJson = user.toJSON();
-    delete userJson.password;
-    return userJson;
+
+    return toSafeUserJson(user);
   }
 
-  public async changePassword(userId: number, currentPassword: string, newPassword: string) {
+  private async assertEmailAvailable(
+    newEmail: string | undefined,
+    currentEmail: string,
+  ): Promise<void> {
+    if (newEmail === undefined || newEmail === currentEmail) return;
+    const existing = await Usuario.findOne({ where: { email: newEmail } });
+    if (existing) throw ApiError.emailExists();
+  }
+
+  private applyProfileUpdates(user: Usuario, data: UpdateProfileRequest): void {
+    if (data.email !== undefined) user.email = data.email;
+    if (data.firstName !== undefined) user.firstName = data.firstName;
+    if (data.lastName !== undefined) user.lastName = data.lastName;
+    if (data.phone !== undefined) user.phone = data.phone;
+    if (data.address !== undefined) user.address = data.address;
+  }
+
+  public async changePassword(userId: number, data: ChangePasswordRequest) {
     const user = await Usuario.findByPk(userId);
     if (!user) throw ApiError.notFound("Usuario no encontrado");
 
-    if (!await bcrypt.compare(currentPassword, user.password)) {
+    if (!(await bcrypt.compare(data.currentPassword, user.password))) {
       throw ApiError.badRequest("La contraseña actual no es correcta");
     }
 
-    if (await bcrypt.compare(newPassword, user.password)) {
+    if (await bcrypt.compare(data.newPassword, user.password)) {
       throw ApiError.badRequest("La nueva contraseña debe ser diferente a la actual");
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password = await bcrypt.hash(data.newPassword, 10);
     await user.save();
 
     return { message: "Contraseña actualizada correctamente" };
@@ -167,7 +179,7 @@ export class AuthService {
     return jwt.sign(
       { id: user.id, role: user.roleData?.code, email: user.email },
       process.env["JWT_SECRET"] || "clinisalud_secret",
-      { expiresIn: JWT_CONFIG.EXPIRES_IN }
+      { expiresIn: JWT_CONFIG.EXPIRES_IN },
     );
   }
 }

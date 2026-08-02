@@ -7,14 +7,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { NotificationStore } from '@core/stores/notification-store/notification.store';
 import { ToastService } from '@core/services/toast.service';
-import { toNotificationUI } from '@shared/utils/mapper-utils';
+import { toNotificationUI } from '@core/utils/notification.mapper';
 import { PAGINATION } from '@shared/utils/pagination-constants';
 import { NotificationFilteredListComponent } from '@features/dashboard/components/notification-filtered-list/notification-filtered-list.component';
 import {
   NotificationsListData,
   NotificationsListEvent,
   NotificationUI,
-} from '@features/dashboard/models/notification.model';
+} from '@core/models/notification.model';
 
 @Component({
   selector: 'app-notifications',
