@@ -55,3 +55,16 @@ export const dischargeAdmission = async (req: AuthRequest, res: Response) => {
     return handleControllerError(error, res, "dischargeAdmission");
   }
 };
+
+export const updateAdmissionState = async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await admissionsService.updateAdmissionState(
+      req.params.admissionNumber,
+      req.body.state,
+      req.user!.id,
+    );
+    res.status(HTTP_STATUS.OK).json(result);
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "updateAdmissionState");
+  }
+};

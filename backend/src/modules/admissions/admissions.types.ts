@@ -92,6 +92,12 @@ export interface DischargeAdmissionResponse {
   dischargedAt: Date;
 }
 
+export interface AdmissionStateResponse {
+  admissionNumber: string;
+  statusId: number;
+  state: string;
+}
+
 export interface CensusRowResponse {
   admissionNumber: string;
   patient: {

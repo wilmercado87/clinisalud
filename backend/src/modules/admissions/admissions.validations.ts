@@ -1,5 +1,5 @@
 import { query, body, param } from "express-validator";
-import { ERROR_MESSAGES_ADMISION } from "../../constants";
+import { ADMISSION_STATUSES, ERROR_MESSAGES_ADMISION } from "../../constants";
 
 export const patientLookupValidation = [
   query("documentTypeId")
@@ -35,4 +35,13 @@ export const dischargeAdmissionValidation = [
   param("admissionNumber")
     .isLength({ min: 1, max: 50 })
     .withMessage(ERROR_MESSAGES_ADMISION.ADMISSION_NUMBER_REQUIRED),
+];
+
+export const updateAdmissionStateValidation = [
+  param("admissionNumber")
+    .isLength({ min: 1, max: 50 })
+    .withMessage(ERROR_MESSAGES_ADMISION.ADMISSION_NUMBER_REQUIRED),
+  body("state")
+    .isIn(ADMISSION_STATUSES)
+    .withMessage(ERROR_MESSAGES_ADMISION.ADMISSION_STATE_INVALID),
 ];

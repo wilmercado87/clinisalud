@@ -13,6 +13,7 @@ import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import {
   ADMISSION_ERROR_CODES,
   ADMISSION_NOTIFICATIONS,
+  ADMISSION_STATE_MACHINE,
   ADMISSION_STATUS,
   BED_STATUS,
   ERROR_MESSAGES_ADMISION,
@@ -29,6 +30,7 @@ import {
 } from "./admission.mapper";
 import {
   AuthorizationData,
+  AdmissionStateResponse,
   CensusRowResponse,
   CompanionData,
   CreateAdmissionRequest,
@@ -404,6 +406,44 @@ export class AdmissionsService {
         admission.dischargedAt ?? new Date(),
       );
     });
+  }
+
+  public async updateAdmissionState(
+    admissionNumber: string,
+    nextState: string,
+    userId: number,
+  ): Promise<AdmissionStateResponse> {
+    const admission = await Admision.findByPk(admissionNumber);
+    if (!admission) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.ADMISSION_NOT_FOUND);
+
+    const currentState = await this.getStatusDescription(admission.statusId);
+    if (currentState === nextState) {
+      throw ApiError.conflict(
+        formatMessage(ERROR_MESSAGES_ADMISION.ADMISSION_STATE_UNCHANGED, { state: nextState }),
+        ADMISSION_ERROR_CODES.ADMISSION_STATE_UNCHANGED,
+      );
+    }
+
+    const allowedTransitions = ADMISSION_STATE_MACHINE[currentState] ?? [];
+    if (!allowedTransitions.includes(nextState)) {
+      throw ApiError.conflict(
+        formatMessage(ERROR_MESSAGES_ADMISION.INVALID_STATE_TRANSITION, {
+          currentState,
+          nextState,
+        }),
+        ADMISSION_ERROR_CODES.INVALID_STATE_TRANSITION,
+      );
+    }
+
+    const nextStatusId = await this.getStatusIdByDescription(nextState);
+    await admission.update({ statusId: nextStatusId, systemUserId: userId });
+
+    return { admissionNumber, statusId: nextStatusId, state: nextState };
+  }
+
+  private async getStatusDescription(statusId: number): Promise<string> {
+    const status = await TipoEstado.findByPk(statusId);
+    return status?.description ?? "";
   }
 
   private async releaseBed(roomId: number, t: Transaction): Promise<void> {

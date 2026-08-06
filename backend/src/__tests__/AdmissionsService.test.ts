@@ -611,4 +611,59 @@ describe("AdmissionsService", () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe("updateAdmissionState", () => {
+    it("should move REGISTRADA to EN_ATENCION (INV-ADM state machine)", async () => {
+      const updateMock = jest.fn().mockResolvedValue(true);
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({
+        admissionNumber: "ADM-001",
+        statusId: 1,
+        update: updateMock,
+      } as any);
+      jest.spyOn(TipoEstado, "findByPk").mockResolvedValue({ id: 1, description: "REGISTRADA" } as any);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 2 } as any);
+
+      const result = await service.updateAdmissionState("ADM-001", "EN_ATENCION", 1);
+
+      expect(result.state).toBe("EN_ATENCION");
+      expect(result.statusId).toBe(2);
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ statusId: 2, systemUserId: 1 }),
+      );
+    });
+
+    it("should throw conflict on invalid transition", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({
+        admissionNumber: "ADM-001",
+        statusId: 1,
+        update: jest.fn(),
+      } as any);
+      jest.spyOn(TipoEstado, "findByPk").mockResolvedValue({ id: 1, description: "REGISTRADA" } as any);
+
+      await expect(
+        service.updateAdmissionState("ADM-001", "FACTURADA", 1),
+      ).rejects.toThrow("Transición de estado no permitida");
+    });
+
+    it("should throw conflict when state is unchanged", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({
+        admissionNumber: "ADM-001",
+        statusId: 1,
+        update: jest.fn(),
+      } as any);
+      jest.spyOn(TipoEstado, "findByPk").mockResolvedValue({ id: 1, description: "REGISTRADA" } as any);
+
+      await expect(
+        service.updateAdmissionState("ADM-001", "REGISTRADA", 1),
+      ).rejects.toThrow("ya se encuentra en el estado");
+    });
+
+    it("should throw notFound when admission does not exist", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue(null as any);
+
+      await expect(
+        service.updateAdmissionState("ADM-999", "EN_ATENCION", 1),
+      ).rejects.toThrow("Admisión no encontrada");
+    });
+  });
 });

@@ -6,6 +6,7 @@ import {
   patientLookupValidation,
   createAdmissionValidation,
   dischargeAdmissionValidation,
+  updateAdmissionStateValidation,
 } from "./admissions.validations";
 
 const router = Router();
@@ -36,6 +37,15 @@ router.post(
   requireRole("SUPER_ADMIN", "ADMIN", "ADMISIONES"),
   validateParams(dischargeAdmissionValidation),
   AdmissionsController.dischargeAdmission,
+);
+
+router.patch(
+  "/admissions/:admissionNumber/state",
+  authenticateToken,
+  requireRole("SUPER_ADMIN", "ADMIN", "ADMISIONES"),
+  validateParams(updateAdmissionStateValidation),
+  validateBody(updateAdmissionStateValidation),
+  AdmissionsController.updateAdmissionState,
 );
 
 export default router;
