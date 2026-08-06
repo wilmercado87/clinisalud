@@ -8,15 +8,28 @@ import TipoEstado from "../../models/TipoEstado";
 import Autorizacion from "../../models/Autorizacion";
 import Acompanante from "../../models/Acompanante";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
-import { ADMISSION_STATUS, PATIENT_STATUS } from "../../constants";
+import {
+  ADMISSION_ERROR_CODES,
+  ADMISSION_NOTIFICATIONS,
+  ADMISSION_STATUS,
+  ERROR_MESSAGES_ADMISION,
+  PATIENT_STATUS,
+} from "../../constants";
+import { formatMessage } from "../../utils/formatMessage";
 import { NotificationsService } from "../notifications/notifications.service";
 import {
-  AdmissionResponse,
+  toAdmissionResponse,
+  toCensusRowResponse,
+  toDischargeResponse,
+  toPatientLookupResponse,
+} from "./admission.mapper";
+import {
   AuthorizationData,
   CensusRowResponse,
   CompanionData,
   CreateAdmissionRequest,
   CreateAdmissionResponse,
+  DischargeAdmissionResponse,
   PatientLookupRequest,
   PatientLookupResponse,
 } from "./admissions.types";
@@ -47,19 +60,23 @@ export class AdmissionsService {
         { association: "userType", attributes: ["id", "name"] },
       ],
     });
-    if (!patient) throw ApiError.notFound("Paciente no encontrado");
+    if (!patient) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.PATIENT_NOT_FOUND);
 
     const latestAdmission = await Admision.findOne({
       where: { patientId: patient.id },
       order: [["admissionDate", "DESC"]],
     });
 
-    return this.toPatientLookupResponse(patient, latestAdmission?.epsId ?? null);
-  }
+    const dischargedStatusId = await this.getStatusIdByDescription(ADMISSION_STATUS.DISCHARGED);
+    const activeAdmission =
+      latestAdmission && latestAdmission.statusId !== dischargedStatusId
+        ? {
+            admissionNumber: latestAdmission.admissionNumber,
+            admissionDate: latestAdmission.admissionDate,
+          }
+        : null;
 
-  private toPatientLookupResponse(patient: Paciente, epsId: number | null): PatientLookupResponse {
-    const json = patient.toJSON() as PatientLookupResponse;
-    return { ...json, id: patient.id, epsId };
+    return toPatientLookupResponse(patient, latestAdmission?.epsId ?? null, activeAdmission);
   }
 
   public async createAdmission(
@@ -70,6 +87,7 @@ export class AdmissionsService {
   ): Promise<CreateAdmissionResponse> {
     return await sequelize.transaction(async (t: Transaction) => {
       const patientId = await this.ensurePatient(data, userId, t);
+      await this.assertNoActiveAdmission(patientId, t);
       await this.occupyBed(data.roomId, t);
       await this.assertEpsExists(data.epsId, t);
 
@@ -84,7 +102,7 @@ export class AdmissionsService {
       return {
         admissionNumber,
         patient: { id: patientId, documentTypeId: data.documentTypeId, document: data.document },
-        admission: this.toAdmissionResponse(admission),
+        admission: toAdmissionResponse(admission),
       };
     });
   }
@@ -103,15 +121,15 @@ export class AdmissionsService {
     userId: number,
     t: Transaction,
   ): Promise<number> {
-    if (!data.firstName) throw ApiError.badRequest("Nombre del paciente es requerido");
-    if (!data.lastName) throw ApiError.badRequest("Apellido del paciente es requerido");
+    if (!data.firstName) throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.FIRST_NAME_REQUIRED);
+    if (!data.lastName) throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.LAST_NAME_REQUIRED);
 
     const existingPatient = await Paciente.findOne({
       where: { documentTypeId: data.documentTypeId, document: data.document },
       transaction: t,
     });
     if (existingPatient) {
-      throw ApiError.conflict("Ya existe un paciente con ese tipo y número de documento");
+      throw ApiError.conflict(ERROR_MESSAGES_ADMISION.PATIENT_ALREADY_EXISTS);
     }
 
     const activeStatusId = await this.getStatusIdByDescription(PATIENT_STATUS.ACTIVE, t);
@@ -147,7 +165,7 @@ export class AdmissionsService {
       transaction: t,
     });
     if (!existingPatient) {
-      throw ApiError.notFound("Paciente no encontrado con los datos proporcionados");
+      throw ApiError.notFound(ERROR_MESSAGES_ADMISION.PATIENT_NOT_FOUND_WITH_DATA);
     }
 
     await existingPatient.update(
@@ -168,11 +186,33 @@ export class AdmissionsService {
     return existingPatient.id;
   }
 
+  private async assertNoActiveAdmission(patientId: number, t: Transaction): Promise<void> {
+    const dischargedStatusId = await this.getStatusIdByDescription(ADMISSION_STATUS.DISCHARGED, t);
+    const activeAdmission = await Admision.findOne({
+      where: {
+        patientId,
+        statusId: { [Op.not]: dischargedStatusId },
+      },
+      transaction: t,
+    });
+    if (activeAdmission) {
+      throw ApiError.conflict(
+        formatMessage(ERROR_MESSAGES_ADMISION.ACTIVE_ADMISSION_EXISTS, {
+          admissionNumber: activeAdmission.admissionNumber,
+        }),
+        ADMISSION_ERROR_CODES.ACTIVE_ADMISSION_EXISTS,
+      );
+    }
+  }
+
   private async occupyBed(roomId: number, t: Transaction): Promise<void> {
     const bed = await Cama.findByPk(roomId, { transaction: t });
-    if (!bed) throw ApiError.notFound("Cama no encontrada");
+    if (!bed) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.BED_NOT_FOUND);
     if (bed.bedStatus !== 0) {
-      throw ApiError.conflict("La cama seleccionada no está disponible");
+      throw ApiError.conflict(
+        ERROR_MESSAGES_ADMISION.BED_UNAVAILABLE,
+        ADMISSION_ERROR_CODES.BED_UNAVAILABLE,
+      );
     }
     bed.bedStatus = 1;
     await bed.save({ transaction: t });
@@ -180,7 +220,7 @@ export class AdmissionsService {
 
   private async assertEpsExists(epsId: number, t: Transaction): Promise<void> {
     const eps = await Convenio.findByPk(epsId, { transaction: t });
-    if (!eps) throw ApiError.notFound("EPS no encontrada");
+    if (!eps) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.EPS_NOT_FOUND);
   }
 
   private async createAdmissionRecord(
@@ -261,10 +301,6 @@ export class AdmissionsService {
     await Autorizacion.bulkCreate(authData, { transaction: t });
   }
 
-  private toAdmissionResponse(admission: Admision): AdmissionResponse {
-    return admission.toJSON() as AdmissionResponse;
-  }
-
   private notifyAdmissionCreated(
     admissionNumber: string,
     data: CreateAdmissionRequest,
@@ -272,16 +308,93 @@ export class AdmissionsService {
     userName: string,
     userRole: string,
   ): void {
+    const config = ADMISSION_NOTIFICATIONS.ADMISSION_CREATED;
     this.notificationsService
       .createAndDispatch({
-        type: "ADMISSION_CREATED",
-        title: "Nueva admisión registrada",
-        message: `Se registró la admisión ${admissionNumber} para paciente ${data.firstName || ""} ${data.lastName || ""}`,
+        type: config.type,
+        title: config.title,
+        message: formatMessage(config.messageTemplate, {
+          admissionNumber,
+          firstName: data.firstName || "",
+          lastName: data.lastName || "",
+        }),
         actorId: userId,
         actorName: userName,
         actorRole: userRole,
-        actionUrl: "/dashboard/admission",
-        actionLabel: "Ver admisiones",
+        actionUrl: config.actionUrl,
+        actionLabel: config.actionLabel,
+      })
+      .catch(() => {});
+  }
+
+  public async dischargeAdmission(
+    admissionNumber: string,
+    userId: number,
+    userName: string,
+    userRole: string,
+  ): Promise<DischargeAdmissionResponse> {
+    return await sequelize.transaction(async (t: Transaction) => {
+      const admission = await Admision.findByPk(admissionNumber, { transaction: t });
+      if (!admission) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.ADMISSION_NOT_FOUND);
+
+      const dischargedStatusId = await this.getStatusIdByDescription(ADMISSION_STATUS.DISCHARGED, t);
+      if (admission.statusId === dischargedStatusId) {
+        throw ApiError.conflict(
+          ERROR_MESSAGES_ADMISION.ADMISSION_ALREADY_DISCHARGED,
+          ADMISSION_ERROR_CODES.ADMISSION_ALREADY_DISCHARGED,
+        );
+      }
+
+      if (admission.roomId) {
+        await this.releaseBed(admission.roomId, t);
+      }
+
+      await admission.update(
+        { statusId: dischargedStatusId, systemUserId: userId },
+        { transaction: t },
+      );
+
+      this.notifyAdmissionDischarged(admissionNumber, userId, userName, userRole);
+
+      return toDischargeResponse(
+        admissionNumber,
+        dischargedStatusId,
+        admission.roomId ?? null,
+        new Date(),
+      );
+    });
+  }
+
+  private async releaseBed(roomId: number, t: Transaction): Promise<void> {
+    const bed = await Cama.findByPk(roomId, { transaction: t });
+    if (!bed) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.BED_NOT_FOUND);
+    if (bed.bedStatus !== 1) {
+      throw ApiError.conflict(
+        ERROR_MESSAGES_ADMISION.BED_NOT_OCCUPIED,
+        ADMISSION_ERROR_CODES.BED_NOT_OCCUPIED,
+      );
+    }
+    bed.bedStatus = 0;
+    await bed.save({ transaction: t });
+  }
+
+  private notifyAdmissionDischarged(
+    admissionNumber: string,
+    userId: number,
+    userName: string,
+    userRole: string,
+  ): void {
+    const config = ADMISSION_NOTIFICATIONS.ADMISSION_DISCHARGED;
+    this.notificationsService
+      .createAndDispatch({
+        type: config.type,
+        title: config.title,
+        message: formatMessage(config.messageTemplate, { admissionNumber }),
+        actorId: userId,
+        actorName: userName,
+        actorRole: userRole,
+        actionUrl: config.actionUrl,
+        actionLabel: config.actionLabel,
       })
       .catch(() => {});
   }
@@ -302,17 +415,6 @@ export class AdmissionsService {
       order: [["admissionDate", "DESC"]],
     });
 
-    return admissions.map((adm) => {
-      const json = adm.toJSON() as CensusRowResponse;
-      return {
-        admissionNumber: json.admissionNumber,
-        patient: json.patient,
-        room: json.room,
-        eps: json.eps,
-        admissionDate: json.admissionDate,
-        observations: json.observations,
-        statusId: json.statusId,
-      };
-    });
+    return admissions.map((adm) => toCensusRowResponse(adm));
   }
 }

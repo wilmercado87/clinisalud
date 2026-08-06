@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { AdmissionFormComponent } from './admission-form.component';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import { AdmissionStore } from '@features/admissions/store/admission.store';
@@ -75,6 +76,7 @@ describe('AdmissionFormComponent', () => {
     birthDate: '1990-01-01',
     genderId: 1,
     epsId: 3,
+    activeAdmission: null,
   };
 
   async function flushEffects(): Promise<void> {
@@ -97,6 +99,7 @@ describe('AdmissionFormComponent', () => {
       providers: [
         { provide: AdmissionStore, useValue: store },
         { provide: CatalogStore, useValue: catalogStore },
+        provideRouter([]),
       ],
     })
       .overrideComponent(AdmissionFormComponent, {
@@ -205,6 +208,27 @@ describe('AdmissionFormComponent', () => {
           document: '1020304050',
         }),
       );
+    });
+
+    it('blocks the submit when the patient already has an active admission', async () => {
+      component.patientForm.patchValue({ documentTypeId: 1, document: '1020304050' });
+      component.onSearchPatient();
+      store.isLookingUp.set(true);
+      store.isLookingUp.set(false);
+      store.patientFound.set({
+        ...patient,
+        activeAdmission: { admissionNumber: 'ADM-20260804-0001', admissionDate: '2026-08-04' },
+      });
+      await flushEffects();
+
+      component.admissionForm.patchValue({ roomId: 5, observations: 'Ingreso por urgencias' });
+      await flushEffects();
+
+      expect(component.activeAdmission()).not.toBeNull();
+      expect(component.canSubmit()).toBeFalse();
+
+      component.onSubmit();
+      expect(store.createAdmission).not.toHaveBeenCalled();
     });
   });
 

@@ -48,7 +48,7 @@ export const getBeds = async (req: Request, res: Response) => {
     const page = Math.max(1, Number(req.query.page) || 1);
     const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 10));
     const data = await catalogsService.getBeds(status, page, pageSize);
-    res.set("Cache-Control", `private, max-age=${CACHE_MAX_AGE}`);
+    res.set("Cache-Control", "no-store");
     res.json(data);
   } catch (error: any) {
     const statusCode = getHttpCode(error);

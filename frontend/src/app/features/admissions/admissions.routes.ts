@@ -8,4 +8,11 @@ export const admissionsRoutes: Routes = [
         m => m.AdmissionFormComponent,
       ),
   },
+  {
+    path: 'census',
+    loadComponent: () =>
+      import('@features/admissions/pages/census/census.component').then(
+        m => m.CensusComponent,
+      ),
+  },
 ];

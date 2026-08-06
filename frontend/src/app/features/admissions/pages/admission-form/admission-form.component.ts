@@ -1,6 +1,7 @@
 import { Component, inject, effect, computed, ChangeDetectionStrategy, signal, ViewChildren, QueryList, DestroyRef, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -77,6 +78,7 @@ export type FormFeedback = {
     MatDatepickerModule,
     MatNativeDateModule,
     CatalogSelectComponent,
+    RouterModule,
   ],
   templateUrl: './admission-form.component.html',
   styleUrl: './admission-form.component.scss',
@@ -102,6 +104,8 @@ export class AdmissionFormComponent {
   readonly isCreating = this.store.isCreating;
   readonly createResult = this.store.createResult;
   readonly createError = this.store.createError;
+
+  readonly activeAdmission = computed(() => this.store.patientFound()?.activeAdmission ?? null);
 
   readonly feedback = signal<FormFeedback | null>(null);
 
@@ -149,6 +153,7 @@ export class AdmissionFormComponent {
 
   readonly canSubmit = computed(() =>
     this.dataEnabled() &&
+    !this.activeAdmission() &&
     this.patientStatus() === 'VALID' &&
     this.companionStatus() === 'VALID' &&
     this.admissionStatus() === 'VALID' &&
@@ -237,6 +242,13 @@ export class AdmissionFormComponent {
     this.patientForm.patchValue(patientToFormValue(patient));
     this.admissionForm.patchValue({ epsId: patient.epsId ?? null });
     this.applyFormState();
+
+    if (patient.activeAdmission) {
+      this.setFeedback(
+        'error',
+        `El paciente ya tiene una admisión activa (${patient.activeAdmission.admissionNumber}). Debe egresarla para crear una nueva admisión`,
+      );
+    }
   }
 
   private watchCreateResult(): void {
@@ -288,6 +300,11 @@ export class AdmissionFormComponent {
   onSubmit(): void {
     if (!this.canSubmit()) {
       this.setFeedback('info', 'Complete los campos requeridos para registrar la admisión');
+      return;
+    }
+
+    if (this.activeAdmission()) {
+      this.setFeedback('info', 'El paciente ya tiene una admisión activa');
       return;
     }
 

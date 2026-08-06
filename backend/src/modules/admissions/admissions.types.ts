@@ -56,6 +56,10 @@ export interface PatientLookupResponse {
   birthDate: string;
   genderId: number;
   epsId: number | null;
+  activeAdmission: {
+    admissionNumber: string;
+    admissionDate: string;
+  } | null;
   documentType?: { id: number; code: string; description: string } | null;
   gender?: { id: number; description: string } | null;
   userType?: { id: number; name: string } | null;
@@ -79,6 +83,13 @@ export interface CreateAdmissionResponse {
   admissionNumber: string;
   patient: { id: number; documentTypeId: number; document: string };
   admission: AdmissionResponse;
+}
+
+export interface DischargeAdmissionResponse {
+  admissionNumber: string;
+  statusId: number;
+  roomId: number | null;
+  dischargedAt: Date;
 }
 
 export interface CensusRowResponse {

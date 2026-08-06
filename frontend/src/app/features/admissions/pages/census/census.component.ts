@@ -1,0 +1,139 @@
+import { Component, inject, ViewChild, effect, signal, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
+import { MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
+import { AdmissionStore } from '@features/admissions/store/admission.store';
+import { CensusRowResponse } from '@features/admissions/models/admissions.model';
+import { ToastService } from '@core/services/toast.service';
+import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
+import { PAGINATION } from '@shared/utils/pagination-constants';
+import { createTableUtils } from '@shared/utils/table-utils';
+import { getHttpErrorMessage } from '@shared/utils/http-error';
+import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+import {
+  CensusDischargeDialogComponent,
+  DischargeDialogResult,
+} from '@features/admissions/components/census-discharge-dialog/census-discharge-dialog.component';
+
+@Component({
+  selector: 'app-census',
+  imports: [
+    CommonModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatTableModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    EmptyStateComponent,
+  ],
+  templateUrl: './census.component.html',
+  styleUrl: './census.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class CensusComponent implements AfterViewInit {
+  private readonly store = inject(AdmissionStore);
+  private readonly catalogStore = inject(CatalogStore);
+  private readonly dialog = inject(MatDialog);
+  private readonly toast = inject(ToastService);
+
+  public readonly PAGE_SIZE_OPTIONS = PAGINATION.PAGE_SIZE_OPTIONS;
+  public readonly displayedColumns: string[] = [
+    'admissionNumber',
+    'patient',
+    'room',
+    'eps',
+    'admissionDate',
+    'actions',
+  ];
+
+  public readonly isLoadingCensus = this.store.isLoadingCensus;
+  public readonly isDischarging = this.store.isDischarging;
+  public dischargingAdmissionNumber = signal<string | null>(null);
+
+  public readonly censusTable = createTableUtils<CensusRowResponse>(this.filterPredicate);
+
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
+
+  constructor() {
+    this.store.reloadCensus();
+
+    effect(() => {
+      const census = this.store.census();
+      if (census) this.censusTable.setData(census);
+    });
+
+    effect(() => {
+      const result = this.store.dischargeResult();
+      if (result && 'admissionNumber' in result) {
+        this.toast.success(`Admisión ${result.admissionNumber} egresada correctamente`);
+        this.dischargingAdmissionNumber.set(null);
+        this.catalogStore.invalidateCatalog('beds');
+        this.store.reloadCensus();
+        this.store.clearDischargeResult();
+      }
+    });
+
+    effect(() => {
+      const err = this.store.dischargeError();
+      if (err) {
+        this.toast.error(getHttpErrorMessage(err, 'Error al egresar la admisión'));
+        this.dischargingAdmissionNumber.set(null);
+      }
+    });
+
+    effect(() => {
+      if (this.store.censusError()) {
+        this.toast.error('Error al cargar el censo hospitalario');
+      }
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.censusTable.connectPaginatorSort(this.paginator, this.sort);
+  }
+
+  public onDischarge(row: CensusRowResponse): void {
+    this.dialog
+      .open(CensusDischargeDialogComponent, {
+        width: '440px',
+        disableClose: true,
+        data: { row },
+      })
+      .afterClosed()
+      .subscribe((result: DischargeDialogResult | undefined) => {
+        if (!result?.confirmed) return;
+        this.dischargingAdmissionNumber.set(row.admissionNumber);
+        this.store.dischargeAdmission(result.admissionNumber);
+      });
+  }
+
+  private filterPredicate(data: CensusRowResponse, filter: string): boolean {
+    const searchTerms = [
+      data.admissionNumber,
+      data.patient?.firstName,
+      data.patient?.lastName,
+      data.patient?.document,
+      data.room?.bedCode,
+      data.eps?.epsName,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return searchTerms.includes(filter.trim().toLowerCase());
+  }
+}

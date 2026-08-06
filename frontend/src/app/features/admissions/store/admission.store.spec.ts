@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdmissionStore } from './admission.store';
-import { CreateAdmissionRequest, CreateAdmissionResponse, PatientLookupResponse } from '@features/admissions/models/admissions.model';
+import { CreateAdmissionRequest, CreateAdmissionResponse, DischargeAdmissionResponse, PatientLookupResponse } from '@features/admissions/models/admissions.model';
 
 async function flushResource(): Promise<void> {
   await TestBed.flushEffects();
@@ -31,6 +31,7 @@ describe('AdmissionStore', () => {
     birthDate: '1990-01-01',
     genderId: 1,
     epsId: 3,
+    activeAdmission: null,
   };
 
   beforeEach(async () => {
@@ -139,5 +140,41 @@ describe('AdmissionStore', () => {
     await flushResource();
 
     expect(store.census()).toEqual([]);
+  });
+
+  it('discharges an admission', async () => {
+    const result: DischargeAdmissionResponse = {
+      admissionNumber: '2026-000001',
+      statusId: 5,
+      roomId: null,
+      dischargedAt: '2026-08-04T12:00:00.000Z',
+    };
+
+    store.dischargeAdmission('2026-000001');
+    await flushResource();
+    const req = httpMock.expectOne(
+      (r) => r.url.endsWith('/admissions/2026-000001/discharge') && r.method === 'POST',
+    );
+    req.flush(result);
+    await flushResource();
+
+    expect(store.dischargeResult()).toEqual(result);
+    expect(store.dischargeError()).toBeUndefined();
+  });
+
+  it('exposes the discharge error on failure', async () => {
+    store.dischargeAdmission('2026-000001');
+    await flushResource();
+    const req = httpMock.expectOne(
+      (r) => r.url.endsWith('/admissions/2026-000001/discharge') && r.method === 'POST',
+    );
+    req.flush(
+      { message: 'La admisión ya fue egresada' },
+      { status: 409, statusText: 'Conflict' },
+    );
+    await flushResource();
+
+    expect(store.dischargeResult()).toBeUndefined();
+    expect((store.dischargeError() as HttpErrorResponse).status).toBe(409);
   });
 });

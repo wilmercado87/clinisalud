@@ -21,6 +21,12 @@
     font-size: 14px;
   }
 
+  &__census-btn {
+    mat-icon {
+      margin-right: 6px;
+    }
+  }
+
   &__card {
     margin-bottom: 20px;
 
@@ -101,6 +107,11 @@
       font-size: 18px;
       width: 18px;
       height: 18px;
+    }
+
+    &--error {
+      background: rgba(185, 28, 28, 0.1);
+      color: #b91c1c;
     }
   }
 

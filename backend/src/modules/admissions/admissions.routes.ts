@@ -1,8 +1,12 @@
 import { Router } from "express";
 import * as AdmissionsController from "./admissions.controller";
-import { authenticateToken } from "../../middlewares/AuthMiddleware";
-import { validateQuery, validateBody } from "../../middlewares/ValidationMiddleware";
-import { patientLookupValidation, createAdmissionValidation } from "./admissions.validations";
+import { authenticateToken, requireRole } from "../../middlewares/AuthMiddleware";
+import { validateQuery, validateBody, validateParams } from "../../middlewares/ValidationMiddleware";
+import {
+  patientLookupValidation,
+  createAdmissionValidation,
+  dischargeAdmissionValidation,
+} from "./admissions.validations";
 
 const router = Router();
 
@@ -24,6 +28,14 @@ router.get(
   "/admissions/census",
   authenticateToken,
   AdmissionsController.getCensus,
+);
+
+router.post(
+  "/admissions/:admissionNumber/discharge",
+  authenticateToken,
+  requireRole("SUPER_ADMIN", "ADMIN", "ADMISIONES"),
+  validateParams(dischargeAdmissionValidation),
+  AdmissionsController.dischargeAdmission,
 );
 
 export default router;

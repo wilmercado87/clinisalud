@@ -6,6 +6,7 @@ import {
   CensusRowResponse,
   CreateAdmissionRequest,
   CreateAdmissionResponse,
+  DischargeAdmissionResponse,
   PatientLookupRequest,
   PatientLookupResponse,
 } from '@features/admissions/models/admissions.model';
@@ -28,5 +29,12 @@ export class AdmissionsService {
 
   getCensus(): Observable<CensusRowResponse[]> {
     return this.http.get<CensusRowResponse[]>(`${this.apiUrl}/census`);
+  }
+
+  dischargeAdmission(admissionNumber: string): Observable<DischargeAdmissionResponse> {
+    return this.http.post<DischargeAdmissionResponse>(
+      `${this.apiUrl}/${admissionNumber}/discharge`,
+      {},
+    );
   }
 }

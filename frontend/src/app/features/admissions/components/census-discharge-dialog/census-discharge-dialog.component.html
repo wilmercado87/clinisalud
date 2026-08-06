@@ -1,0 +1,20 @@
+<div class="discharge-dialog">
+  <mat-dialog-content class="discharge-dialog__content">
+    <div class="discharge-dialog__icon">
+      <mat-icon>meeting_room</mat-icon>
+    </div>
+    <h2 class="discharge-dialog__title">Confirmar Egreso</h2>
+    <p class="discharge-dialog__message">
+      ¿Desea egresar la admisión
+      <strong>{{ row.admissionNumber }}</strong>?<br />
+      Se liberará la cama asignada y finalizará la hospitalización.
+    </p>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end" class="discharge-dialog__actions">
+    <button mat-stroked-button color="primary" (click)="cancel()">Cancelar</button>
+    <button mat-raised-button color="warn" (click)="confirm()">
+      <mat-icon>logout</mat-icon>
+      Egresar
+    </button>
+  </mat-dialog-actions>
+</div>

@@ -50,3 +50,17 @@ export const getCensus = async (req: Request, res: Response) => {
     return handleError(error, res, "getCensus");
   }
 };
+
+export const dischargeAdmission = async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await admissionsService.dischargeAdmission(
+      req.params.admissionNumber,
+      req.user!.id,
+      req.user!.email,
+      req.user!.role,
+    );
+    res.status(HTTP_STATUS.OK).json(result);
+  } catch (error: any) {
+    return handleError(error, res, "dischargeAdmission");
+  }
+};

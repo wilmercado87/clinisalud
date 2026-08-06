@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { getHttpCode } from "../../utils/StatusCodes";
-import { HTTP_STATUS } from "../../constants";
+import { ERROR_MESSAGES, HTTP_STATUS } from "../../constants";
 import { logInfo, logError } from "../../utils/Logger";
 import { AuthRequest } from "../../middlewares/AuthMiddleware";
 
@@ -12,7 +12,7 @@ export async function login(req: Request, res: Response) {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: "Email and password are required" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: ERROR_MESSAGES.EMAIL_PASSWORD_REQUIRED });
     }
 
     logInfo(`Login attempt for email: ${email}`);

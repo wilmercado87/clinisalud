@@ -118,7 +118,10 @@ export class UserFormDialogComponent {
     const items = this.menuOptions() ?? [];
     const roleId = this.roleIdSignal();
     const selectedRole = (this.roles() ?? []).find(r => r.id === roleId);
-    const hideGestor = selectedRole?.code === ROLE_CODES.MEDICO || selectedRole?.code === ROLE_CODES.FACTURADOR;
+    const hideGestor =
+      selectedRole?.code === ROLE_CODES.MEDICO ||
+      selectedRole?.code === ROLE_CODES.FACTURADOR ||
+      selectedRole?.code === ROLE_CODES.ADMISIONES;
     if (!hideGestor) return items;
     return items.filter(g => !isUserManagerGroup(g));
   });

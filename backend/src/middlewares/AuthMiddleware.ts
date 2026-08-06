@@ -32,7 +32,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
     }) as jwt.JwtPayload;
 
     if (!decoded.id || !decoded.role) {
-      throw ApiError.unauthorized("Token inválido");
+      throw ApiError.unauthorized(ERROR_MESSAGES.INVALID_TOKEN);
     }
 
     req.user = {
@@ -48,7 +48,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
     if (error instanceof jwt.TokenExpiredError) {
       return res.status(HTTP_STATUS.FORBIDDEN).json({
         success: false,
-        message: "Token expirado",
+        message: ERROR_MESSAGES.TOKEN_EXPIRED,
       });
     }
 

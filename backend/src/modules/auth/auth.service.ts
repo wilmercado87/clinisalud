@@ -6,7 +6,7 @@ import OpcionMenu from "../../models/OpcionMenu";
 import SobreescrituraMenuUsuario from "../../models/SobreescrituraMenuUsuario";
 import PermisoRolMenu from "../../models/PermisoRolMenu";
 import { buildMenuTree } from "../../utils/MenuTree.util";
-import { JWT_CONFIG } from "../../constants";
+import { ERROR_MESSAGES_AUTH, JWT_CONFIG } from "../../constants";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import { generateTempPassword } from "../../utils/Password.util";
 import { EmailService } from "../notifications/email.service";
@@ -23,7 +23,7 @@ export class AuthService {
     if (user) {
       await this.resetPasswordAndNotify(user);
     }
-    return { message: "Si el correo existe, recibirás una contraseña temporal para iniciar sesión" };
+    return { message: ERROR_MESSAGES_AUTH.FORGOT_PASSWORD_RESPONSE };
   }
 
   private async resetPasswordAndNotify(user: Usuario): Promise<void> {
@@ -52,9 +52,9 @@ export class AuthService {
       include: [{ model: Rol, as: "roleData" }],
     });
 
-    if (!user) throw ApiError.unauthorized("Usuario no encontrado");
-    if (!(await bcrypt.compare(pass, user.password))) throw ApiError.unauthorized("Credenciales inválidas");
-    if (!user.isActive) throw ApiError.forbidden("Usuario inactivo");
+    if (!user) throw ApiError.unauthorized(ERROR_MESSAGES_AUTH.USER_NOT_FOUND);
+    if (!(await bcrypt.compare(pass, user.password))) throw ApiError.unauthorized(ERROR_MESSAGES_AUTH.INVALID_PASSWORD);
+    if (!user.isActive) throw ApiError.forbidden(ERROR_MESSAGES_AUTH.USER_INACTIVE);
 
     const [menu, token] = await Promise.all([
       this.getAuthorizedMenu(user.id, user.roleId),
@@ -130,7 +130,7 @@ export class AuthService {
 
   public async updateProfile(userId: number, data: UpdateProfileRequest) {
     const user = await Usuario.findByPk(userId);
-    if (!user) throw ApiError.notFound("Usuario no encontrado");
+    if (!user) throw ApiError.notFound(ERROR_MESSAGES_AUTH.USER_NOT_FOUND);
 
     await this.assertEmailAvailable(data.email, user.email);
 
@@ -159,20 +159,20 @@ export class AuthService {
 
   public async changePassword(userId: number, data: ChangePasswordRequest) {
     const user = await Usuario.findByPk(userId);
-    if (!user) throw ApiError.notFound("Usuario no encontrado");
+    if (!user) throw ApiError.notFound(ERROR_MESSAGES_AUTH.USER_NOT_FOUND);
 
     if (!(await bcrypt.compare(data.currentPassword, user.password))) {
-      throw ApiError.badRequest("La contraseña actual no es correcta");
+      throw ApiError.badRequest(ERROR_MESSAGES_AUTH.CURRENT_PASSWORD_INCORRECT);
     }
 
     if (await bcrypt.compare(data.newPassword, user.password)) {
-      throw ApiError.badRequest("La nueva contraseña debe ser diferente a la actual");
+      throw ApiError.badRequest(ERROR_MESSAGES_AUTH.NEW_PASSWORD_MUST_DIFFER);
     }
 
     user.password = await bcrypt.hash(data.newPassword, 10);
     await user.save();
 
-    return { message: "Contraseña actualizada correctamente" };
+    return { message: ERROR_MESSAGES_AUTH.PASSWORD_UPDATED };
   }
 
   private generateToken(user: Usuario): string {

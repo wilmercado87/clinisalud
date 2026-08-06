@@ -80,6 +80,7 @@ async function seedSystemRoles() {
   const rolesData = [
     { code: "SUPER_ADMIN", name: "Super Administrador" },
     { code: "ADMIN", name: "Administrador Sistema" },
+    { code: "ADMISIONES", name: "Personal de Admisiones" },
     { code: "MEDICO", name: "Personal Médico" },
     { code: "FACTURADOR", name: "Personal de Facturación" }
   ];
@@ -139,17 +140,16 @@ async function assignAllRolePermissions(rolesMap: Record<string, Rol>) {
       where: { roleId: rolesMap["ADMIN"].id, menuOptionId: opt.id },
     });
 
-    // MEDICO and FACTURADOR get all EXCEPT Gestor Usuarios
+    // ADMISIONES, MEDICO and FACTURADOR get all EXCEPT Gestor Usuarios
     if (!isGestorUsuarios) {
-      await PermisoRolMenu.findOrCreate({
-        where: { roleId: rolesMap["MEDICO"].id, menuOptionId: opt.id },
-      });
-      await PermisoRolMenu.findOrCreate({
-        where: { roleId: rolesMap["FACTURADOR"].id, menuOptionId: opt.id },
-      });
+      for (const code of ["ADMISIONES", "MEDICO", "FACTURADOR"]) {
+        await PermisoRolMenu.findOrCreate({
+          where: { roleId: rolesMap[code].id, menuOptionId: opt.id },
+        });
+      }
     }
   }
-  console.log(`✅ Matriz de permisos inicializada (SUPER_ADMIN/ADMIN total, MEDICO/FACTURADOR operativo).`);
+  console.log(`✅ Matriz de permisos inicializada (SUPER_ADMIN/ADMIN total, ADMISIONES/MEDICO/FACTURADOR operativo).`);
 }
 
 async function deployInitialSuperAdmin(superAdminRoleId: number) {

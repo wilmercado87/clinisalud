@@ -6,7 +6,13 @@ import OpcionMenu from "../../models/OpcionMenu";
 import SobreescrituraMenuUsuario from "../../models/SobreescrituraMenuUsuario";
 import PermisoRolMenu from "../../models/PermisoRolMenu";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
-import { ERROR_MESSAGES } from "../../constants";
+import {
+  ERROR_MESSAGES,
+  ERROR_MESSAGES_USERS,
+  USER_NOTIFICATIONS,
+  USER_STATUS_ACTIONS,
+} from "../../constants";
+import { formatMessage } from "../../utils/formatMessage";
 import TipoDocumento from "../../models/TipoDocumento";
 import { buildMenuTree } from "../../utils/MenuTree.util";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -212,16 +218,23 @@ export class UsersService {
     requestingUserId: number,
     requestingUserName: string,
   ): void {
+    const config = USER_NOTIFICATIONS.USER_CREATED;
     this.notificationsService
       .createAndDispatch({
-        type: "USER_CREATED",
-        title: "Nuevo usuario registrado",
-        message: `${requestingUserName} (${requestingUserRole}) creó al usuario ${data.firstName} ${data.lastName} (${targetRoleName ?? "Sin rol"})`,
+        type: config.type,
+        title: config.title,
+        message: formatMessage(config.messageTemplate, {
+          actorName: requestingUserName,
+          actorRole: requestingUserRole,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          roleName: targetRoleName ?? ERROR_MESSAGES_USERS.NO_ROLE,
+        }),
         actorId: requestingUserId,
         actorName: requestingUserName,
         actorRole: requestingUserRole,
-        actionUrl: "/dashboard/users",
-        actionLabel: "Ver usuarios",
+        actionUrl: config.actionUrl,
+        actionLabel: config.actionLabel,
       })
       .catch(() => {});
   }
@@ -289,24 +302,33 @@ export class UsersService {
     user.isActive = !user.isActive;
     await user.save();
 
-    const action = user.isActive ? "activado" : "desactivado";
+    const action = user.isActive ? USER_STATUS_ACTIONS.ACTIVATED : USER_STATUS_ACTIONS.DEACTIVATED;
+    const config = USER_NOTIFICATIONS.USER_TOGGLED;
     this.notificationsService
       .createAndDispatch({
-        type: "USER_TOGGLED",
-        title: `Usuario ${action}`,
-        message: `${requestingUserName} (${requestingUserRole}) ${action} al usuario ${user.firstName} ${user.lastName}`,
+        type: config.type,
+        title: formatMessage(config.title, { action }),
+        message: formatMessage(config.messageTemplate, {
+          actorName: requestingUserName,
+          actorRole: requestingUserRole,
+          action,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        }),
         actorId: requestingUserId,
         actorName: requestingUserName,
         actorRole: requestingUserRole,
-        actionUrl: "/dashboard/users",
-        actionLabel: "Ver usuarios",
+        actionUrl: config.actionUrl,
+        actionLabel: config.actionLabel,
       })
       .catch(() => {});
 
     return {
       id: user.id,
       isActive: user.isActive,
-      message: `Usuario ${user.isActive ? "activado" : "desactivado"} correctamente.`,
+      message: formatMessage(ERROR_MESSAGES_USERS.USER_STATUS_TOGGLED_MSG, {
+        statusLabel: action,
+      }),
     };
   }
 

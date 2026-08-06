@@ -4,6 +4,15 @@
       <h1 class="admission-form__title">Registro de Admisión</h1>
       <p class="admission-form__subtitle">Gestión de ingresos hospitalarios y censo.</p>
     </div>
+    <a
+      mat-stroked-button
+      color="primary"
+      class="admission-form__census-btn"
+      routerLink="/dashboard/admission/census"
+    >
+      <mat-icon>meeting_room</mat-icon>
+      Ver censo
+    </a>
   </header>
 
   <form [formGroup]="patientForm">
@@ -51,6 +60,13 @@
 
         @if (mode() === 'FOUND') {
           <div class="admission-form__badge">Paciente existente</div>
+          @if (activeAdmission()) {
+            <div class="admission-form__alert admission-form__alert--error">
+              <mat-icon>warning</mat-icon>
+              El paciente ya tiene una admisión activa
+              ({{ activeAdmission()!.admissionNumber }}). Debe egresarla antes de crear una nueva.
+            </div>
+          }
         } @else if (mode() === 'NOT_FOUND') {
           <div class="admission-form__badge admission-form__badge--new">Nuevo paciente</div>
           <div class="admission-form__alert">

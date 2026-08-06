@@ -65,11 +65,33 @@ describe("AdmissionsService", () => {
         id: 1,
         toJSON: () => ({ id: 1, firstName: "Juan" }),
       } as any);
-      jest.spyOn(Admision, "findOne").mockResolvedValue({ epsId: 7 } as any);
+      jest.spyOn(Admision, "findOne").mockResolvedValue({ epsId: 7, statusId: 7 } as any);
 
       const result = await service.lookupPatient({ documentTypeId: 1, document: "12345" });
 
       expect(result).toHaveProperty("epsId", 7);
+      expect(result).toHaveProperty("activeAdmission", null);
+    });
+
+    it("should include activeAdmission when latest admission is not discharged", async () => {
+      jest.spyOn(Paciente, "findOne").mockResolvedValue({
+        id: 1,
+        toJSON: () => ({ id: 1, firstName: "Juan" }),
+      } as any);
+      jest.spyOn(Admision, "findOne").mockResolvedValue({
+        admissionNumber: "ADM-20260804-0001",
+        admissionDate: "2026-08-04",
+        epsId: 7,
+        statusId: 3,
+      } as any);
+
+      const result = await service.lookupPatient({ documentTypeId: 1, document: "12345" });
+
+      expect(result).toHaveProperty("activeAdmission");
+      expect(result!.activeAdmission).toEqual({
+        admissionNumber: "ADM-20260804-0001",
+        admissionDate: "2026-08-04",
+      });
     });
 
     it("should include related associations", async () => {
@@ -103,6 +125,10 @@ describe("AdmissionsService", () => {
       epsId: 1,
       roomId: 1,
     };
+
+    beforeEach(() => {
+      jest.spyOn(Admision, "findOne").mockResolvedValue(null as any);
+    });
 
     it("should create admission for new patient (INV-ADM-01)", async () => {
       const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
@@ -425,6 +451,125 @@ describe("AdmissionsService", () => {
 
       expect(result.admissionNumber).toBe(`ADM-${todayPrefix}-0002`);
       expect(Admision.create).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("should throw conflict when patient already has an active admission", async () => {
+      const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+      jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+
+      jest.spyOn(Paciente, "findOne").mockResolvedValue({
+        id: 1,
+        update: jest.fn().mockResolvedValue(true),
+        toJSON: () => ({ id: 1 }),
+      } as any);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 7 } as any);
+      jest.spyOn(Admision, "findOne").mockResolvedValue({
+        admissionNumber: "ADM-20260804-0001",
+        statusId: 3,
+      } as any);
+
+      await expect(
+        service.createAdmission(
+          { isNewPatient: false, documentTypeId: 1, document: "12345", epsId: 1, roomId: 2 },
+          1,
+          "admin@test.com",
+          "ADMISIONES",
+        ),
+      ).rejects.toThrow("admisión activa");
+    });
+
+  describe("dischargeAdmission", () => {
+    const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+
+    beforeEach(() => {
+      jest
+        .spyOn(sequelize, "transaction")
+        .mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+    });
+
+    it("should discharge admission and release the bed (INV-ADM-01)", async () => {
+      const bedSave = jest.fn().mockResolvedValue(true);
+      const updateSpy = jest.fn().mockResolvedValue(true);
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({
+        admissionNumber: "ADM-001",
+        roomId: 1,
+        statusId: 2,
+        update: updateSpy,
+      } as any);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue({
+        roomId: 1,
+        bedStatus: 1,
+        save: bedSave,
+      } as any);
+
+      const result = await service.dischargeAdmission("ADM-001", 1, "admin@test.com", "ADMISIONES");
+
+      expect(result.admissionNumber).toBe("ADM-001");
+      expect(result.statusId).toBe(5);
+      expect(result.roomId).toBe(1);
+      expect(bedSave).toHaveBeenCalled();
+      expect(updateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ statusId: 5, systemUserId: 1 }),
+        expect.any(Object),
+      );
+    });
+
+    it("should throw notFound when admission does not exist", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue(null as any);
+
+      await expect(
+        service.dischargeAdmission("ADM-999", 1, "admin@test.com", "ADMISIONES"),
+      ).rejects.toThrow("Admisión no encontrada");
+    });
+
+    it("should throw conflict when admission is already discharged", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({
+        admissionNumber: "ADM-001",
+        roomId: 1,
+        statusId: 5,
+        update: jest.fn(),
+      } as any);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+
+      await expect(
+        service.dischargeAdmission("ADM-001", 1, "admin@test.com", "ADMISIONES"),
+      ).rejects.toThrow("ya fue egresada");
+    });
+
+    it("should throw conflict when bed is not occupied", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({
+        admissionNumber: "ADM-001",
+        roomId: 1,
+        statusId: 2,
+        update: jest.fn(),
+      } as any);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue({
+        roomId: 1,
+        bedStatus: 0,
+        save: jest.fn(),
+      } as any);
+
+      await expect(
+        service.dischargeAdmission("ADM-001", 1, "admin@test.com", "ADMISIONES"),
+      ).rejects.toThrow("no se encuentra ocupada");
+    });
+
+    it("should throw notFound when bed does not exist", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({
+        admissionNumber: "ADM-001",
+        roomId: 99,
+        statusId: 2,
+        update: jest.fn(),
+      } as any);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue(null as any);
+
+      await expect(
+        service.dischargeAdmission("ADM-001", 1, "admin@test.com", "ADMISIONES"),
+      ).rejects.toThrow("Cama no encontrada");
     });
   });
 

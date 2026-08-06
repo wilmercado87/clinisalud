@@ -1,0 +1,42 @@
+.discharge-dialog {
+  &__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2.5rem 2.5rem 0.5rem;
+    text-align: center;
+  }
+
+  &__icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: rgb(var(--color-error-rgb) / 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+      color: rgb(var(--color-error-rgb));
+      font-size: 2rem;
+      width: 2rem;
+      height: 2rem;
+    }
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  &__message {
+    margin: 0;
+    color: var(--mat-body-medium-color);
+  }
+
+  &__actions {
+    padding: 1rem 1.5rem 1.5rem;
+  }
+}

@@ -33,9 +33,10 @@ export class CatalogService {
     return this.http.get<ContratoResponse[]>(`${this.apiUrl}/contracts`, { params });
   }
 
-  getBeds(bedStatus?: number): Observable<BedsPageResponse> {
+  getBeds(bedStatus?: number, pageSize?: number): Observable<BedsPageResponse> {
     let params = new HttpParams();
     if (bedStatus !== undefined) params = params.set('status', bedStatus);
+    if (pageSize !== undefined) params = params.set('pageSize', pageSize);
     return this.http.get<BedsPageResponse>(`${this.apiUrl}/beds`, { params });
   }
 

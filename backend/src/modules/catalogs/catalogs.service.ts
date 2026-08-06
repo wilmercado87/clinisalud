@@ -19,6 +19,8 @@ import Cama from "../../models/Cama";
 import Diagnostico from "../../models/Diagnostico";
 import Cups from "../../models/Cups";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
+import { ERROR_MESSAGES_CATALOGS } from "../../constants";
+import { formatMessage } from "../../utils/formatMessage";
 import { BedsPageResponse, CatalogItemResponse } from "./catalogs.types";
 
 interface CatalogDef {
@@ -47,7 +49,9 @@ export class CatalogsService {
   async findByType(type: string): Promise<CatalogItemResponse[]> {
     const catalog = STATIC_CATALOGS[type];
     if (!catalog) {
-      throw ApiError.notFound(`Catálogo no encontrado: ${type}`);
+      throw ApiError.notFound(
+        formatMessage(ERROR_MESSAGES_CATALOGS.CATALOG_NOT_FOUND, { type }),
+      );
     }
     return (await catalog.model.findAll({ order: catalog.order })).map(
       (row) => row.toJSON() as CatalogItemResponse,

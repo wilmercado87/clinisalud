@@ -44,6 +44,20 @@ export class AdmissionStore {
   readonly isLoadingCensus = this.censusResource.isLoading;
   readonly censusError = this.censusResource.error;
 
+  private readonly dischargeTrigger = signal<string | null>(null);
+
+  private readonly dischargeResource = rxResource({
+    request: () => this.dischargeTrigger(),
+    loader: ({ request }) => {
+      if (!request) return of(null);
+      return this.api.dischargeAdmission(request);
+    },
+  });
+
+  readonly dischargeResult = this.dischargeResource.value.asReadonly();
+  readonly isDischarging = this.dischargeResource.isLoading;
+  readonly dischargeError = this.dischargeResource.error;
+
   lookupPatient(documentTypeId: number, document: string): void {
     this.lookupTrigger.set({ documentTypeId, document });
   }
@@ -58,5 +72,13 @@ export class AdmissionStore {
 
   reloadCensus(): void {
     this.censusResource.reload();
+  }
+
+  dischargeAdmission(admissionNumber: string): void {
+    this.dischargeTrigger.set(admissionNumber);
+  }
+
+  clearDischargeResult(): void {
+    this.dischargeTrigger.set(null);
   }
 }

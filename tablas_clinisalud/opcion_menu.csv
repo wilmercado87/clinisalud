@@ -2,8 +2,9 @@ ID;LABEL;ICONO;RUTA;ORDEN;ID_PADRE;ACTIVO
 1;Panel Principal;grid_view;;1;;true
 2;Triage;emergency;/dashboard/triage;2;1;true
 3;Admision;person_add;/dashboard/admission;3;1;true
-4;Autorizaciones;verified;/dashboard/authorizations;4;1;true
-5;Facturacion Rips;receipt_long;/dashboard/billing;5;1;true
-6;Citas;event;/dashboard/appointments;6;1;true
-7;Historia Clinica;description;/dashboard/history;7;1;true
-8;Gestor Usuarios;manage_accounts;/dashboard/users;8;;true
+4;Censo;meeting_room;/dashboard/admission/census;4;1;true
+5;Autorizaciones;verified;/dashboard/authorizations;5;1;true
+6;Facturacion Rips;receipt_long;/dashboard/billing;6;1;true
+7;Citas;event;/dashboard/appointments;7;1;true
+8;Historia Clinica;description;/dashboard/history;8;1;true
+9;Gestor Usuarios;manage_accounts;/dashboard/users;9;;true
