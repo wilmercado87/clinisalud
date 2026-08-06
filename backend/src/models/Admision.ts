@@ -16,6 +16,7 @@ class Admision extends Model {
   public observations!: string | null;
   public statusId!: number;
   public systemUserId!: number;
+  public dischargedAt!: Date | null;
 
   public patient?: Paciente;
   public room?: Cama;
@@ -71,6 +72,11 @@ Admision.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "ID_USUARIO",
+    },
+    dischargedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "FECHA_EGRESO",
     },
   },
   {

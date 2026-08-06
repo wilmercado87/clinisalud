@@ -13,8 +13,14 @@ export class NotificationStore {
 
   private readonly fetchParams = signal<{ limit: number; offset: number }>({ limit: 5, offset: 0 });
 
+  private readonly reloadParams = computed(() => ({
+    limit: this.fetchParams().limit,
+    offset: this.fetchParams().offset,
+    refreshKey: this.refreshCounter(),
+  }));
+
   private readonly notificationsResource = rxResource({
-    request: () => this.fetchParams(),
+    request: () => this.reloadParams(),
     loader: ({ request }) =>
       this.notificationService.getNotifications(request.limit, request.offset),
   });
@@ -61,6 +67,7 @@ export class NotificationStore {
     effect(() => {
       if (this.socketService.onNotification()) {
         this.refreshCounter.update(n => n + 1);
+        this.loadUnreadCount();
       }
     });
   }
@@ -79,5 +86,12 @@ export class NotificationStore {
 
   markAllAsRead(): void {
     this.markAllTrigger.update(n => n + 1);
+  }
+
+  reset(): void {
+    this.fetchParams.set({ limit: 5, offset: 0 });
+    this.refreshCounter.set(0);
+    this.markReadTrigger.set(null);
+    this.markAllTrigger.set(0);
   }
 }

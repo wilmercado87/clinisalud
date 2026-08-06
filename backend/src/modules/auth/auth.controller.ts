@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { AuthService } from "./auth.service";
-import { getHttpCode } from "../../utils/StatusCodes";
 import { ERROR_MESSAGES, HTTP_STATUS } from "../../constants";
 import { logInfo, logError } from "../../utils/Logger";
 import { AuthRequest } from "../../middlewares/AuthMiddleware";
+import { handleControllerError } from "../../utils/controllerError";
 
 const authService = new AuthService();
 
@@ -37,11 +37,9 @@ export async function login(req: Request, res: Response) {
       },
       menu,
     });
-  } catch (error: any) {
-    logError(`Login failed for email: ${req.body.email}`, { error: error.message });
-    const statusCode = getHttpCode(error);
-    const message = error.message;
-    return res.status(statusCode).json({ message, ...(error.code && { code: error.code }) });
+  } catch (error: unknown) {
+    logError(`Login failed for email: ${req.body.email}`, { error: error instanceof Error ? error.message : error });
+    return handleControllerError(error, res, "login");
   }
 }
 
@@ -52,11 +50,9 @@ export async function updateProfile(req: AuthRequest, res: Response) {
     const result = await authService.updateProfile(userId, { email, firstName, lastName, phone, address });
     logInfo(`Profile updated for user ID: ${userId}`);
     return res.status(HTTP_STATUS.OK).json(result);
-  } catch (error: any) {
-    logError(`Profile update failed`, { error: error.message });
-    const statusCode = getHttpCode(error);
-    const message = error.message;
-    return res.status(statusCode).json({ message, ...(error.code && { code: error.code }) });
+  } catch (error: unknown) {
+    logError(`Profile update failed`, { error: error instanceof Error ? error.message : error });
+    return handleControllerError(error, res, "updateProfile");
   }
 }
 
@@ -65,11 +61,9 @@ export async function forgotPassword(req: Request, res: Response) {
     const { email } = req.body;
     const result = await authService.forgotPassword(email);
     return res.status(HTTP_STATUS.OK).json(result);
-  } catch (error: any) {
-    logError(`Password recovery failed for email: ${req.body.email}`, { error: error.message });
-    const statusCode = getHttpCode(error);
-    const message = error.message;
-    return res.status(statusCode).json({ message, ...(error.code && { code: error.code }) });
+  } catch (error: unknown) {
+    logError(`Password recovery failed for email: ${req.body.email}`, { error: error instanceof Error ? error.message : error });
+    return handleControllerError(error, res, "forgotPassword");
   }
 }
 
@@ -80,10 +74,8 @@ export async function changePassword(req: AuthRequest, res: Response) {
     const result = await authService.changePassword(userId, { currentPassword, newPassword });
     logInfo(`Password changed for user ID: ${userId}`);
     return res.status(HTTP_STATUS.OK).json(result);
-  } catch (error: any) {
-    logError(`Password change failed`, { error: error.message });
-    const statusCode = getHttpCode(error);
-    const message = error.message;
-    return res.status(statusCode).json({ message, ...(error.code && { code: error.code }) });
+  } catch (error: unknown) {
+    logError(`Password change failed`, { error: error instanceof Error ? error.message : error });
+    return handleControllerError(error, res, "changePassword");
   }
 }

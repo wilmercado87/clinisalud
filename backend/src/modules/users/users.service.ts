@@ -13,6 +13,7 @@ import {
   USER_STATUS_ACTIONS,
 } from "../../constants";
 import { formatMessage } from "../../utils/formatMessage";
+import { dispatchNotification } from "../../utils/notify";
 import TipoDocumento from "../../models/TipoDocumento";
 import { buildMenuTree } from "../../utils/MenuTree.util";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -219,24 +220,18 @@ export class UsersService {
     requestingUserName: string,
   ): void {
     const config = USER_NOTIFICATIONS.USER_CREATED;
-    this.notificationsService
-      .createAndDispatch({
-        type: config.type,
-        title: config.title,
-        message: formatMessage(config.messageTemplate, {
-          actorName: requestingUserName,
-          actorRole: requestingUserRole,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          roleName: targetRoleName ?? ERROR_MESSAGES_USERS.NO_ROLE,
-        }),
-        actorId: requestingUserId,
+    dispatchNotification(
+      this.notificationsService,
+      config,
+      { id: requestingUserId, name: requestingUserName, role: requestingUserRole },
+      {
         actorName: requestingUserName,
         actorRole: requestingUserRole,
-        actionUrl: config.actionUrl,
-        actionLabel: config.actionLabel,
-      })
-      .catch(() => {});
+        firstName: data.firstName,
+        lastName: data.lastName,
+        roleName: targetRoleName ?? ERROR_MESSAGES_USERS.NO_ROLE,
+      },
+    );
   }
 
   private async sendWelcomeEmailWithLog(
@@ -304,24 +299,19 @@ export class UsersService {
 
     const action = user.isActive ? USER_STATUS_ACTIONS.ACTIVATED : USER_STATUS_ACTIONS.DEACTIVATED;
     const config = USER_NOTIFICATIONS.USER_TOGGLED;
-    this.notificationsService
-      .createAndDispatch({
-        type: config.type,
-        title: formatMessage(config.title, { action }),
-        message: formatMessage(config.messageTemplate, {
-          actorName: requestingUserName,
-          actorRole: requestingUserRole,
-          action,
-          firstName: user.firstName,
-          lastName: user.lastName,
-        }),
-        actorId: requestingUserId,
+    dispatchNotification(
+      this.notificationsService,
+      config,
+      { id: requestingUserId, name: requestingUserName, role: requestingUserRole },
+      {
         actorName: requestingUserName,
         actorRole: requestingUserRole,
-        actionUrl: config.actionUrl,
-        actionLabel: config.actionLabel,
-      })
-      .catch(() => {});
+        action,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      { action },
+    );
 
     return {
       id: user.id,

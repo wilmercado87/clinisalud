@@ -1,6 +1,6 @@
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { Request, Response } from 'express';
+import { ERROR_MESSAGES } from '../constants';
 
 export const securityMiddleware = helmet({
   contentSecurityPolicy: {
@@ -19,7 +19,7 @@ export const generalLimiter = rateLimit({
   max: 100,
   message: {
     success: false,
-    message: 'Demasiadas solicitudes, intente más tarde',
+    message: ERROR_MESSAGES.RATE_LIMIT_TOO_MANY,
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -31,18 +31,7 @@ export const authLimiter = rateLimit({
   skipSuccessfulRequests: true,
   message: {
     success: false,
-    message: 'Demasiados intentos de login, intente en 15 minutos',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-export const apiLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000,
-  max: 30,
-  message: {
-    success: false,
-    message: 'Límite de solicitudes excedido',
+    message: ERROR_MESSAGES.RATE_LIMIT_LOGIN,
   },
   standardHeaders: true,
   legacyHeaders: false,

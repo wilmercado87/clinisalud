@@ -16,6 +16,8 @@ import Admision from "../models/Admision";
 import TipoEstado from "../models/TipoEstado";
 import Autorizacion from "../models/Autorizacion";
 import Acompanante from "../models/Acompanante";
+import TipoAutorizacion from "../models/TipoAutorizacion";
+import Cups from "../models/Cups";
 
 const expectedAdmissionNumber = () => {
   const todayPrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -274,6 +276,8 @@ describe("AdmissionsService", () => {
         toJSON: () => ({ admissionNumber: expectedAdmissionNumber() }),
       } as any);
       const bulkCreateSpy = jest.spyOn(Autorizacion, "bulkCreate").mockResolvedValue([] as any);
+      jest.spyOn(TipoAutorizacion, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-001", maxQuantity: 10 } as any);
 
       const result = await service.createAdmission(dataWithAuth, 1, "admin@test.com", "SUPER_ADMIN");
 
@@ -400,6 +404,8 @@ describe("AdmissionsService", () => {
         toJSON: () => ({ admissionNumber: expectedAdmissionNumber() }),
       } as any);
       const bulkCreateSpy = jest.spyOn(Autorizacion, "bulkCreate").mockResolvedValue([] as any);
+      jest.spyOn(TipoAutorizacion, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-010", maxQuantity: 10 } as any);
 
       await service.createAdmission(
         {

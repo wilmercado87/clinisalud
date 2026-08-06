@@ -1,5 +1,7 @@
 import { Server as HttpServer } from "http";
+import jwt from "jsonwebtoken";
 import { Server, Socket } from "socket.io";
+import { JWT_CONFIG } from "../constants";
 
 let io: Server | null = null;
 
@@ -19,8 +21,7 @@ export function initSocketGateway(httpServer: HttpServer): Server {
     }
 
     try {
-      const jwt = require("jsonwebtoken");
-      const secret = process.env["JWT_SECRET"] || "clinisalud_secret";
+      const secret = process.env["JWT_SECRET"] || JWT_CONFIG.SECRET_FALLBACK;
       const decoded = jwt.verify(token, secret) as { id: number; role: string };
       socket.data.userId = decoded.id;
       socket.data.role = decoded.role;

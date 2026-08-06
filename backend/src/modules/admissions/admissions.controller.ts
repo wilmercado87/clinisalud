@@ -1,19 +1,10 @@
 import { Request, Response } from "express";
 import { AdmissionsService } from "./admissions.service";
-import { getHttpCode } from "../../utils/StatusCodes";
 import { HTTP_STATUS } from "../../constants";
 import { AuthRequest } from "../../middlewares/AuthMiddleware";
-import { logError } from "../../utils/Logger";
+import { handleControllerError } from "../../utils/controllerError";
 
 const admissionsService = new AdmissionsService();
-
-const handleError = (error: any, res: Response, context: string) => {
-  const statusCode = getHttpCode(error);
-  if (statusCode === HTTP_STATUS.INTERNAL_SERVER_ERROR) {
-    logError(`Error ${context}`, { error: error.message });
-  }
-  return res.status(statusCode).json({ message: error.message, ...(error.code && { code: error.code }) });
-};
 
 export const lookupPatient = async (req: Request, res: Response) => {
   try {
@@ -23,8 +14,8 @@ export const lookupPatient = async (req: Request, res: Response) => {
       document: String(document),
     });
     res.status(HTTP_STATUS.OK).json(result);
-  } catch (error: any) {
-    return handleError(error, res, "lookupPatient");
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "lookupPatient");
   }
 };
 
@@ -37,8 +28,8 @@ export const registerAdmission = async (req: AuthRequest, res: Response) => {
       req.user!.role,
     );
     res.status(HTTP_STATUS.CREATED).json(result);
-  } catch (error: any) {
-    return handleError(error, res, "registerAdmission");
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "registerAdmission");
   }
 };
 
@@ -46,8 +37,8 @@ export const getCensus = async (req: Request, res: Response) => {
   try {
     const result = await admissionsService.getCensus();
     res.status(HTTP_STATUS.OK).json(result);
-  } catch (error: any) {
-    return handleError(error, res, "getCensus");
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "getCensus");
   }
 };
 
@@ -60,7 +51,7 @@ export const dischargeAdmission = async (req: AuthRequest, res: Response) => {
       req.user!.role,
     );
     res.status(HTTP_STATUS.OK).json(result);
-  } catch (error: any) {
-    return handleError(error, res, "dischargeAdmission");
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "dischargeAdmission");
   }
 };

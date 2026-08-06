@@ -1,25 +1,17 @@
 import { Request, Response } from "express";
 import { UsersService } from "./users.service";
-import { getHttpCode } from "../../utils/StatusCodes";
 import { ERROR_MESSAGES_USERS, HTTP_STATUS } from "../../constants";
 import { AuthRequest } from "../../middlewares/AuthMiddleware";
+import { handleControllerError } from "../../utils/controllerError";
 
 const usersService = new UsersService();
-
-const handleError = (error: any, res: Response, context: string) => {
-  const statusCode = getHttpCode(error);
-  if (statusCode === HTTP_STATUS.INTERNAL_SERVER_ERROR) {
-    console.error(`Error ${context}:`, error);
-  }
-  return res.status(statusCode).json({ message: error.message, ...(error.code && { code: error.code }) });
-};
 
 export const getRoles = async (req: Request, res: Response) => {
   try {
     const roles = await usersService.findAllRoles();
     res.status(HTTP_STATUS.OK).json(roles);
-  } catch (error: any) {
-    return handleError(error, res, 'getRoles');
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "getRoles");
   }
 };
 
@@ -27,8 +19,8 @@ export const getMenuOptions = async (req: Request, res: Response) => {
   try {
     const menus = await usersService.findAllMenuOptions();
     res.status(HTTP_STATUS.OK).json(menus);
-  } catch (error: any) {
-    return handleError(error, res, 'getMenuOptions');
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "getMenuOptions");
   }
 };
 
@@ -36,8 +28,8 @@ export const getManageableUsers = async (req: Request, res: Response) => {
   try {
     const users = await usersService.findAllManageableUsers();
     res.status(HTTP_STATUS.OK).json(users);
-  } catch (error: any) {
-    return handleError(error, res, 'getManageableUsers');
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "getManageableUsers");
   }
 };
 
@@ -45,8 +37,8 @@ export const registerUser = async (req: AuthRequest, res: Response) => {
   try {
     const result = await usersService.createUser(req.body, req.user!.role, req.user!.id, `${req.user!.email}`);
     res.status(HTTP_STATUS.CREATED).json(result);
-  } catch (error: any) {
-    return handleError(error, res, 'registerUser');
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "registerUser");
   }
 };
 
@@ -59,8 +51,8 @@ export const updatePermissions = async (req: AuthRequest, res: Response) => {
       message: ERROR_MESSAGES_USERS.PERMISSIONS_UPDATED,
       data: result,
     });
-  } catch (error: any) {
-    return handleError(error, res, 'updatePermissions');
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "updatePermissions");
   }
 };
 
@@ -69,7 +61,7 @@ export const toggleStatus = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const result = await usersService.toggleUserStatus(Number(id), req.user!.role, req.user!.id, `${req.user!.email}`);
     res.status(HTTP_STATUS.OK).json(result);
-  } catch (error: any) {
-    return handleError(error, res, 'toggleStatus');
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "toggleStatus");
   }
 };

@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { HTTP_STATUS, ERROR_MESSAGES, JWT_CONFIG } from '../constants';
 import { ApiError } from './ErrorHandlerMiddleware';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'clinisalud_secret';
+const JWT_SECRET = process.env.JWT_SECRET || JWT_CONFIG.SECRET_FALLBACK;
 
 export interface AuthRequest extends Request {
   user?: {

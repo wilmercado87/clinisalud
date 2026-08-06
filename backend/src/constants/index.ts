@@ -30,6 +30,9 @@ export const ERROR_MESSAGES = {
   TOKEN_EXPIRED: 'Token expirado',
   EMAIL_PASSWORD_REQUIRED: 'Email y contraseña son requeridos',
   AUTH_USER_NOT_FOUND: 'Usuario no encontrado',
+  RATE_LIMIT_TOO_MANY: 'Demasiadas solicitudes, intente más tarde',
+  RATE_LIMIT_LOGIN: 'Demasiados intentos de login, intente en 15 minutos',
+  ROUTE_NOT_FOUND: 'Ruta no encontrada: {url}',
   CREATE_ADMIN_FORBIDDEN: 'No tienes permisos para crear usuarios administradores',
   PERMISSIONS_SUPER_ADMIN_FORBIDDEN: 'No se puede cambiar permisos del super administrador',
   PERMISSIONS_ADMIN_FORBIDDEN: 'No se puede cambiar permisos de administrador',
@@ -46,6 +49,7 @@ export const PAGINATION = {
 export const JWT_CONFIG = {
   EXPIRES_IN: '24h',
   ALGORITHM: 'HS256',
+  SECRET_FALLBACK: 'clinisalud_secret',
 } as const;
 
 export const PATIENT_STATUS = {
@@ -59,6 +63,11 @@ export const ADMISSION_STATUS = {
   WITH_EPICRISIS: 'CON_EPICRISIS',
   BILLED: 'FACTURADA',
   DISCHARGED: 'EGRESADA',
+} as const;
+
+export const BED_STATUS = {
+  AVAILABLE: 0,
+  OCCUPIED: 1,
 } as const;
 
 export const ERROR_MESSAGES_AUTH = {
@@ -113,6 +122,9 @@ export const ERROR_MESSAGES_ADMISION = {
   AUTH_MAPIISS_REQUIRED: 'Código MAPIISS es requerido',
   AUTH_QUANTITY_MIN: 'Cantidad debe ser mayor o igual a 1',
   ADMISSION_NUMBER_REQUIRED: 'Número de admisión es requerido',
+  AUTH_MAPIISS_NOT_FOUND: 'El código MAPIISS {mapiissCode} no existe en el tarifario',
+  AUTH_TYPE_NOT_FOUND: 'El tipo de autorización no es válido',
+  AUTH_QUANTITY_EXCEEDS_MAX: 'La cantidad excede el máximo permitido ({maxQuantity}) para el servicio',
 } as const;
 
 export const ADMISSION_ERROR_CODES = {

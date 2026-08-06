@@ -5,6 +5,8 @@ import Paciente from "../../models/Paciente";
 import Cama from "../../models/Cama";
 import Convenio from "../../models/Convenio";
 import TipoEstado from "../../models/TipoEstado";
+import TipoAutorizacion from "../../models/TipoAutorizacion";
+import Cups from "../../models/Cups";
 import Autorizacion from "../../models/Autorizacion";
 import Acompanante from "../../models/Acompanante";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
@@ -12,10 +14,12 @@ import {
   ADMISSION_ERROR_CODES,
   ADMISSION_NOTIFICATIONS,
   ADMISSION_STATUS,
+  BED_STATUS,
   ERROR_MESSAGES_ADMISION,
   PATIENT_STATUS,
 } from "../../constants";
 import { formatMessage } from "../../utils/formatMessage";
+import { dispatchNotification } from "../../utils/notify";
 import { NotificationsService } from "../notifications/notifications.service";
 import {
   toAdmissionResponse,
@@ -90,6 +94,7 @@ export class AdmissionsService {
       await this.assertNoActiveAdmission(patientId, t);
       await this.occupyBed(data.roomId, t);
       await this.assertEpsExists(data.epsId, t);
+      await this.assertAuthorizationsAreValid(data.authorizations, t);
 
       const registeredStatusId = await this.getStatusIdByDescription(ADMISSION_STATUS.REGISTERED, t);
       const admission = await this.createAdmissionRecord(data, patientId, userId, registeredStatusId, t);
@@ -208,19 +213,61 @@ export class AdmissionsService {
   private async occupyBed(roomId: number, t: Transaction): Promise<void> {
     const bed = await Cama.findByPk(roomId, { transaction: t });
     if (!bed) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.BED_NOT_FOUND);
-    if (bed.bedStatus !== 0) {
+    if (bed.bedStatus !== BED_STATUS.AVAILABLE) {
       throw ApiError.conflict(
         ERROR_MESSAGES_ADMISION.BED_UNAVAILABLE,
         ADMISSION_ERROR_CODES.BED_UNAVAILABLE,
       );
     }
-    bed.bedStatus = 1;
+    bed.bedStatus = BED_STATUS.OCCUPIED;
     await bed.save({ transaction: t });
   }
 
   private async assertEpsExists(epsId: number, t: Transaction): Promise<void> {
     const eps = await Convenio.findByPk(epsId, { transaction: t });
     if (!eps) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.EPS_NOT_FOUND);
+  }
+
+  private async assertAuthorizationsAreValid(
+    authorizations: AuthorizationData[] | undefined,
+    t: Transaction,
+  ): Promise<void> {
+    if (!authorizations || authorizations.length === 0) return;
+
+    for (const authorization of authorizations) {
+      await this.assertAuthTypeExists(authorization.authTypeId, t);
+      const cups = await this.assertMapiissCodeExists(authorization.mapiissCode, t);
+      this.assertQuantityWithinMax(authorization, cups);
+    }
+  }
+
+  private async assertMapiissCodeExists(
+    mapiissCode: string,
+    t: Transaction,
+  ): Promise<Cups> {
+    const cups = await Cups.findOne({ where: { mapiissCode }, transaction: t });
+    if (!cups) {
+      throw ApiError.badRequest(
+        formatMessage(ERROR_MESSAGES_ADMISION.AUTH_MAPIISS_NOT_FOUND, { mapiissCode }),
+      );
+    }
+    return cups;
+  }
+
+  private async assertAuthTypeExists(authTypeId: number, t: Transaction): Promise<void> {
+    const authType = await TipoAutorizacion.findByPk(authTypeId, { transaction: t });
+    if (!authType) throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.AUTH_TYPE_NOT_FOUND);
+  }
+
+  private assertQuantityWithinMax(authorization: AuthorizationData, cups: Cups): void {
+    if (!authorization.quantity || authorization.quantity <= 0) return;
+    if (authorization.quantity > cups.maxQuantity) {
+      throw ApiError.badRequest(
+        formatMessage(ERROR_MESSAGES_ADMISION.AUTH_QUANTITY_EXCEEDS_MAX, {
+          maxQuantity: cups.maxQuantity,
+        }),
+      );
+    }
   }
 
   private async createAdmissionRecord(
@@ -309,22 +356,16 @@ export class AdmissionsService {
     userRole: string,
   ): void {
     const config = ADMISSION_NOTIFICATIONS.ADMISSION_CREATED;
-    this.notificationsService
-      .createAndDispatch({
-        type: config.type,
-        title: config.title,
-        message: formatMessage(config.messageTemplate, {
-          admissionNumber,
-          firstName: data.firstName || "",
-          lastName: data.lastName || "",
-        }),
-        actorId: userId,
-        actorName: userName,
-        actorRole: userRole,
-        actionUrl: config.actionUrl,
-        actionLabel: config.actionLabel,
-      })
-      .catch(() => {});
+    dispatchNotification(
+      this.notificationsService,
+      config,
+      { id: userId, name: userName, role: userRole },
+      {
+        admissionNumber,
+        firstName: data.firstName || "",
+        lastName: data.lastName || "",
+      },
+    );
   }
 
   public async dischargeAdmission(
@@ -350,7 +391,7 @@ export class AdmissionsService {
       }
 
       await admission.update(
-        { statusId: dischargedStatusId, systemUserId: userId },
+        { statusId: dischargedStatusId, systemUserId: userId, dischargedAt: new Date() },
         { transaction: t },
       );
 
@@ -360,7 +401,7 @@ export class AdmissionsService {
         admissionNumber,
         dischargedStatusId,
         admission.roomId ?? null,
-        new Date(),
+        admission.dischargedAt ?? new Date(),
       );
     });
   }
@@ -368,13 +409,13 @@ export class AdmissionsService {
   private async releaseBed(roomId: number, t: Transaction): Promise<void> {
     const bed = await Cama.findByPk(roomId, { transaction: t });
     if (!bed) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.BED_NOT_FOUND);
-    if (bed.bedStatus !== 1) {
+    if (bed.bedStatus !== BED_STATUS.OCCUPIED) {
       throw ApiError.conflict(
         ERROR_MESSAGES_ADMISION.BED_NOT_OCCUPIED,
         ADMISSION_ERROR_CODES.BED_NOT_OCCUPIED,
       );
     }
-    bed.bedStatus = 0;
+    bed.bedStatus = BED_STATUS.AVAILABLE;
     await bed.save({ transaction: t });
   }
 
@@ -385,18 +426,12 @@ export class AdmissionsService {
     userRole: string,
   ): void {
     const config = ADMISSION_NOTIFICATIONS.ADMISSION_DISCHARGED;
-    this.notificationsService
-      .createAndDispatch({
-        type: config.type,
-        title: config.title,
-        message: formatMessage(config.messageTemplate, { admissionNumber }),
-        actorId: userId,
-        actorName: userName,
-        actorRole: userRole,
-        actionUrl: config.actionUrl,
-        actionLabel: config.actionLabel,
-      })
-      .catch(() => {});
+    dispatchNotification(
+      this.notificationsService,
+      config,
+      { id: userId, name: userName, role: userRole },
+      { admissionNumber },
+    );
   }
 
   public async getCensus(): Promise<CensusRowResponse[]> {

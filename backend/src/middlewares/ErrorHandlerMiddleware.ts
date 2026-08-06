@@ -1,10 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import { HTTP_STATUS, ERROR_MESSAGES } from '../constants';
+import { formatMessage } from '../utils/formatMessage';
 
 export interface AppError extends Error {
   statusCode?: number;
   code?: string;
   isOperational?: boolean;
+}
+
+interface ErrorResponseBody {
+  success: boolean;
+  message: string;
+  code?: string;
+  stack?: string;
+  details?: unknown;
 }
 
 export const errorHandler = (
@@ -21,7 +30,7 @@ export const errorHandler = (
     timestamp: new Date().toISOString(),
   });
 
-  const response: any = {
+  const response: ErrorResponseBody = {
     success: false,
     message: err.message,
   };
@@ -41,7 +50,7 @@ export const errorHandler = (
 export const notFoundHandler = (req: Request, res: Response) => {
   res.status(HTTP_STATUS.NOT_FOUND).json({
     success: false,
-    message: `Ruta no encontrada: ${req.originalUrl}`,
+    message: formatMessage(ERROR_MESSAGES.ROUTE_NOT_FOUND, { url: req.originalUrl }),
   });
 };
 

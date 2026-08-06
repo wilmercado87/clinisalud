@@ -178,7 +178,7 @@ export class AuthService {
   private generateToken(user: Usuario): string {
     return jwt.sign(
       { id: user.id, role: user.roleData?.code, email: user.email },
-      process.env["JWT_SECRET"] || "clinisalud_secret",
+      process.env["JWT_SECRET"] || JWT_CONFIG.SECRET_FALLBACK,
       { expiresIn: JWT_CONFIG.EXPIRES_IN },
     );
   }

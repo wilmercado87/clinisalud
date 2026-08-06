@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { CatalogsService } from "./catalogs.service";
-import { getHttpCode } from "../../utils/StatusCodes";
+import { handleControllerError } from "../../utils/controllerError";
 
 const catalogsService = new CatalogsService();
 
@@ -8,37 +8,32 @@ const CACHE_MAX_AGE = 86400;
 
 export const getCatalog = async (req: Request, res: Response) => {
   try {
-    const { type } = req.params;
-    const data = await catalogsService.findByType(type);
+    const result = await catalogsService.findByType(req.params.type);
     res.set("Cache-Control", `private, max-age=${CACHE_MAX_AGE}`);
-    res.json(data);
-  } catch (error: any) {
-    const statusCode = getHttpCode(error);
-    res.status(statusCode).json({ message: error.message });
+    res.json(result);
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "getCatalog");
   }
 };
 
 export const getMunicipalities = async (req: Request, res: Response) => {
   try {
-    const departmentId = req.query.departmentId as string | undefined;
-    const data = await catalogsService.getMunicipalities(departmentId);
+    const result = await catalogsService.getMunicipalities(req.query.departmentId as string | undefined);
     res.set("Cache-Control", `private, max-age=${CACHE_MAX_AGE}`);
-    res.json(data);
-  } catch (error: any) {
-    const statusCode = getHttpCode(error);
-    res.status(statusCode).json({ message: error.message });
+    res.json(result);
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "getMunicipalities");
   }
 };
 
 export const getContracts = async (req: Request, res: Response) => {
   try {
     const epsId = req.query.epsId ? Number(req.query.epsId) : undefined;
-    const data = await catalogsService.getContracts(epsId);
+    const result = await catalogsService.getContracts(epsId);
     res.set("Cache-Control", `private, max-age=${CACHE_MAX_AGE}`);
-    res.json(data);
-  } catch (error: any) {
-    const statusCode = getHttpCode(error);
-    res.status(statusCode).json({ message: error.message });
+    res.json(result);
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "getContracts");
   }
 };
 
@@ -50,30 +45,29 @@ export const getBeds = async (req: Request, res: Response) => {
     const data = await catalogsService.getBeds(status, page, pageSize);
     res.set("Cache-Control", "no-store");
     res.json(data);
-  } catch (error: any) {
-    const statusCode = getHttpCode(error);
-    res.status(statusCode).json({ message: error.message });
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "getBeds");
   }
 };
 
 export const searchDiagnostics = async (req: Request, res: Response) => {
   try {
-    const q = (req.query.q as string) || "";
-    const data = await catalogsService.searchDiagnostics(q);
-    res.json(data);
-  } catch (error: any) {
-    const statusCode = getHttpCode(error);
-    res.status(statusCode).json({ message: error.message });
+    const q = typeof req.query.q === "string" ? req.query.q : "";
+    const limit = Number(req.query.limit) || 20;
+    const result = await catalogsService.searchDiagnostics(q, limit);
+    res.json(result);
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "searchDiagnostics");
   }
 };
 
 export const searchCups = async (req: Request, res: Response) => {
   try {
-    const q = (req.query.q as string) || "";
-    const data = await catalogsService.searchCups(q);
-    res.json(data);
-  } catch (error: any) {
-    const statusCode = getHttpCode(error);
-    res.status(statusCode).json({ message: error.message });
+    const q = typeof req.query.q === "string" ? req.query.q : "";
+    const limit = Number(req.query.limit) || 20;
+    const result = await catalogsService.searchCups(q, limit);
+    res.json(result);
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "searchCups");
   }
 };

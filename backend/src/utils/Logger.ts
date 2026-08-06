@@ -45,7 +45,3 @@ export const logError = (message: string, meta?: any) => {
 export const logWarn = (message: string, meta?: any) => {
   logger.warn(message, meta);
 };
-
-export const logDebug = (message: string, meta?: any) => {
-  logger.debug(message, meta);
-};

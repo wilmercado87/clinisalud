@@ -10,6 +10,7 @@ import { RoleService } from '@core/services/roles.service';
 import { MenuService } from '@core/services/menu.service';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { RoleStore } from '@core/stores/role-store/role.store';
+import { NotificationStore } from '@core/stores/notification-store/notification.store';
 import { UserStore } from '@features/dashboard/store/user-store/user.store';
 
 const STORAGE_KEYS = {
@@ -30,6 +31,7 @@ export class AuthStore {
   private get catalogStore() { return this.injector.get(CatalogStore); }
   private get roleStore() { return this.injector.get(RoleStore); }
   private get userStore() { return this.injector.get(UserStore); }
+  private get notificationStore() { return this.injector.get(NotificationStore); }
 
   private readonly userSignal = signal<UserResponse | null>(this.getUserFromStorage());
   private readonly menuSignal = signal<MenuOption[]>(this.getMenuFromStorage());
@@ -133,6 +135,8 @@ export class AuthStore {
     this.roleService.clearCache();
     this.menuService.clearMenuCache();
     this.catalogStore.clearCache();
+    this.userStore.clearCache();
+    this.notificationStore.reset();
     this.clear();
     this.router.navigate(['/login']);
   }
