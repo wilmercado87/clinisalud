@@ -58,20 +58,6 @@ export class CatalogStore {
   readonly isSearchingDiagnostics = this.diagnosticsResource.isLoading;
   readonly diagnosticsError = this.diagnosticsResource.error;
 
-  private readonly searchCupsTrigger = signal<string | null>(null);
-
-  private readonly cupsResource = rxResource({
-    request: () => this.searchCupsTrigger(),
-    loader: ({ request }) => {
-      if (!request) return of([]);
-      return this.catalogApi.searchCups(request);
-    },
-  });
-
-  readonly cups = this.cupsResource.value.asReadonly();
-  readonly isSearchingCups = this.cupsResource.isLoading;
-  readonly cupsError = this.cupsResource.error;
-
   private readonly municipalitiesTrigger = signal<{ departmentId?: string } | null>(null);
 
   private readonly municipalitiesResource = rxResource({
@@ -104,10 +90,6 @@ export class CatalogStore {
     this.searchDiagTrigger.set(q || null);
   }
 
-  searchCups(q: string): void {
-    this.searchCupsTrigger.set(q || null);
-  }
-
   loadMunicipalities(departmentId?: string): void {
     this.municipalitiesTrigger.set({ departmentId });
   }
@@ -126,7 +108,6 @@ export class CatalogStore {
     this.cache.clear();
     this.observables.clear();
     this.searchDiagTrigger.set(null);
-    this.searchCupsTrigger.set(null);
     this.municipalitiesTrigger.set(null);
     this.contractsTrigger.set(null);
   }

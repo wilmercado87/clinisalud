@@ -15,11 +15,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AdmissionStore } from '@features/admissions/store/admission.store';
 import {
   ADMISSION_ERROR_RULES,
   applyRequiredValidators,
+  applyAuthCupsSelection,
   AUTH_ERROR_RULES,
+  clearAuthCupsSelection,
   COMPANION_ERROR_RULES,
   COMPANION_FORMAT_VALIDATORS,
   COMPANION_REQUIRED_KEYS,
@@ -31,6 +34,11 @@ import { extractFieldErrors } from '@shared/utils/form-field-errors';
 import { PatientLookupResponse } from '@features/admissions/models/admissions.model';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
+import { CupsSearchItem } from '@core/models/catalog.model';
+import {
+  CupsSearchDialogComponent,
+  CupsSearchDialogData,
+} from '@features/admissions/components/cups-search-dialog/cups-search-dialog.component';
 import { startOfToday } from '@shared/utils/form-validators';
 import { HTTP_STATUS } from '@shared/utils/status.codes';
 import { getHttpErrorMessage, getHttpErrorStatus } from '@shared/utils/http-error';
@@ -78,6 +86,7 @@ export type FormFeedback = {
     MatSlideToggleModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatDialogModule,
     CatalogSelectComponent,
     RouterModule,
   ],
@@ -88,6 +97,7 @@ export type FormFeedback = {
 export class AdmissionFormComponent {
   private readonly store = inject(AdmissionStore);
   private readonly catalogStore = inject(CatalogStore);
+  private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
   @ViewChildren(CatalogSelectComponent) private readonly catalogSelects!: QueryList<CatalogSelectComponent>;
@@ -340,6 +350,10 @@ export class AdmissionFormComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.bumpAuthRevision());
     this.authEntrySubscriptions.push(subscription);
+    const feeScheduleSubscription = fg.controls.feeScheduleId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => clearAuthCupsSelection(fg));
+    this.authEntrySubscriptions.push(feeScheduleSubscription);
     this.bumpAuthRevision();
   }
 
@@ -353,6 +367,43 @@ export class AdmissionFormComponent {
   toggleAuthorizations(checked: boolean): void {
     this.showAuthorizations.set(checked);
     this.bumpAuthRevision();
+  }
+
+  openCupsSearch(index: number): void {
+    const fg = this.authEntries()[index];
+    if (!fg) return;
+
+    const feeScheduleId = fg.controls.feeScheduleId.value;
+    if (feeScheduleId === null) {
+      this.setFeedback('info', 'Seleccione el tarifario antes de buscar el CUPS');
+      return;
+    }
+
+    const dialogRef = this.dialog.open(CupsSearchDialogComponent, {
+      width: '560px',
+      maxWidth: '90vw',
+      data: {
+        feeScheduleId,
+        feeScheduleName: this.feeScheduleName(feeScheduleId),
+      } satisfies CupsSearchDialogData,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((cups?: CupsSearchItem) => {
+        if (!cups) return;
+        applyAuthCupsSelection(fg, cups);
+        this.bumpAuthRevision();
+      });
+  }
+
+  private feeScheduleName(feeScheduleId: number): string {
+    const item = this.catalogStore
+      .getCatalog('fee-schedules')
+      .find((catalogItem) => 'name' in catalogItem && catalogItem.id === feeScheduleId);
+    if (!item || !('name' in item)) return `#${feeScheduleId}`;
+    return item.name;
   }
 
   private bumpAuthRevision(): void {

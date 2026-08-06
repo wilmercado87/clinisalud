@@ -67,6 +67,19 @@ export type AdmissionFormValue = {
 export type AuthFormGroup = FormGroup<{
   authTypeId: FormControl<number | null>;
   authNumber: FormControl<string>;
+  feeScheduleId: FormControl<number | null>;
   mapiissCode: FormControl<string>;
   quantity: FormControl<number | null>;
+  description: FormControl<string>;
+  maxQuantity: FormControl<number | null>;
 }>;
+
+export type AuthFormValue = {
+  authTypeId: number | null;
+  authNumber: string;
+  feeScheduleId: number | null;
+  mapiissCode: string;
+  quantity: number | null;
+  description: string;
+  maxQuantity: number | null;
+};

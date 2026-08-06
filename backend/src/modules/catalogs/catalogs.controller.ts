@@ -64,8 +64,11 @@ export const searchDiagnostics = async (req: Request, res: Response) => {
 export const searchCups = async (req: Request, res: Response) => {
   try {
     const q = typeof req.query.q === "string" ? req.query.q : "";
-    const limit = Number(req.query.limit) || 20;
-    const result = await catalogsService.searchCups(q, limit);
+    const feeScheduleId =
+      req.query.feeScheduleId !== undefined ? Number(req.query.feeScheduleId) : undefined;
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 20));
+    const result = await catalogsService.searchCups(q, feeScheduleId, page, pageSize);
     res.json(result);
   } catch (error: unknown) {
     return handleControllerError(error, res, "searchCups");

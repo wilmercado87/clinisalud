@@ -130,12 +130,23 @@
     margin-left: 16px;
   }
 
+  &__auth-block {
+    margin-bottom: 12px;
+
+    .admission-form__field--full {
+      margin-top: 8px;
+    }
+  }
+
   &__auth-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr) 48px;
+    grid-template-columns: repeat(5, 1fr) 48px;
     gap: 12px;
     align-items: start;
-    margin-bottom: 12px;
+  }
+
+  &__lupa {
+    transform: scale(0.9);
   }
 
   &__feedback {

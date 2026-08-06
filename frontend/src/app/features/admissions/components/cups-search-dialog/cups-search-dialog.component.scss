@@ -1,0 +1,76 @@
+.cups-dialog {
+  min-width: 480px;
+  max-width: 100%;
+}
+
+.cups-dialog__content {
+  min-height: 320px;
+  overflow: auto;
+}
+
+.cups-dialog__tarifario {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--mat-expansion-header-description-color);
+}
+
+.cups-dialog__search {
+  width: 100%;
+}
+
+.cups-dialog__hint,
+.cups-dialog__summary {
+  margin: 4px 0 8px;
+  font-size: 13px;
+  color: var(--mat-expansion-header-description-color);
+}
+
+.cups-dialog__error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--mat-snack-bar-button-color, #fdecea);
+  color: #b3261e;
+  font-size: 13px;
+}
+
+.cups-dialog__results {
+  max-height: 320px;
+  overflow: auto;
+}
+
+.cups-dialog__row {
+  width: 100%;
+  text-align: left;
+}
+
+.cups-dialog__code {
+  font-weight: 600;
+}
+
+.cups-dialog__desc {
+  font-size: 13px;
+}
+
+.cups-dialog__meta {
+  font-size: 12px;
+}
+
+.cups-dialog__empty {
+  margin: 16px 0;
+  text-align: center;
+  color: var(--mat-expansion-header-description-color);
+}
+
+.cups-dialog__more {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.cups-dialog__actions {
+  padding: 8px 24px 16px;
+}

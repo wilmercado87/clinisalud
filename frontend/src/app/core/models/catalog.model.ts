@@ -38,10 +38,17 @@ export interface DiagnosticoResponse {
   description: string;
 }
 
-export interface CupsResponse {
+export interface CupsSearchItem {
   id: number;
-  mapiissCode: string;
+  code: string;
   description: string;
+  maxQuantity: number;
+  netValue: number;
+}
+
+export interface CupsPageResponse {
+  items: CupsSearchItem[];
+  total: number;
 }
 
 export type CatalogSourceItem = CatalogItemResponse | CamaResponse | EpsResponse;

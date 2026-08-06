@@ -6,6 +6,7 @@ import {
   numericValidator,
   phoneValidator,
 } from '@shared/utils/form-validators';
+import { AuthFormGroup } from './admission-form.types';
 export {
   ErrorRules,
   extractFieldErrors,
@@ -101,10 +102,38 @@ export const ADMISSION_ERROR_RULES = {
 
 export const AUTH_ERROR_RULES = {
   authNumber: [['required', 'El número de autorización es requerido']],
-  mapiissCode: [['required', 'El código MAPIISS es requerido']],
+  feeScheduleId: [['required', 'Seleccione el tarifario']],
+  mapiissCode: [['required', 'Seleccione el código MAPIISS con la lupa de búsqueda']],
   quantity: [
     ['required', 'La cantidad es requerida'],
     ['invalidNumeric', 'Solo se permiten números'],
     ['min', 'La cantidad mínima es 1'],
+    ['max', 'La cantidad supera el máximo permitido'],
   ],
 } satisfies Record<string, [string, string][]>;
+
+export function applyAuthQuantityMax(fg: AuthFormGroup, maxQuantity: number | null): void {
+  const validators: ValidatorFn[] = [Validators.required, numericValidator, Validators.min(1)];
+  if (maxQuantity !== null && maxQuantity > 0) {
+    validators.push(Validators.max(maxQuantity));
+  }
+  fg.controls.quantity.setValidators(validators);
+  fg.controls.quantity.updateValueAndValidity({ emitEvent: false });
+}
+
+export function applyAuthCupsSelection(
+  fg: AuthFormGroup,
+  cups: { code: string; description: string; maxQuantity: number },
+): void {
+  fg.patchValue({
+    mapiissCode: cups.code,
+    description: cups.description,
+    maxQuantity: cups.maxQuantity,
+  });
+  applyAuthQuantityMax(fg, cups.maxQuantity);
+}
+
+export function clearAuthCupsSelection(fg: AuthFormGroup): void {
+  fg.patchValue({ mapiissCode: '', description: '', maxQuantity: null });
+  applyAuthQuantityMax(fg, null);
+}

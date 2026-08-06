@@ -73,10 +73,17 @@ export function createAdmissionForm(): AdmissionForm {
 }
 
 export function createAuthEntryForm(): AuthFormGroup {
+  const description = createControl<string>('');
+  description.disable();
+  const maxQuantity = createControl<number | null>(null);
+  maxQuantity.disable();
   return new FormGroup({
     authTypeId: createControl<number | null>(null, Validators.required),
     authNumber: createControl<string>('', Validators.required),
+    feeScheduleId: createControl<number | null>(null, Validators.required),
     mapiissCode: createControl<string>('', Validators.required),
     quantity: createControl<number | null>(1, Validators.required, numericValidator, Validators.min(1)),
+    description,
+    maxQuantity,
   });
 }

@@ -318,6 +318,7 @@ describe('AdmissionFormComponent', () => {
       component.authEntries()[0].patchValue({
         authTypeId: 5,
         authNumber: 'AUTH-001',
+        feeScheduleId: 2,
         mapiissCode: 'MAPIISS-1',
         quantity: 2,
       });

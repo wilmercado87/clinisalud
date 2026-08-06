@@ -1,8 +1,11 @@
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import {
   ADMISSION_ERROR_RULES,
+  applyAuthCupsSelection,
   applyRequiredValidators,
+  applyAuthQuantityMax,
   AUTH_ERROR_RULES,
+  clearAuthCupsSelection,
   COMPANION_ERROR_RULES,
   COMPANION_FORMAT_VALIDATORS,
   COMPANION_REQUIRED_KEYS,
@@ -11,6 +14,8 @@ import {
   PATIENT_REQUIRED_KEYS,
 } from './admission-form-validator';
 import { extractFieldErrors } from '@shared/utils/form-field-errors';
+import { createAuthEntryForm } from './admission-form.factory';
+import { AuthFormGroup } from './admission-form.types';
 
 describe('admission-form-validator', () => {
   const today = new Date(2026, 0, 15);
@@ -133,19 +138,70 @@ describe('admission-form-validator', () => {
     it('maps auth errors including min quantity', () => {
       const group = new FormGroup({
         authNumber: new FormControl<string>(''),
+        feeScheduleId: new FormControl<number | null>(null),
         mapiissCode: new FormControl<string>(''),
         quantity: new FormControl<number | null>(0),
       });
       applyRequiredValidators(
         group,
-        ['authNumber', 'mapiissCode', 'quantity'],
+        ['authNumber', 'feeScheduleId', 'mapiissCode', 'quantity'],
         { quantity: [Validators.min(1)] },
         true,
       );
       const errors = extractFieldErrors(group, AUTH_ERROR_RULES);
       expect(errors.authNumber).toBe('El número de autorización es requerido');
-      expect(errors.mapiissCode).toBe('El código MAPIISS es requerido');
+      expect(errors.feeScheduleId).toBe('Seleccione el tarifario');
+      expect(errors.mapiissCode).toBe('Seleccione el código MAPIISS con la lupa de búsqueda');
       expect(errors.quantity).toBe('La cantidad mínima es 1');
+    });
+  });
+
+  describe('auth CUPS selection helpers', () => {
+    let group: AuthFormGroup;
+
+    beforeEach(() => {
+      group = createAuthEntryForm();
+    });
+
+    it('applies the CUPS selection with its max quantity', () => {
+      applyAuthCupsSelection(group, { code: '123', description: 'Consulta', maxQuantity: 5 });
+
+      expect(group.controls.mapiissCode.value).toBe('123');
+      expect(group.controls.description.value).toBe('Consulta');
+      expect(group.controls.maxQuantity.value).toBe(5);
+
+      group.controls.quantity.setValue(6);
+      expect(group.controls.quantity.hasError('max')).toBeTrue();
+
+      group.controls.quantity.setValue(5);
+      expect(group.controls.quantity.valid).toBeTrue();
+    });
+
+    it('clears the selection and removes the max validator', () => {
+      applyAuthCupsSelection(group, { code: '123', description: 'Consulta', maxQuantity: 5 });
+      clearAuthCupsSelection(group);
+
+      expect(group.controls.mapiissCode.value).toBe('');
+      expect(group.controls.description.value).toBe('');
+      expect(group.controls.maxQuantity.value).toBeNull();
+
+      group.controls.quantity.setValue(50);
+      expect(group.controls.quantity.valid).toBeTrue();
+    });
+
+    it('does not limit the quantity when the CUPS has no max', () => {
+      applyAuthCupsSelection(group, { code: '9', description: 'Sin límite', maxQuantity: 0 });
+
+      group.controls.quantity.setValue(4);
+      expect(group.controls.quantity.valid).toBeTrue();
+    });
+
+    it('applies a custom max quantity through applyAuthQuantityMax', () => {
+      applyAuthQuantityMax(group, 3);
+      group.controls.quantity.setValue(4);
+      expect(group.controls.quantity.hasError('max')).toBeTrue();
+      group.controls.quantity.setValue(3);
+      expect(group.controls.quantity.valid).toBeTrue();
     });
   });
 

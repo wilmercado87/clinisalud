@@ -9,7 +9,7 @@ import {
   CamaResponse,
   BedsPageResponse,
   DiagnosticoResponse,
-  CupsResponse,
+  CupsPageResponse,
 } from '@core/models/catalog.model';
 
 @Injectable({ providedIn: 'root' })
@@ -46,9 +46,17 @@ export class CatalogService {
     });
   }
 
-  searchCups(q: string): Observable<CupsResponse[]> {
-    return this.http.get<CupsResponse[]>(`${this.apiUrl}/cups/search`, {
-      params: new HttpParams().set('q', q),
-    });
+  searchCups(
+    q: string,
+    feeScheduleId: number,
+    page = 1,
+    pageSize = 20,
+  ): Observable<CupsPageResponse> {
+    const params = new HttpParams()
+      .set('q', q)
+      .set('feeScheduleId', feeScheduleId)
+      .set('page', page)
+      .set('pageSize', pageSize);
+    return this.http.get<CupsPageResponse>(`${this.apiUrl}/cups/search`, { params });
   }
 }

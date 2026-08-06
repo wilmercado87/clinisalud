@@ -139,14 +139,48 @@ describe("CatalogsService", () => {
 
   // @spec:INV-CAT-01
   describe("searchCups", () => {
-    it("should return empty for empty query", async () => {
-      const result = await service.searchCups("");
-      expect(result).toEqual([]);
+    beforeEach(() => {
+      jest.spyOn(Cups, "findAndCountAll").mockResolvedValue({ count: 0, rows: [] } as any);
     });
 
-    it("should search by mapiissCode or description", async () => {
+    it("should return empty for empty query", async () => {
+      const result = await service.searchCups("");
+      expect(result).toEqual({ items: [], total: 0 });
+    });
+
+    it("should return empty when no fee schedule is provided", async () => {
       const result = await service.searchCups("123");
-      expect(result).toEqual([]);
+      expect(result).toEqual({ items: [], total: 0 });
+    });
+
+    it("should filter by feeScheduleId, map result and paginate", async () => {
+      jest.spyOn(Cups, "findAndCountAll").mockResolvedValue({
+        count: 42,
+        rows: [
+          {
+            cupsId: 7,
+            mapiissCode: "123",
+            mapiissDescription: "Consulta",
+            maxQuantity: 3,
+            netValue: 125000,
+            toJSON: () => ({}),
+          },
+        ],
+      } as any);
+
+      const result = await service.searchCups("123", 2, 1, 20);
+
+      expect(result.total).toBe(42);
+      expect(result.items).toEqual([
+        { id: 7, code: "123", description: "Consulta", maxQuantity: 3, netValue: 125000 },
+      ]);
+      expect(Cups.findAndCountAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ feeScheduleId: 2 }),
+          limit: 20,
+          offset: 0,
+        }),
+      );
     });
   });
 });

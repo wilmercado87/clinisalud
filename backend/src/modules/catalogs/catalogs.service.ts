@@ -21,7 +21,7 @@ import Cups from "../../models/Cups";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import { ERROR_MESSAGES_CATALOGS } from "../../constants";
 import { formatMessage } from "../../utils/formatMessage";
-import { BedsPageResponse, CatalogItemResponse } from "./catalogs.types";
+import { BedsPageResponse, CatalogItemResponse, CupsPageResponse } from "./catalogs.types";
 
 interface CatalogDef {
   model: ModelStatic<Model>;
@@ -105,20 +105,37 @@ export class CatalogsService {
     })).map((row) => row.toJSON() as CatalogItemResponse);
   }
 
-  async searchCups(q: string, limit = 20): Promise<CatalogItemResponse[]> {
-    if (!q || q.trim().length === 0) {
-      return [];
+  async searchCups(
+    q: string,
+    feeScheduleId?: number,
+    page = 1,
+    pageSize = 20,
+  ): Promise<CupsPageResponse> {
+    if (!feeScheduleId || !q || q.trim().length === 0) {
+      return { items: [], total: 0 };
     }
     const term = `%${q.trim()}%`;
-    return (await Cups.findAll({
+    const { count, rows } = await Cups.findAndCountAll({
       where: {
+        feeScheduleId,
         [Op.or]: [
           { mapiissCode: { [Op.like]: term } },
           { mapiissDescription: { [Op.like]: term } },
         ],
       },
-      limit,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
       order: [["mapiissCode", "ASC"]],
-    })).map((row) => row.toJSON() as CatalogItemResponse);
+    });
+    return {
+      items: rows.map((row) => ({
+        id: row.cupsId,
+        code: row.mapiissCode,
+        description: row.mapiissDescription,
+        maxQuantity: row.maxQuantity,
+        netValue: Number(row.netValue ?? 0),
+      })),
+      total: count,
+    };
   }
 }

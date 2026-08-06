@@ -305,53 +305,84 @@
       @if (showAuthorizations()) {
         <mat-card-content>
           @for (auth of authEntries(); track $index) {
-            <div class="admission-form__auth-row">
-              <app-catalog-select
-                catalogType="authorization-types"
-                label="Tipo Autorización"
-                [formControl]="auth.controls.authTypeId"
-              />
-              <mat-form-field appearance="outline">
-                <mat-label>N° Autorización</mat-label>
-                <input
-                  matInput
-                  [formControl]="auth.controls.authNumber"
-                  placeholder="Número"
-                  required
+            <div class="admission-form__auth-block">
+              <div class="admission-form__auth-row">
+                <app-catalog-select
+                  catalogType="authorization-types"
+                  label="Tipo Autorización"
+                  [formControl]="auth.controls.authTypeId"
                 />
-                @if (authErrors()[$index].authNumber) {
-                  <mat-error>{{ authErrors()[$index].authNumber }}</mat-error>
-                }
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Código MAPIISS</mat-label>
-                <input
-                  matInput
-                  [formControl]="auth.controls.mapiissCode"
-                  placeholder="Código"
-                  required
+                <mat-form-field appearance="outline">
+                  <mat-label>N° Autorización</mat-label>
+                  <input
+                    matInput
+                    [formControl]="auth.controls.authNumber"
+                    placeholder="Número"
+                    required
+                  />
+                  @if (authErrors()[$index].authNumber) {
+                    <mat-error>{{ authErrors()[$index].authNumber }}</mat-error>
+                  }
+                </mat-form-field>
+                <app-catalog-select
+                  catalogType="fee-schedules"
+                  label="Tarifario"
+                  [formControl]="auth.controls.feeScheduleId"
                 />
-                @if (authErrors()[$index].mapiissCode) {
-                  <mat-error>{{ authErrors()[$index].mapiissCode }}</mat-error>
-                }
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Cantidad</mat-label>
-                <input
+                <mat-form-field appearance="outline">
+                  <mat-label>Código MAPIISS</mat-label>
+                  <input
+                    matInput
+                    [formControl]="auth.controls.mapiissCode"
+                    placeholder="Busque con la lupa"
+                    readonly
+                    required
+                  />
+                  <button
+                    matSuffix
+                    mat-icon-button
+                    type="button"
+                    class="admission-form__lupa"
+                    (click)="openCupsSearch($index)"
+                    [disabled]="auth.controls.feeScheduleId.value === null"
+                  >
+                    <mat-icon>search</mat-icon>
+                  </button>
+                  @if (authErrors()[$index].mapiissCode) {
+                    <mat-error>{{ authErrors()[$index].mapiissCode }}</mat-error>
+                  }
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Cantidad</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    [formControl]="auth.controls.quantity"
+                    min="1"
+                    placeholder="1"
+                    required
+                  />
+                  @if (auth.controls.maxQuantity.value !== null) {
+                    <mat-hint>Máx: {{ auth.controls.maxQuantity.value }}</mat-hint>
+                  }
+                  @if (authErrors()[$index].quantity) {
+                    <mat-error>{{ authErrors()[$index].quantity }}</mat-error>
+                  }
+                </mat-form-field>
+                <button mat-icon-button color="warn" type="button" (click)="removeAuthEntry($index)">
+                  <mat-icon>remove_circle</mat-icon>
+                </button>
+              </div>
+              <mat-form-field appearance="outline" class="admission-form__field--full">
+                <mat-label>Descripción del CUPS</mat-label>
+                <textarea
                   matInput
-                  type="number"
-                  [formControl]="auth.controls.quantity"
-                  min="1"
-                  placeholder="1"
-                  required
-                />
-                @if (authErrors()[$index].quantity) {
-                  <mat-error>{{ authErrors()[$index].quantity }}</mat-error>
-                }
+                  [formControl]="auth.controls.description"
+                  rows="2"
+                  placeholder="Descripción del procedimiento seleccionado"
+                  readonly
+                ></textarea>
               </mat-form-field>
-              <button mat-icon-button color="warn" type="button" (click)="removeAuthEntry($index)">
-                <mat-icon>remove_circle</mat-icon>
-              </button>
             </div>
           }
           <button mat-stroked-button type="button" (click)="addAuthEntry()">
