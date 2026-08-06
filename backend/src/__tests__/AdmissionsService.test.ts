@@ -672,4 +672,56 @@ describe("AdmissionsService", () => {
       ).rejects.toThrow("Admisión no encontrada");
     });
   });
+
+  describe("evaluateBillability", () => {
+    const billabilityPayload = {
+      admissionNumber: "ADM-001",
+      modality: "HOSPITALIZACION",
+      items: [{ mapiissCode: "CUP-010", quantity: 2 }],
+    };
+
+    it("should block service requiring auth without authNumber (INV-ADM-03)", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({ admissionNumber: "ADM-001" } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-010", authHosp: "SI" } as any);
+      jest.spyOn(Autorizacion, "findAll").mockResolvedValue([] as any);
+
+      const result = await service.evaluateBillability(billabilityPayload);
+
+      expect(result.items[0].billable).toBe(false);
+      expect(result.items[0].reason).toContain("bloqueado para facturación");
+    });
+
+    it("should allow service without auth requirement (INV-ADM-03)", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({ admissionNumber: "ADM-001" } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-020", authHosp: "NO" } as any);
+
+      const result = await service.evaluateBillability(billabilityPayload);
+
+      expect(result.items[0].billable).toBe(true);
+      expect(result.items[0].requiresAuth).toBe(false);
+    });
+
+    it("should allow service with sufficient authorized quantity (INV-ADM-03)", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({ admissionNumber: "ADM-001" } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-010", authHosp: "SI" } as any);
+      jest.spyOn(Autorizacion, "findAll").mockResolvedValue([
+        { authNumber: "AUTH-100", mapiissCode: "CUP-010", quantity: 3 },
+      ] as any);
+
+      const result = await service.evaluateBillability(billabilityPayload);
+
+      expect(result.items[0].billable).toBe(true);
+      expect(result.items[0].authorizedQuantity).toBe(3);
+    });
+
+    it("should enforce a global block when any service is not billable", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({ admissionNumber: "ADM-001" } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-010", authHosp: "SI" } as any);
+      jest.spyOn(Autorizacion, "findAll").mockResolvedValue([] as any);
+
+      await expect(
+        service.evaluateBillability({ ...billabilityPayload, enforce: true }),
+      ).rejects.toThrow("bloqueado para facturación");
+    });
+  });
 });

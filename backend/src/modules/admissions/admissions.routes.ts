@@ -7,6 +7,7 @@ import {
   createAdmissionValidation,
   dischargeAdmissionValidation,
   updateAdmissionStateValidation,
+  billabilityCheckValidation,
 } from "./admissions.validations";
 
 const router = Router();
@@ -46,6 +47,14 @@ router.patch(
   validateParams(updateAdmissionStateValidation),
   validateBody(updateAdmissionStateValidation),
   AdmissionsController.updateAdmissionState,
+);
+
+router.post(
+  "/admissions/billability-check",
+  authenticateToken,
+  requireRole("SUPER_ADMIN", "ADMIN"),
+  validateBody(billabilityCheckValidation),
+  AdmissionsController.evaluateBillability,
 );
 
 export default router;

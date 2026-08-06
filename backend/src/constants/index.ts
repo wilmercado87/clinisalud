@@ -129,6 +129,18 @@ export const ERROR_MESSAGES_ADMISION = {
   ADMISSION_STATE_INVALID: 'El estado no es válido',
   ADMISSION_STATE_UNCHANGED: 'La admisión ya se encuentra en el estado {state}',
   INVALID_STATE_TRANSITION: 'Transición de estado no permitida: de {currentState} a {nextState}',
+  BILLING_SERVICE_NOT_FOUND: 'El servicio {mapiissCode} no existe en el tarifario',
+  BILLING_SERVICE_NO_AUTH: 'Servicio {mapiissCode} bloqueado para facturación: requiere autorización previa no registrada',
+  BILLING_AUTH_INSUFFICIENT_QUANTITY: 'La cantidad autorizada ({authorized}) es insuficiente para cobrar {requested} del servicio {mapiissCode}',
+  BILLABILITY_MODALITY_INVALID: 'La modalidad debe ser AMBULATORIO u HOSPITALIZACION',
+  BILLABILITY_ITEMS_REQUIRED: 'Debe enviar al menos un servicio a validar',
+} as const;
+
+export const ADMISSION_MODALITY = {
+  AMBULATORY: 'AMBULATORIO',
+  HOSPITALIZATION: 'HOSPITALIZACION',
+  authFieldOf: (modality: string): "authAmb" | "authHosp" =>
+    modality === ADMISSION_MODALITY.HOSPITALIZATION ? "authHosp" : "authAmb",
 } as const;
 
 export const ADMISSION_STATE_MACHINE: Record<string, readonly string[]> = {
@@ -152,6 +164,7 @@ export const ADMISSION_ERROR_CODES = {
   ADMISSION_ALREADY_DISCHARGED: 'ADMISSION_ALREADY_DISCHARGED',
   INVALID_STATE_TRANSITION: 'INVALID_STATE_TRANSITION',
   ADMISSION_STATE_UNCHANGED: 'ADMISSION_STATE_UNCHANGED',
+  SERVICE_BLOCKED_FOR_BILLING: 'SERVICE_BLOCKED_FOR_BILLING',
 } as const;
 
 export const ADMISSION_NOTIFICATIONS = {

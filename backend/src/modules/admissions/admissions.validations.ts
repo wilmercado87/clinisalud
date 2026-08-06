@@ -1,5 +1,5 @@
 import { query, body, param } from "express-validator";
-import { ADMISSION_STATUSES, ERROR_MESSAGES_ADMISION } from "../../constants";
+import { ADMISSION_MODALITY, ADMISSION_STATUSES, ERROR_MESSAGES_ADMISION } from "../../constants";
 
 export const patientLookupValidation = [
   query("documentTypeId")
@@ -44,4 +44,17 @@ export const updateAdmissionStateValidation = [
   body("state")
     .isIn(ADMISSION_STATUSES)
     .withMessage(ERROR_MESSAGES_ADMISION.ADMISSION_STATE_INVALID),
+];
+
+export const billabilityCheckValidation = [
+  body("admissionNumber")
+    .isLength({ min: 1, max: 50 })
+    .withMessage(ERROR_MESSAGES_ADMISION.ADMISSION_NUMBER_REQUIRED),
+  body("modality")
+    .isIn([ADMISSION_MODALITY.AMBULATORY, ADMISSION_MODALITY.HOSPITALIZATION])
+    .withMessage(ERROR_MESSAGES_ADMISION.BILLABILITY_MODALITY_INVALID),
+  body("enforce").optional().isBoolean().withMessage(ERROR_MESSAGES_ADMISION.IS_NEW_PATIENT_BOOLEAN),
+  body("items").isArray({ min: 1 }).withMessage(ERROR_MESSAGES_ADMISION.BILLABILITY_ITEMS_REQUIRED),
+  body("items.*.mapiissCode").isLength({ min: 1, max: 30 }).withMessage(ERROR_MESSAGES_ADMISION.AUTH_MAPIISS_REQUIRED),
+  body("items.*.quantity").optional().isInt({ min: 1 }).withMessage(ERROR_MESSAGES_ADMISION.AUTH_QUANTITY_MIN),
 ];

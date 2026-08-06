@@ -98,6 +98,32 @@ export interface AdmissionStateResponse {
   state: string;
 }
 
+export interface BillabilityItemRequest {
+  mapiissCode: string;
+  quantity?: number;
+}
+
+export interface BillabilityRequest {
+  admissionNumber: string;
+  modality: string;
+  enforce?: boolean;
+  items: BillabilityItemRequest[];
+}
+
+export interface BillabilityItemResponse {
+  mapiissCode: string;
+  requiresAuth: boolean;
+  billable: boolean;
+  authorizedQuantity?: number;
+  reason?: string;
+}
+
+export interface BillabilityResponse {
+  admissionNumber: string;
+  modality: string;
+  items: BillabilityItemResponse[];
+}
+
 export interface CensusRowResponse {
   admissionNumber: string;
   patient: {
