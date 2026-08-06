@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as AdmissionsController from "./admissions.controller";
 import { authenticateToken, requireRole } from "../../middlewares/AuthMiddleware";
 import { validateQuery, validateBody, validateParams } from "../../middlewares/ValidationMiddleware";
+import { ROLE_CODES } from "../../constants";
 import {
   patientLookupValidation,
   createAdmissionValidation,
@@ -12,9 +13,19 @@ import {
 
 const router = Router();
 
+const admissionsRoles = requireRole(ROLE_CODES.SUPER_ADMIN, ROLE_CODES.ADMIN, ROLE_CODES.ADMISIONES);
+const clinicalRoles = requireRole(
+  ROLE_CODES.SUPER_ADMIN,
+  ROLE_CODES.ADMIN,
+  ROLE_CODES.ADMISIONES,
+  ROLE_CODES.MEDICO,
+);
+const adminOnly = requireRole(ROLE_CODES.SUPER_ADMIN, ROLE_CODES.ADMIN);
+
 router.get(
   "/admissions/patient-lookup",
   authenticateToken,
+  clinicalRoles,
   validateQuery(patientLookupValidation),
   AdmissionsController.lookupPatient,
 );
@@ -22,6 +33,7 @@ router.get(
 router.post(
   "/admissions",
   authenticateToken,
+  admissionsRoles,
   validateBody(createAdmissionValidation),
   AdmissionsController.registerAdmission,
 );
@@ -29,13 +41,14 @@ router.post(
 router.get(
   "/admissions/census",
   authenticateToken,
+  clinicalRoles,
   AdmissionsController.getCensus,
 );
 
 router.post(
   "/admissions/:admissionNumber/discharge",
   authenticateToken,
-  requireRole("SUPER_ADMIN", "ADMIN", "ADMISIONES"),
+  admissionsRoles,
   validateParams(dischargeAdmissionValidation),
   AdmissionsController.dischargeAdmission,
 );
@@ -43,7 +56,7 @@ router.post(
 router.patch(
   "/admissions/:admissionNumber/state",
   authenticateToken,
-  requireRole("SUPER_ADMIN", "ADMIN", "ADMISIONES"),
+  admissionsRoles,
   validateParams(updateAdmissionStateValidation),
   validateBody(updateAdmissionStateValidation),
   AdmissionsController.updateAdmissionState,
@@ -52,7 +65,7 @@ router.patch(
 router.post(
   "/admissions/billability-check",
   authenticateToken,
-  requireRole("SUPER_ADMIN", "ADMIN"),
+  adminOnly,
   validateBody(billabilityCheckValidation),
   AdmissionsController.evaluateBillability,
 );

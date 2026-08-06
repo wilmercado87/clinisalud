@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -114,6 +115,8 @@ export class AdmissionFormComponent {
   readonly companionActive = signal(false);
 
   private readonly authRevision = signal(0);
+  private readonly authEntrySubscriptions: Subscription[] = [];
+  private blurTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly patientForm: PatientForm = createPatientForm(this.today);
   readonly companionForm: CompanionForm = createCompanionForm();
@@ -169,6 +172,14 @@ export class AdmissionFormComponent {
     this.applyFormState();
     this.registerEffects();
     this.subscribeToFormChanges();
+    this.destroyRef.onDestroy(() => this.clearBlurTimer());
+  }
+
+  private clearBlurTimer(): void {
+    if (this.blurTimer) {
+      clearTimeout(this.blurTimer);
+      this.blurTimer = null;
+    }
   }
 
   private subscribeToFormChanges(): void {
@@ -285,7 +296,9 @@ export class AdmissionFormComponent {
     if (this.mode() !== 'IDLE') return;
     const doc = this.patientForm.controls.document.value?.trim();
     if (!doc) return;
-    setTimeout(() => {
+    this.clearBlurTimer();
+    this.blurTimer = setTimeout(() => {
+      this.blurTimer = null;
       if (this.mode() === 'IDLE') this.onSearchPatient();
     }, 150);
   }
@@ -322,13 +335,17 @@ export class AdmissionFormComponent {
 
   addAuthEntry(): void {
     const fg = createAuthEntryForm();
-    fg.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.bumpAuthRevision());
-    fg.statusChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.bumpAuthRevision());
     this.authEntries.update((entries) => [...entries, fg]);
+    const subscription = fg.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.bumpAuthRevision());
+    this.authEntrySubscriptions.push(subscription);
     this.bumpAuthRevision();
   }
 
   removeAuthEntry(index: number): void {
+    this.authEntrySubscriptions[index]?.unsubscribe();
+    this.authEntrySubscriptions.splice(index, 1);
     this.authEntries.update((entries) => entries.filter((_, i) => i !== index));
     this.bumpAuthRevision();
   }

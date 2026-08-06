@@ -10,6 +10,7 @@ import SobreescrituraMenuUsuario from "./models/SobreescrituraMenuUsuario";
 import Notificacion from "./models/Notificacion";
 import DestinatarioNotificacion from "./models/DestinatarioNotificacion";
 import { initAssociations } from "./models/associations";
+import { MENU_LABELS, ROLE_CODES } from "./constants";
 
 // Helpers de automatización
 import { parseCSV } from "./utils/bd/csvReader";
@@ -78,11 +79,11 @@ async function resetDatabaseTables() {
 
 async function seedSystemRoles() {
   const rolesData = [
-    { code: "SUPER_ADMIN", name: "Super Administrador" },
-    { code: "ADMIN", name: "Administrador Sistema" },
-    { code: "ADMISIONES", name: "Personal de Admisiones" },
-    { code: "MEDICO", name: "Personal Médico" },
-    { code: "FACTURADOR", name: "Personal de Facturación" }
+    { code: ROLE_CODES.SUPER_ADMIN, name: "Super Administrador" },
+    { code: ROLE_CODES.ADMIN, name: "Administrador Sistema" },
+    { code: ROLE_CODES.ADMISIONES, name: "Personal de Admisiones" },
+    { code: ROLE_CODES.MEDICO, name: "Personal Médico" },
+    { code: ROLE_CODES.FACTURADOR, name: "Personal de Facturación" }
   ];
 
   const initializedRoles: Record<string, Rol> = {};
@@ -130,19 +131,19 @@ async function assignAllRolePermissions(rolesMap: Record<string, Rol>) {
   const allOptions = await OpcionMenu.findAll();
 
   for (const opt of allOptions) {
-    const isGestorUsuarios = opt.label.toUpperCase() === 'GESTOR USUARIOS';
+    const isGestorUsuarios = opt.label.toUpperCase() === MENU_LABELS.GESTOR_USUARIOS;
 
     // SUPER_ADMIN and ADMIN get ALL menu options
     await PermisoRolMenu.findOrCreate({
-      where: { roleId: rolesMap["SUPER_ADMIN"].id, menuOptionId: opt.id },
+      where: { roleId: rolesMap[ROLE_CODES.SUPER_ADMIN].id, menuOptionId: opt.id },
     });
     await PermisoRolMenu.findOrCreate({
-      where: { roleId: rolesMap["ADMIN"].id, menuOptionId: opt.id },
+      where: { roleId: rolesMap[ROLE_CODES.ADMIN].id, menuOptionId: opt.id },
     });
 
     // ADMISIONES, MEDICO and FACTURADOR get all EXCEPT Gestor Usuarios
     if (!isGestorUsuarios) {
-      for (const code of ["ADMISIONES", "MEDICO", "FACTURADOR"]) {
+      for (const code of [ROLE_CODES.ADMISIONES, ROLE_CODES.MEDICO, ROLE_CODES.FACTURADOR]) {
         await PermisoRolMenu.findOrCreate({
           where: { roleId: rolesMap[code].id, menuOptionId: opt.id },
         });
@@ -153,12 +154,13 @@ async function assignAllRolePermissions(rolesMap: Record<string, Rol>) {
 }
 
 async function deployInitialSuperAdmin(superAdminRoleId: number) {
-  const adminEmail = "admin@clinisalud.com";
+  const adminEmail = process.env.SUPER_ADMIN_EMAIL || "admin@clinisalud.com";
+  const adminPassword = process.env.SUPER_ADMIN_PASSWORD || "Admin2026!";
   const adminExists = await Usuario.findOne({ where: { email: adminEmail } });
 
   if (!adminExists) {
     const ccDocType = await TipoDocumento.findOne({ where: { code: "CC" } });
-    const hashedPassword = await bcrypt.hash("Admin2026!", 10);
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
     await Usuario.create({
       firstName: "Super",
@@ -170,7 +172,7 @@ async function deployInitialSuperAdmin(superAdminRoleId: number) {
       roleId: superAdminRoleId,
       isActive: true,
     });
-    console.log(`✅ Cuenta de Super Administrador desplegada: ${adminEmail} / Admin2026!`);
+    console.log(`✅ Cuenta de Super Administrador desplegada: ${adminEmail}`);
   }
 }
 
@@ -191,7 +193,7 @@ export const runSeeder = async () => {
     console.log("👥 Inicializando roles base del sistema...");
     const rolesMap = await seedSystemRoles();
 
-    await deployInitialSuperAdmin(rolesMap["SUPER_ADMIN"].id);
+    await deployInitialSuperAdmin(rolesMap[ROLE_CODES.SUPER_ADMIN].id);
 
     console.log("📦 Iniciando procesamiento e inserción de archivos CSV...");
     const csvFolder = path.join(__dirname, "../../tablas_clinisalud");

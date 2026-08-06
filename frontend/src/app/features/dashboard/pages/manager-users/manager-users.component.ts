@@ -1,4 +1,5 @@
-import { Component, inject, ViewChild, signal, effect, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ViewChild, signal, effect, AfterViewInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -36,6 +37,7 @@ export class ManagerUsersComponent implements AfterViewInit {
   private readonly userStore = inject(UserStore);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   public readonly PAGE_SIZE_OPTIONS = PAGINATION.PAGE_SIZE_OPTIONS;
   public readonly displayedColumns: string[] = ['name', 'dni', 'email', 'role', 'status', 'actions'];
@@ -96,6 +98,7 @@ export class ManagerUsersComponent implements AfterViewInit {
   public openCreateDialog(): void {
     this.dialog.open(UserFormDialogComponent, { width: '820px', disableClose: true })
       .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(result => result && this.userStore.loadUsers());
   }
 
@@ -103,6 +106,7 @@ export class ManagerUsersComponent implements AfterViewInit {
     this.userStore.resetUpdatePermissions();
     this.dialog.open(PermissionsDialogComponent, { width: '600px', disableClose: true, data: { user: user.source } })
       .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(result => result?.success && this.userStore.loadUsers());
   }
 

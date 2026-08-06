@@ -1,4 +1,5 @@
-import { Component, inject, ViewChild, effect, signal, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ViewChild, effect, signal, AfterViewInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -51,6 +52,7 @@ export class CensusComponent implements AfterViewInit {
   private readonly catalogStore = inject(CatalogStore);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   public readonly PAGE_SIZE_OPTIONS = PAGINATION.PAGE_SIZE_OPTIONS;
   public readonly displayedColumns: string[] = [
@@ -138,6 +140,7 @@ export class CensusComponent implements AfterViewInit {
         data: { row },
       })
       .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: DischargeDialogResult | undefined) => {
         if (!result?.confirmed) return;
         this.dischargingAdmissionNumber.set(row.admissionNumber);

@@ -120,7 +120,7 @@ Paciente.init(
       { fields: ["FK_TIPO_ESTADO"] },
       { fields: ["ID_USUARIO"] },
       { fields: ["DOCUMENTO_PACIENTE"] },
-      { fields: ["FK_TIPO_DOCUMENTO", "DOCUMENTO_PACIENTE"] },
+      { fields: ["FK_TIPO_DOCUMENTO", "DOCUMENTO_PACIENTE"], unique: true },
     ],
   },
 );

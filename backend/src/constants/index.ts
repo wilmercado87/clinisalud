@@ -52,6 +52,31 @@ export const JWT_CONFIG = {
   SECRET_FALLBACK: 'clinisalud_secret',
 } as const;
 
+export const ROLE_CODES = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  ADMISIONES: 'ADMISIONES',
+  MEDICO: 'MEDICO',
+  FACTURADOR: 'FACTURADOR',
+} as const;
+
+export const MENU_LABELS = {
+  GESTOR_USUARIOS: 'GESTOR USUARIOS',
+} as const;
+
+export const OPERATIONAL_ROLES: readonly string[] = [
+  ROLE_CODES.SUPER_ADMIN,
+  ROLE_CODES.ADMIN,
+  ROLE_CODES.ADMISIONES,
+  ROLE_CODES.MEDICO,
+  ROLE_CODES.FACTURADOR,
+] as const;
+
+export const ADMIN_ROLES: readonly string[] = [
+  ROLE_CODES.SUPER_ADMIN,
+  ROLE_CODES.ADMIN,
+] as const;
+
 export const PATIENT_STATUS = {
   ACTIVE: 'ACTIVO',
   INACTIVE: 'INACTIVO',

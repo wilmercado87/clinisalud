@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+
 export function generateTempPassword(): string {
-  return `Clini-${Math.random().toString(36).slice(-4)}!`;
+  return `Clini-${randomBytes(4).toString("hex")}!`;
 }

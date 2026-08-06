@@ -39,7 +39,7 @@ describe('AuthService', () => {
   });
 
   describe('login - SUCCESS', () => {
-    it('should login with valid credentials', async () => {
+    it('should login with valid credentials (@spec:INV-SEC-01)', async () => {
       const result = await service.login('admin@test.com', 'any_password');
 
       expect(result).toHaveProperty('user');
@@ -47,7 +47,7 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('menu');
     });
 
-    it('should return menu array', async () => {
+    it('should return menu array (@spec:INV-SEC-02)', async () => {
       jest.spyOn(Rol, 'findByPk').mockResolvedValue({ code: 'USER', id: 2 } as any);
       jest.spyOn(PermisoRolMenu, 'findAll').mockResolvedValue([{ menuOptionId: 1 }] as any);
 
@@ -64,7 +64,7 @@ describe('AuthService', () => {
       await expect(service.login('notfound@test.com', 'password')).rejects.toThrow('no encontrado');
     });
 
-    it('should throw if user inactive', async () => {
+    it('should throw if user inactive (@spec:INV-SEC-01)', async () => {
       (Usuario.findOne as jest.Mock).mockResolvedValueOnce({ ...mockUser, isActive: false } as any);
 
       await expect(service.login('admin@test.com', 'password')).rejects.toThrow('inactivo');

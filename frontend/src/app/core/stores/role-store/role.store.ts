@@ -31,4 +31,11 @@ export class RoleStore {
   reloadMenuOptions(): void {
     this.menuOptionsResource.reload();
   }
+
+  reset(): void {
+    this.roleService.clearCache();
+    this.menuService.clearMenuCache();
+    this.reloadRoles();
+    this.reloadMenuOptions();
+  }
 }

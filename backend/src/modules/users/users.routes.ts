@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as UsersController from "./users.controller";
 import { authenticateToken, requireRole } from "../../middlewares/AuthMiddleware";
 import { validateBody, validateParams } from "../../middlewares/ValidationMiddleware";
+import { ROLE_CODES } from "../../constants";
 import {
   createUserValidation,
   updatePermissionsValidation,
@@ -14,7 +15,7 @@ const router = Router();
 router.get("/roles", authenticateToken, UsersController.getRoles);
 router.get('/menu-options', authenticateToken, UsersController.getMenuOptions);
 
-const adminOrSuperAdmin = requireRole('ADMIN', 'SUPER_ADMIN');
+const adminOrSuperAdmin = requireRole(ROLE_CODES.ADMIN, ROLE_CODES.SUPER_ADMIN);
 
 router.get("/users", authenticateToken, adminOrSuperAdmin, UsersController.getManageableUsers);
 router.post(

@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, effect, computed } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { of, tap } from 'rxjs';
 import { NotificationService } from '@core/services/notification.service';
 import { SocketService } from '@core/services/socket.service';
 
@@ -37,11 +37,16 @@ export class NotificationStore {
 
   private readonly markReadTrigger = signal<{ id: number } | null>(null);
 
-  private readonly markReadResource = rxResource({
+private readonly markReadResource = rxResource({
     request: () => this.markReadTrigger(),
     loader: ({ request }) => {
       if (!request) return of(undefined);
-      return this.notificationService.markAsRead(request.id);
+      return this.notificationService.markAsRead(request.id).pipe(
+        tap(() => {
+          this.loadUnreadCount();
+          this.refreshCounter.update((n) => n + 1);
+        }),
+      );
     },
   });
 
@@ -55,7 +60,12 @@ export class NotificationStore {
     request: () => this.markAllTrigger(),
     loader: ({ request }) => {
       if (request === 0) return of(undefined);
-      return this.notificationService.markAllAsRead();
+      return this.notificationService.markAllAsRead().pipe(
+        tap(() => {
+          this.loadUnreadCount();
+          this.refreshCounter.update((n) => n + 1);
+        }),
+      );
     },
   });
 
@@ -65,8 +75,10 @@ export class NotificationStore {
 
   constructor() {
     effect(() => {
-      if (this.socketService.onNotification()) {
-        this.refreshCounter.update(n => n + 1);
+      const seq = this.socketService.notificationSeq();
+      const event = this.socketService.onNotification();
+      if (seq > 0 && event) {
+        this.refreshCounter.update((n) => n + 1);
         this.loadUnreadCount();
       }
     });
@@ -78,6 +90,11 @@ export class NotificationStore {
 
   loadUnreadCount(): void {
     this.unreadResource.reload();
+  }
+
+  reloadAll(): void {
+    this.refreshCounter.update((n) => n + 1);
+    this.loadUnreadCount();
   }
 
   markAsRead(id: number): void {

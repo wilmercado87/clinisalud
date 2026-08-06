@@ -6,10 +6,19 @@ import Usuario from "../models/Usuario";
 
 let io: Server | null = null;
 
+function resolveAllowedOrigins(): boolean | string[] {
+  const raw = process.env["CORS_ORIGIN"] ?? "";
+  const allowed = raw
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  return allowed.length > 0 ? allowed : true;
+}
+
 export function initSocketGateway(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
     cors: {
-      origin: "*",
+      origin: resolveAllowedOrigins(),
       methods: ["GET", "POST"],
     },
   });

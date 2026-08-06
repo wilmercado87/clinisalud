@@ -4,7 +4,7 @@ import DestinatarioNotificacion from "../../models/DestinatarioNotificacion";
 import Usuario from "../../models/Usuario";
 import Rol from "../../models/Rol";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
-import { ERROR_MESSAGES } from "../../constants";
+import { ERROR_MESSAGES, ROLE_CODES } from "../../constants";
 import { emitNotification } from "../../socket/socket.gateway";
 import {
   DispatchNotificationRequest,
@@ -55,6 +55,9 @@ export class NotificationsService {
   }
 
   public async markAsRead(recipientId: number, userId: number): Promise<void> {
+    if (!Number.isInteger(recipientId) || recipientId <= 0) {
+      throw ApiError.notFound(ERROR_MESSAGES.RESOURCE_NOT_FOUND);
+    }
     const recipient = await DestinatarioNotificacion.findByPk(recipientId);
     if (!recipient) throw ApiError.notFound(ERROR_MESSAGES.RESOURCE_NOT_FOUND);
     if (recipient.userId !== userId) throw ApiError.forbidden(ERROR_MESSAGES.FORBIDDEN);
@@ -97,7 +100,7 @@ export class NotificationsService {
       include: [{
         model: Rol,
         as: "roleData",
-        where: { code: { [Op.in]: ["SUPER_ADMIN", "ADMIN"] } },
+        where: { code: { [Op.in]: [ROLE_CODES.SUPER_ADMIN, ROLE_CODES.ADMIN] } },
       }],
       where: { isActive: true, id: { [Op.ne]: actorId } },
     });

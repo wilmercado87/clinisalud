@@ -6,7 +6,7 @@ import OpcionMenu from "../../models/OpcionMenu";
 import SobreescrituraMenuUsuario from "../../models/SobreescrituraMenuUsuario";
 import PermisoRolMenu from "../../models/PermisoRolMenu";
 import { buildMenuTree } from "../../utils/MenuTree.util";
-import { ERROR_MESSAGES_AUTH, JWT_CONFIG } from "../../constants";
+import { ERROR_MESSAGES_AUTH, JWT_CONFIG, MENU_LABELS, ROLE_CODES } from "../../constants";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import { generateTempPassword } from "../../utils/Password.util";
 import { EmailService } from "../notifications/email.service";
@@ -70,7 +70,7 @@ export class AuthService {
 
   private async getAuthorizedMenu(userId: number, roleId: number): Promise<MenuOptionResponse[]> {
     const role = await Rol.findByPk(roleId);
-    const isAdmin = role?.code === "ADMIN" || role?.code === "SUPER_ADMIN";
+    const isAdmin = role?.code === ROLE_CODES.ADMIN || role?.code === ROLE_CODES.SUPER_ADMIN;
 
     const [rolePermissions, overrides] = await Promise.all([
       PermisoRolMenu.findAll({ where: { roleId } }),
@@ -88,7 +88,7 @@ export class AuthService {
     }
 
     if (isAdmin) {
-      const gestorOption = await OpcionMenu.findOne({ where: { label: "Gestor Usuarios" } });
+      const gestorOption = await OpcionMenu.findOne({ where: { label: MENU_LABELS.GESTOR_USUARIOS } });
       if (gestorOption) authorizedIds.add(gestorOption.id);
     }
 

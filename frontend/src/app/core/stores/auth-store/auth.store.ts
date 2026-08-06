@@ -1,4 +1,4 @@
-import { Injectable, signal, inject, Injector } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of, tap } from 'rxjs';
@@ -23,15 +23,13 @@ const STORAGE_KEYS = {
 export class AuthStore {
   private readonly authApi = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly injector = inject(Injector);
   private readonly socketService = inject(SocketService);
-
-  private get roleService() { return this.injector.get(RoleService); }
-  private get menuService() { return this.injector.get(MenuService); }
-  private get catalogStore() { return this.injector.get(CatalogStore); }
-  private get roleStore() { return this.injector.get(RoleStore); }
-  private get userStore() { return this.injector.get(UserStore); }
-  private get notificationStore() { return this.injector.get(NotificationStore); }
+  private readonly roleService = inject(RoleService);
+  private readonly menuService = inject(MenuService);
+  private readonly catalogStore = inject(CatalogStore);
+  private readonly roleStore = inject(RoleStore);
+  private readonly userStore = inject(UserStore);
+  private readonly notificationStore = inject(NotificationStore);
 
   private readonly userSignal = signal<UserResponse | null>(this.getUserFromStorage());
   private readonly menuSignal = signal<MenuOption[]>(this.getMenuFromStorage());
@@ -137,6 +135,9 @@ export class AuthStore {
     this.catalogStore.clearCache();
     this.userStore.clearCache();
     this.notificationStore.reset();
+    this.loginTrigger.set(null);
+    this.updateTrigger.set(null);
+    this.changePasswordTrigger.set(null);
     this.clear();
     this.router.navigate(['/login']);
   }
@@ -190,7 +191,9 @@ export class AuthStore {
   private clear(): void {
     this.userSignal.set(null);
     this.menuSignal.set([]);
-    localStorage.clear();
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    localStorage.removeItem(STORAGE_KEYS.MENU);
   }
 
   private saveSession(res: AuthResponse): void {
@@ -199,7 +202,8 @@ export class AuthStore {
     this.setUser(res.user);
     this.setMenu(res.menu);
     this.socketService.connect(res.token);
-    this.injector.get(RoleStore);
+    this.roleStore.reset();
+    this.notificationStore.reloadAll();
   }
 
   private getUserFromStorage(): UserResponse | null {

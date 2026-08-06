@@ -1,8 +1,6 @@
 import { Op, Transaction, UniqueConstraintError } from "sequelize";
 import sequelize from "../../config/database";
 import Admision from "../../models/Admision";
-import Paciente from "../../models/Paciente";
-import Cama from "../../models/Cama";
 import Convenio from "../../models/Convenio";
 import TipoEstado from "../../models/TipoEstado";
 import TipoAutorizacion from "../../models/TipoAutorizacion";
@@ -12,17 +10,18 @@ import Acompanante from "../../models/Acompanante";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import {
   ADMISSION_ERROR_CODES,
-  ADMISSION_MODALITY,
   ADMISSION_NOTIFICATIONS,
   ADMISSION_STATE_MACHINE,
   ADMISSION_STATUS,
-  BED_STATUS,
   ERROR_MESSAGES_ADMISION,
-  PATIENT_STATUS,
 } from "../../constants";
 import { formatMessage } from "../../utils/formatMessage";
 import { dispatchNotification } from "../../utils/notify";
 import { NotificationsService } from "../notifications/notifications.service";
+import { getStatusIdByDescription } from "./admission-status.util";
+import { PatientService } from "./patient.service";
+import { BedService } from "./bed.service";
+import { BillabilityService } from "./billability.service";
 import {
   toAdmissionResponse,
   toCensusRowResponse,
@@ -32,7 +31,6 @@ import {
 import {
   AuthorizationData,
   AdmissionStateResponse,
-  BillabilityItemResponse,
   BillabilityRequest,
   BillabilityResponse,
   CensusRowResponse,
@@ -55,21 +53,15 @@ const isUniqueConstraintError = (error: unknown): boolean => {
 
 export class AdmissionsService {
   private readonly notificationsService = new NotificationsService();
-
-  private async getStatusIdByDescription(description: string, t?: Transaction): Promise<number> {
-    const status = await TipoEstado.findOne({ where: { description }, transaction: t });
-    return status ? status.id : 1;
-  }
+  private readonly patientService = new PatientService();
+  private readonly bedService = new BedService();
+  private readonly billabilityService = new BillabilityService();
 
   public async lookupPatient(query: PatientLookupRequest): Promise<PatientLookupResponse> {
-    const patient = await Paciente.findOne({
-      where: { documentTypeId: query.documentTypeId, document: query.document },
-      include: [
-        { association: "documentType", attributes: ["id", "code", "description"] },
-        { association: "gender", attributes: ["id", "description"] },
-        { association: "userType", attributes: ["id", "name"] },
-      ],
-    });
+    const patient = await this.patientService.findByDocument(
+      query.documentTypeId,
+      query.document,
+    );
     if (!patient) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.PATIENT_NOT_FOUND);
 
     const latestAdmission = await Admision.findOne({
@@ -77,7 +69,7 @@ export class AdmissionsService {
       order: [["admissionDate", "DESC"]],
     });
 
-    const dischargedStatusId = await this.getStatusIdByDescription(ADMISSION_STATUS.DISCHARGED);
+    const dischargedStatusId = await getStatusIdByDescription(ADMISSION_STATUS.DISCHARGED);
     const activeAdmission =
       latestAdmission && latestAdmission.statusId !== dischargedStatusId
         ? {
@@ -96,13 +88,13 @@ export class AdmissionsService {
     userRole: string,
   ): Promise<CreateAdmissionResponse> {
     return await sequelize.transaction(async (t: Transaction) => {
-      const patientId = await this.ensurePatient(data, userId, t);
+      const patientId = await this.patientService.ensurePatient(data, userId, t);
       await this.assertNoActiveAdmission(patientId, t);
-      await this.occupyBed(data.roomId, t);
+      await this.bedService.occupyBed(data.roomId, t);
       await this.assertEpsExists(data.epsId, t);
       await this.assertAuthorizationsAreValid(data.authorizations, t);
 
-      const registeredStatusId = await this.getStatusIdByDescription(ADMISSION_STATUS.REGISTERED, t);
+      const registeredStatusId = await getStatusIdByDescription(ADMISSION_STATUS.REGISTERED, t);
       const admission = await this.createAdmissionRecord(data, patientId, userId, registeredStatusId, t);
       const admissionNumber = admission.admissionNumber;
 
@@ -118,87 +110,8 @@ export class AdmissionsService {
     });
   }
 
-  private async ensurePatient(
-    data: CreateAdmissionRequest,
-    userId: number,
-    t: Transaction,
-  ): Promise<number> {
-    if (data.isNewPatient) return await this.createNewPatient(data, userId, t);
-    return await this.updateExistingPatient(data, t);
-  }
-
-  private async createNewPatient(
-    data: CreateAdmissionRequest,
-    userId: number,
-    t: Transaction,
-  ): Promise<number> {
-    if (!data.firstName) throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.FIRST_NAME_REQUIRED);
-    if (!data.lastName) throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.LAST_NAME_REQUIRED);
-
-    const existingPatient = await Paciente.findOne({
-      where: { documentTypeId: data.documentTypeId, document: data.document },
-      transaction: t,
-    });
-    if (existingPatient) {
-      throw ApiError.conflict(ERROR_MESSAGES_ADMISION.PATIENT_ALREADY_EXISTS);
-    }
-
-    const activeStatusId = await this.getStatusIdByDescription(PATIENT_STATUS.ACTIVE, t);
-
-    const newPatient = await Paciente.create(
-      {
-        documentTypeId: data.documentTypeId,
-        document: data.document,
-        firstName: data.firstName || "",
-        lastName: data.lastName || "",
-        age: data.age || "",
-        address: data.address || "",
-        phone: data.phone || "",
-        email: data.email || null,
-        disability: data.disability || "NO",
-        userTypeId: data.userTypeId || 1,
-        birthDate: data.birthDate || "",
-        genderId: data.genderId || 1,
-        statusId: activeStatusId,
-        systemUserId: userId,
-      },
-      { transaction: t },
-    );
-    return newPatient.id;
-  }
-
-  private async updateExistingPatient(
-    data: CreateAdmissionRequest,
-    t: Transaction,
-  ): Promise<number> {
-    const existingPatient = await Paciente.findOne({
-      where: { documentTypeId: data.documentTypeId, document: data.document },
-      transaction: t,
-    });
-    if (!existingPatient) {
-      throw ApiError.notFound(ERROR_MESSAGES_ADMISION.PATIENT_NOT_FOUND_WITH_DATA);
-    }
-
-    await existingPatient.update(
-      {
-        firstName: data.firstName?.trim() || existingPatient.firstName,
-        lastName: data.lastName?.trim() || existingPatient.lastName,
-        age: data.age ?? existingPatient.age,
-        address: data.address !== undefined ? data.address : existingPatient.address,
-        phone: data.phone !== undefined ? data.phone : existingPatient.phone,
-        email: data.email !== undefined ? data.email || null : existingPatient.email,
-        disability: data.disability?.trim() || existingPatient.disability,
-        userTypeId: data.userTypeId ?? existingPatient.userTypeId,
-        birthDate: data.birthDate?.trim() || existingPatient.birthDate,
-        genderId: data.genderId ?? existingPatient.genderId,
-      },
-      { transaction: t },
-    );
-    return existingPatient.id;
-  }
-
   private async assertNoActiveAdmission(patientId: number, t: Transaction): Promise<void> {
-    const dischargedStatusId = await this.getStatusIdByDescription(ADMISSION_STATUS.DISCHARGED, t);
+    const dischargedStatusId = await getStatusIdByDescription(ADMISSION_STATUS.DISCHARGED, t);
     const activeAdmission = await Admision.findOne({
       where: {
         patientId,
@@ -214,19 +127,6 @@ export class AdmissionsService {
         ADMISSION_ERROR_CODES.ACTIVE_ADMISSION_EXISTS,
       );
     }
-  }
-
-  private async occupyBed(roomId: number, t: Transaction): Promise<void> {
-    const bed = await Cama.findByPk(roomId, { transaction: t });
-    if (!bed) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.BED_NOT_FOUND);
-    if (bed.bedStatus !== BED_STATUS.AVAILABLE) {
-      throw ApiError.conflict(
-        ERROR_MESSAGES_ADMISION.BED_UNAVAILABLE,
-        ADMISSION_ERROR_CODES.BED_UNAVAILABLE,
-      );
-    }
-    bed.bedStatus = BED_STATUS.OCCUPIED;
-    await bed.save({ transaction: t });
   }
 
   private async assertEpsExists(epsId: number, t: Transaction): Promise<void> {
@@ -384,7 +284,7 @@ export class AdmissionsService {
       const admission = await Admision.findByPk(admissionNumber, { transaction: t });
       if (!admission) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.ADMISSION_NOT_FOUND);
 
-      const dischargedStatusId = await this.getStatusIdByDescription(ADMISSION_STATUS.DISCHARGED, t);
+      const dischargedStatusId = await getStatusIdByDescription(ADMISSION_STATUS.DISCHARGED, t);
       if (admission.statusId === dischargedStatusId) {
         throw ApiError.conflict(
           ERROR_MESSAGES_ADMISION.ADMISSION_ALREADY_DISCHARGED,
@@ -393,7 +293,7 @@ export class AdmissionsService {
       }
 
       if (admission.roomId) {
-        await this.releaseBed(admission.roomId, t);
+        await this.bedService.releaseBed(admission.roomId, t);
       }
 
       await admission.update(
@@ -439,7 +339,7 @@ export class AdmissionsService {
       );
     }
 
-    const nextStatusId = await this.getStatusIdByDescription(nextState);
+    const nextStatusId = await getStatusIdByDescription(nextState);
     await admission.update({ statusId: nextStatusId, systemUserId: userId });
 
     return { admissionNumber, statusId: nextStatusId, state: nextState };
@@ -448,19 +348,6 @@ export class AdmissionsService {
   private async getStatusDescription(statusId: number): Promise<string> {
     const status = await TipoEstado.findByPk(statusId);
     return status?.description ?? "";
-  }
-
-  private async releaseBed(roomId: number, t: Transaction): Promise<void> {
-    const bed = await Cama.findByPk(roomId, { transaction: t });
-    if (!bed) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.BED_NOT_FOUND);
-    if (bed.bedStatus !== BED_STATUS.OCCUPIED) {
-      throw ApiError.conflict(
-        ERROR_MESSAGES_ADMISION.BED_NOT_OCCUPIED,
-        ADMISSION_ERROR_CODES.BED_NOT_OCCUPIED,
-      );
-    }
-    bed.bedStatus = BED_STATUS.AVAILABLE;
-    await bed.save({ transaction: t });
   }
 
   private notifyAdmissionDischarged(
@@ -479,81 +366,7 @@ export class AdmissionsService {
   }
 
   public async evaluateBillability(payload: BillabilityRequest): Promise<BillabilityResponse> {
-    const admission = await Admision.findByPk(payload.admissionNumber);
-    if (!admission) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.ADMISSION_NOT_FOUND);
-
-    const authField = ADMISSION_MODALITY.authFieldOf(payload.modality);
-    const items: BillabilityItemResponse[] = [];
-
-    for (const item of payload.items) {
-      const cups = await Cups.findOne({ where: { mapiissCode: item.mapiissCode } });
-
-      if (!cups) {
-        items.push({
-          mapiissCode: item.mapiissCode,
-          requiresAuth: false,
-          billable: false,
-          reason: formatMessage(ERROR_MESSAGES_ADMISION.BILLING_SERVICE_NOT_FOUND, {
-            mapiissCode: item.mapiissCode,
-          }),
-        });
-        continue;
-      }
-
-      const requiresAuth = (cups[authField] ?? "").toUpperCase() === "SI";
-      if (!requiresAuth) {
-        items.push({ mapiissCode: cups.mapiissCode, requiresAuth: false, billable: true });
-        continue;
-      }
-
-      const requested = item.quantity ?? 1;
-      const authorizations = await Autorizacion.findAll({
-        where: { admissionNumber: payload.admissionNumber, mapiissCode: cups.mapiissCode },
-      });
-      const hasAuthNumber = authorizations.some((a) => (a.authNumber ?? "").trim().length > 0);
-      const authorizedQuantity = authorizations.reduce((acc, a) => acc + a.quantity, 0);
-
-      if (!hasAuthNumber) {
-        items.push({
-          mapiissCode: cups.mapiissCode,
-          requiresAuth: true,
-          billable: false,
-          reason: formatMessage(ERROR_MESSAGES_ADMISION.BILLING_SERVICE_NO_AUTH, {
-            mapiissCode: cups.mapiissCode,
-          }),
-        });
-        continue;
-      }
-
-      if (authorizedQuantity < requested) {
-        items.push({
-          mapiissCode: cups.mapiissCode,
-          requiresAuth: true,
-          billable: false,
-          authorizedQuantity,
-          reason: formatMessage(ERROR_MESSAGES_ADMISION.BILLING_AUTH_INSUFFICIENT_QUANTITY, {
-            mapiissCode: cups.mapiissCode,
-            authorized: authorizedQuantity,
-            requested,
-          }),
-        });
-        continue;
-      }
-
-      items.push({ mapiissCode: cups.mapiissCode, requiresAuth: true, billable: true, authorizedQuantity });
-    }
-
-    if (payload.enforce) {
-      const blocked = items.find((item) => !item.billable);
-      if (blocked) {
-        throw ApiError.conflict(
-          blocked.reason ?? ERROR_MESSAGES_ADMISION.BILLING_SERVICE_NO_AUTH,
-          ADMISSION_ERROR_CODES.SERVICE_BLOCKED_FOR_BILLING,
-        );
-      }
-    }
-
-    return { admissionNumber: payload.admissionNumber, modality: payload.modality, items };
+    return this.billabilityService.evaluateBillability(payload);
   }
 
   public async getCensus(): Promise<CensusRowResponse[]> {

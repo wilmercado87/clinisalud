@@ -84,8 +84,9 @@ export class NotificationsComponent {
   public handleEvent(e: NotificationsListEvent): void {
     switch (e.type) {
       case 'markAsRead':
-        if (e.notification.isRead && !this.notificationStore.isMarkingRead()) break;
-        this.notificationStore.markAsRead(e.notification.recipientId);
+        if (!e.notification.isRead && !this.notificationStore.isMarkingRead()) {
+          this.notificationStore.markAsRead(e.notification.recipientId);
+        }
         if (e.notification.actionUrl) {
           this.router.navigateByUrl(e.notification.actionUrl);
         }

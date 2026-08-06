@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '@env/environment';
 import { NotificationResponse } from '@core/models/notification.model';
@@ -8,7 +8,13 @@ import { NotificationResponse } from '@core/models/notification.model';
 })
 export class SocketService {
   private socket: Socket | null = null;
-  public readonly onNotification = signal<NotificationResponse | null>(null);
+  private readonly notificationEvent = signal<{
+    payload: NotificationResponse | null;
+    seq: number;
+  }>({ payload: null, seq: 0 });
+
+  public readonly onNotification = computed(() => this.notificationEvent().payload);
+  public readonly notificationSeq = computed(() => this.notificationEvent().seq);
 
   public connect(token: string): void {
     if (this.socket?.connected) return;
@@ -18,21 +24,14 @@ export class SocketService {
       transports: ['websocket', 'polling'],
     });
 
-    this.socket.on('connect', () => {
-      console.log('[Socket] Conectado');
-    });
-
     this.socket.on('notification', (data: NotificationResponse) => {
-      this.onNotification.set(data);
-    });
-
-    this.socket.on('disconnect', () => {
-      console.log('[Socket] Desconectado');
+      this.notificationEvent.update((state) => ({ payload: data, seq: state.seq + 1 }));
     });
   }
 
   public disconnect(): void {
     this.socket?.disconnect();
     this.socket = null;
+    this.notificationEvent.set({ payload: null, seq: 0 });
   }
 }

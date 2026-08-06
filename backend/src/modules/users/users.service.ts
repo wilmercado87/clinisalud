@@ -1,5 +1,6 @@
 import * as bcrypt from "bcryptjs";
-import { Op } from "sequelize";
+import { Op, Transaction } from "sequelize";
+import sequelize from "../../config/database";
 import Usuario from "../../models/Usuario";
 import Rol from "../../models/Rol";
 import OpcionMenu from "../../models/OpcionMenu";
@@ -9,6 +10,7 @@ import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import {
   ERROR_MESSAGES,
   ERROR_MESSAGES_USERS,
+  ROLE_CODES,
   USER_NOTIFICATIONS,
   USER_STATUS_ACTIONS,
 } from "../../constants";
@@ -151,16 +153,20 @@ export class UsersService {
     requestingUserName: string,
   ): Promise<CreateUserResult> {
     const targetRole = await Rol.findByPk(data.roleId);
-    const isTargetAdmin = targetRole?.code === "ADMIN" || targetRole?.code === "SUPER_ADMIN";
-    if (isTargetAdmin && requestingUserRole !== "SUPER_ADMIN") {
+    const isTargetAdmin =
+      targetRole?.code === ROLE_CODES.ADMIN || targetRole?.code === ROLE_CODES.SUPER_ADMIN;
+    if (isTargetAdmin && requestingUserRole !== ROLE_CODES.SUPER_ADMIN) {
       throw ApiError.forbidden(ERROR_MESSAGES.CREATE_ADMIN_FORBIDDEN);
     }
 
     await this.assertNoDuplicate(data);
 
     const tempPassword = generateTempPassword();
-    const newUser = await this.createUserRecord(data, tempPassword);
-    await this.createPermissionOverrides(newUser.id, data.roleId, data.permissions);
+    const newUser = await sequelize.transaction(async (t: Transaction) => {
+      const created = await this.createUserRecord(data, tempPassword, t);
+      await this.createPermissionOverrides(created.id, data.roleId, data.permissions, t);
+      return created;
+    });
 
     const userJson = toSafeUserJson(newUser);
     this.notifyUserCreated(data, targetRole?.name ?? null, requestingUserRole, requestingUserId, requestingUserName);
@@ -176,25 +182,33 @@ export class UsersService {
     if (existingUser.dni === data.dni) throw ApiError.conflict(ERROR_MESSAGES.DNI_EXISTS);
   }
 
-  private async createUserRecord(data: CreateUserRequest, tempPassword: string): Promise<Usuario> {
+  private async createUserRecord(
+    data: CreateUserRequest,
+    tempPassword: string,
+    t: Transaction,
+  ): Promise<Usuario> {
     const ccDocument = await TipoDocumento.findOne({ where: { code: "CC" } });
     const defaultDocumentTypeId = ccDocument ? ccDocument.id : 3;
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
-    return await Usuario.create({
-      ...data,
-      documentTypeId: data.documentTypeId || defaultDocumentTypeId,
-      password: hashedPassword,
-      isActive: true,
-    });
+    return await Usuario.create(
+      {
+        ...data,
+        documentTypeId: data.documentTypeId || defaultDocumentTypeId,
+        password: hashedPassword,
+        isActive: true,
+      },
+      { transaction: t },
+    );
   }
 
   private async createPermissionOverrides(
     userId: number,
     roleId: number,
     permissions: number[],
+    t: Transaction,
   ): Promise<void> {
-    const rolePerms = await PermisoRolMenu.findAll({ where: { roleId } });
+    const rolePerms = await PermisoRolMenu.findAll({ where: { roleId }, transaction: t });
     const selectedSet = new Set(permissions);
     const allMenuIds = new Set([
       ...rolePerms.map((p) => p.menuOptionId),
@@ -208,7 +222,7 @@ export class UsersService {
     }));
 
     if (overrides.length > 0) {
-      await SobreescrituraMenuUsuario.bulkCreate(overrides);
+      await SobreescrituraMenuUsuario.bulkCreate(overrides, { transaction: t });
     }
   }
 
@@ -267,15 +281,17 @@ export class UsersService {
       admin: ERROR_MESSAGES.PERMISSIONS_ADMIN_FORBIDDEN,
     });
 
-    await SobreescrituraMenuUsuario.destroy({ where: { userId: targetUserId } });
+    return await sequelize.transaction(async (t: Transaction) => {
+      await SobreescrituraMenuUsuario.destroy({ where: { userId: targetUserId }, transaction: t });
 
-    const overrideData = permissions.map((p) => ({
-      userId: targetUserId,
-      menuOptionId: p.menuOptionId,
-      hasAccess: p.hasAccess,
-    }));
+      const overrideData = permissions.map((p) => ({
+        userId: targetUserId,
+        menuOptionId: p.menuOptionId,
+        hasAccess: p.hasAccess,
+      }));
 
-    return await SobreescrituraMenuUsuario.bulkCreate(overrideData);
+      return await SobreescrituraMenuUsuario.bulkCreate(overrideData, { transaction: t });
+    });
   }
 
   public async toggleUserStatus(
@@ -327,8 +343,8 @@ export class UsersService {
     requestingRole: string,
     messages: RoleHierarchyMessages,
   ): void {
-    if (targetRoleCode === "SUPER_ADMIN") throw ApiError.forbidden(messages.superAdmin);
-    if (targetRoleCode === "ADMIN" && requestingRole !== "SUPER_ADMIN") {
+    if (targetRoleCode === ROLE_CODES.SUPER_ADMIN) throw ApiError.forbidden(messages.superAdmin);
+    if (targetRoleCode === ROLE_CODES.ADMIN && requestingRole !== ROLE_CODES.SUPER_ADMIN) {
       throw ApiError.forbidden(messages.admin);
     }
   }
