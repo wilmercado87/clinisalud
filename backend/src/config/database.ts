@@ -1,5 +1,4 @@
 import { Sequelize } from 'sequelize';
-import { logInfo, logError } from '../utils/Logger';
 
 const sequelize = new Sequelize({
   dialect: 'sqlite',
@@ -19,16 +18,5 @@ const sequelize = new Sequelize({
     max: 3,
   },
 });
-
-export async function testConnection(): Promise<boolean> {
-  try {
-    await sequelize.query('SELECT 1');
-    logInfo('Database connection verified');
-    return true;
-  } catch (error) {
-    logError('Database connection failed', { error });
-    return false;
-  }
-}
 
 export default sequelize;

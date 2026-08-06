@@ -119,8 +119,6 @@ export class AdmissionFormComponent {
   readonly companionForm: CompanionForm = createCompanionForm();
   readonly admissionForm: AdmissionForm = createAdmissionForm();
 
-  private authFormArray: AuthFormGroup[] = [];
-
   private readonly patientStatus: Signal<string>;
   private readonly patientValue: Signal<Partial<PatientFormValue>>;
   private readonly companionStatus: Signal<string>;
@@ -157,7 +155,7 @@ export class AdmissionFormComponent {
     this.patientStatus() === 'VALID' &&
     this.companionStatus() === 'VALID' &&
     this.admissionStatus() === 'VALID' &&
-    (!this.showAuthorizations() || this.authFormArray.every((fg) => fg.valid)) &&
+    (!this.showAuthorizations() || this.authEntries().every((fg) => fg.valid)) &&
     !this.isCreating()
   );
 
@@ -316,7 +314,7 @@ export class AdmissionFormComponent {
         patient: this.patientForm.getRawValue(),
         admission: this.admissionForm.getRawValue(),
         companion: this.companionForm.getRawValue(),
-        authForms: this.authFormArray,
+        authForms: this.authEntries(),
         authorizationsEnabled: this.showAuthorizations(),
       }),
     );
@@ -326,14 +324,12 @@ export class AdmissionFormComponent {
     const fg = createAuthEntryForm();
     fg.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.bumpAuthRevision());
     fg.statusChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.bumpAuthRevision());
-    this.authFormArray.push(fg);
-    this.authEntries.set([...this.authFormArray]);
+    this.authEntries.update((entries) => [...entries, fg]);
     this.bumpAuthRevision();
   }
 
   removeAuthEntry(index: number): void {
-    this.authFormArray.splice(index, 1);
-    this.authEntries.set([...this.authFormArray]);
+    this.authEntries.update((entries) => entries.filter((_, i) => i !== index));
     this.bumpAuthRevision();
   }
 
@@ -376,7 +372,6 @@ export class AdmissionFormComponent {
     this.admissionForm.reset();
     this.catalogSelects?.forEach((select) => select.forceReset());
     this.showAuthorizations.set(false);
-    this.authFormArray = [];
     this.authEntries.set([]);
     this.bumpAuthRevision();
     this.mode.set('IDLE');

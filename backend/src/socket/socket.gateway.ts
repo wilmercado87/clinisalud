@@ -41,11 +41,6 @@ export function initSocketGateway(httpServer: HttpServer): Server {
   return io;
 }
 
-export function getIO(): Server {
-  if (!io) throw new Error("Socket.IO not initialized");
-  return io;
-}
-
 export function emitNotification(
   userId: number,
   notification: {

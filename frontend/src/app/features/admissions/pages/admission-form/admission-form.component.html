@@ -309,13 +309,13 @@
               <app-catalog-select
                 catalogType="authorization-types"
                 label="Tipo Autorización"
-                [formControl]="$any(auth).controls.authTypeId"
+                [formControl]="auth.controls.authTypeId"
               />
               <mat-form-field appearance="outline">
                 <mat-label>N° Autorización</mat-label>
                 <input
                   matInput
-                  [formControl]="$any(auth).controls.authNumber"
+                  [formControl]="auth.controls.authNumber"
                   placeholder="Número"
                   required
                 />
@@ -327,7 +327,7 @@
                 <mat-label>Código MAPIISS</mat-label>
                 <input
                   matInput
-                  [formControl]="$any(auth).controls['mapiissCode']"
+                  [formControl]="auth.controls.mapiissCode"
                   placeholder="Código"
                   required
                 />
@@ -340,7 +340,7 @@
                 <input
                   matInput
                   type="number"
-                  [formControl]="$any(auth).controls['quantity']"
+                  [formControl]="auth.controls.quantity"
                   min="1"
                   placeholder="1"
                   required
