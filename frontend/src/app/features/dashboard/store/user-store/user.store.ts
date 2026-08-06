@@ -69,7 +69,7 @@ export class UserStore {
   }
 
   clearCache(): void {
-    this.loadTrigger.update(n => n + 1);
+    this.loadTrigger.set(0);
   }
 
   toggleStatus(id: number): void {

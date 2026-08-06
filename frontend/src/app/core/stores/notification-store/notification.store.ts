@@ -11,18 +11,24 @@ export class NotificationStore {
 
   readonly refreshCounter = signal(0);
 
-  private readonly fetchParams = signal<{ limit: number; offset: number }>({ limit: 5, offset: 0 });
+  private readonly fetchParams = signal<{ limit: number; offset: number } | null>({ limit: 5, offset: 0 });
 
-  private readonly reloadParams = computed(() => ({
-    limit: this.fetchParams().limit,
-    offset: this.fetchParams().offset,
-    refreshKey: this.refreshCounter(),
-  }));
+  private readonly reloadParams = computed(() => {
+    const params = this.fetchParams();
+    if (!params) return null;
+    return {
+      limit: params.limit,
+      offset: params.offset,
+      refreshKey: this.refreshCounter(),
+    };
+  });
 
   private readonly notificationsResource = rxResource({
     request: () => this.reloadParams(),
-    loader: ({ request }) =>
-      this.notificationService.getNotifications(request.limit, request.offset),
+    loader: ({ request }) => {
+      if (!request) return of(undefined);
+      return this.notificationService.getNotifications(request.limit, request.offset);
+    },
   });
 
   private readonly unreadResource = rxResource({
@@ -93,6 +99,7 @@ private readonly markReadResource = rxResource({
   }
 
   reloadAll(): void {
+    this.fetchParams.set(this.fetchParams() ?? { limit: 5, offset: 0 });
     this.refreshCounter.update((n) => n + 1);
     this.loadUnreadCount();
   }
@@ -106,7 +113,7 @@ private readonly markReadResource = rxResource({
   }
 
   reset(): void {
-    this.fetchParams.set({ limit: 5, offset: 0 });
+    this.fetchParams.set(null);
     this.refreshCounter.set(0);
     this.markReadTrigger.set(null);
     this.markAllTrigger.set(0);
