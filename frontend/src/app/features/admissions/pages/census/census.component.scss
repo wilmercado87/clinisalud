@@ -128,6 +128,33 @@
     }
   }
 
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+  }
+
+  &__advance-btn {
+    color: v.$navy-500 !important;
+    border-color: v.$navy-300 !important;
+
+    mat-icon {
+      margin-right: 4px;
+    }
+  }
+
+  &__state-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    background-color: v.$color-blue-light-50;
+    color: v.$navy-500;
+  }
+
   &__paginator {
     border-top: 1px solid v.$color-gray-light-200;
     background: v.$color-gray-light-100;

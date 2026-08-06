@@ -92,6 +92,30 @@ export interface DischargeAdmissionResponse {
   dischargedAt: string;
 }
 
+export interface AdmissionStateResponse {
+  admissionNumber: string;
+  statusId: number;
+  state: string;
+}
+
+export const ADMISSION_STATES = {
+  REGISTERED: 'REGISTRADA',
+  IN_CARE: 'EN_ATENCION',
+  WITH_EPICRISIS: 'CON_EPICRISIS',
+  BILLED: 'FACTURADA',
+  DISCHARGED: 'EGRESADA',
+} as const;
+
+export type AdmissionState = (typeof ADMISSION_STATES)[keyof typeof ADMISSION_STATES];
+
+export const ADMISSION_STATE_TRANSITIONS: Record<AdmissionState, AdmissionState | null> = {
+  [ADMISSION_STATES.REGISTERED]: ADMISSION_STATES.IN_CARE,
+  [ADMISSION_STATES.IN_CARE]: ADMISSION_STATES.WITH_EPICRISIS,
+  [ADMISSION_STATES.WITH_EPICRISIS]: ADMISSION_STATES.BILLED,
+  [ADMISSION_STATES.BILLED]: null,
+  [ADMISSION_STATES.DISCHARGED]: null,
+};
+
 export interface CensusRowResponse {
   admissionNumber: string;
   patient: {
@@ -107,4 +131,5 @@ export interface CensusRowResponse {
   admissionDate: string;
   observations: string | null;
   statusId: number;
+  state: string;
 }

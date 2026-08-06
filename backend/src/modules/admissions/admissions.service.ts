@@ -490,6 +490,9 @@ export class AdmissionsService {
       order: [["admissionDate", "DESC"]],
     });
 
-    return admissions.map((adm) => toCensusRowResponse(adm));
+    const states = await TipoEstado.findAll();
+    const stateById = new Map(states.map((s) => [s.id, s.description]));
+
+    return admissions.map((adm) => toCensusRowResponse(adm, stateById.get(adm.statusId) ?? ""));
   }
 }

@@ -58,6 +58,20 @@ export class AdmissionStore {
   readonly isDischarging = this.dischargeResource.isLoading;
   readonly dischargeError = this.dischargeResource.error;
 
+  private readonly stateTrigger = signal<{ admissionNumber: string; state: string } | null>(null);
+
+  private readonly stateResource = rxResource({
+    request: () => this.stateTrigger(),
+    loader: ({ request }) => {
+      if (!request) return of(null);
+      return this.api.updateAdmissionState(request.admissionNumber, request.state);
+    },
+  });
+
+  readonly updateStateResult = this.stateResource.value.asReadonly();
+  readonly isUpdatingState = this.stateResource.isLoading;
+  readonly updateStateError = this.stateResource.error;
+
   lookupPatient(documentTypeId: number, document: string): void {
     this.lookupTrigger.set({ documentTypeId, document });
   }
@@ -80,5 +94,13 @@ export class AdmissionStore {
 
   clearDischargeResult(): void {
     this.dischargeTrigger.set(null);
+  }
+
+  updateAdmissionState(admissionNumber: string, state: string): void {
+    this.stateTrigger.set({ admissionNumber, state });
+  }
+
+  clearUpdateStateResult(): void {
+    this.stateTrigger.set(null);
   }
 }

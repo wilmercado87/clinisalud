@@ -77,23 +77,46 @@
         <td mat-cell *matCellDef="let row">{{ row.admissionDate }}</td>
       </ng-container>
 
+      <ng-container matColumnDef="state">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="census__state-chip">{{ row.state }}</span>
+        </td>
+      </ng-container>
+
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef>Acciones</th>
         <td mat-cell *matCellDef="let row">
-          @if (isDischarging() && dischargingAdmissionNumber() === row.admissionNumber) {
-            <mat-spinner diameter="20"></mat-spinner>
-          } @else {
-            <button
-              mat-stroked-button
-              color="warn"
-              class="census__discharge-btn"
-              (click)="onDischarge(row)"
-              [disabled]="isDischarging()"
-            >
-              <mat-icon>logout</mat-icon>
-              Egresar
-            </button>
-          }
+          <div class="census__actions">
+            @if (isUpdatingState() && updatingStateAdmissionNumber() === row.admissionNumber) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else if (nextStateOf(row)) {
+              <button
+                mat-stroked-button
+                color="primary"
+                class="census__advance-btn"
+                (click)="onAdvanceState(row)"
+                [disabled]="isUpdatingState()"
+              >
+                <mat-icon>double_arrow</mat-icon>
+                Avanzar
+              </button>
+            }
+            @if (isDischarging() && dischargingAdmissionNumber() === row.admissionNumber) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              <button
+                mat-stroked-button
+                color="warn"
+                class="census__discharge-btn"
+                (click)="onDischarge(row)"
+                [disabled]="isDischarging()"
+              >
+                <mat-icon>logout</mat-icon>
+                Egresar
+              </button>
+            }
+          </div>
         </td>
       </ng-container>
 
@@ -101,7 +124,7 @@
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
       <tr class="mat-row" *matNoDataRow>
-        <td class="mat-cell" colspan="6">
+        <td class="mat-cell" colspan="7">
           <div class="census__empty-state">
             @if (censusTable.filterValue().length > 0) {
               <app-empty-state

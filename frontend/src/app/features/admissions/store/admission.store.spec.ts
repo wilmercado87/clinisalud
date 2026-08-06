@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdmissionStore } from './admission.store';
-import { CreateAdmissionRequest, CreateAdmissionResponse, DischargeAdmissionResponse, PatientLookupResponse } from '@features/admissions/models/admissions.model';
+import { AdmissionStateResponse, CreateAdmissionRequest, CreateAdmissionResponse, DischargeAdmissionResponse, PatientLookupResponse } from '@features/admissions/models/admissions.model';
 
 async function flushResource(): Promise<void> {
   await TestBed.flushEffects();
@@ -176,5 +176,41 @@ describe('AdmissionStore', () => {
 
     expect(store.dischargeResult()).toBeUndefined();
     expect((store.dischargeError() as HttpErrorResponse).status).toBe(409);
+  });
+
+  it('updates the admission state', async () => {
+    const result: AdmissionStateResponse = {
+      admissionNumber: '2026-000001',
+      statusId: 4,
+      state: 'EN_ATENCION',
+    };
+
+    store.updateAdmissionState('2026-000001', 'EN_ATENCION');
+    await flushResource();
+    const req = httpMock.expectOne(
+      (r) => r.url.endsWith('/admissions/2026-000001/state') && r.method === 'PATCH',
+    );
+    expect(req.request.body).toEqual({ state: 'EN_ATENCION' });
+    req.flush(result);
+    await flushResource();
+
+    expect(store.updateStateResult()).toEqual(result);
+    expect(store.updateStateError()).toBeUndefined();
+  });
+
+  it('exposes the state transition error on failure', async () => {
+    store.updateAdmissionState('2026-000001', 'FACTURADA');
+    await flushResource();
+    const req = httpMock.expectOne(
+      (r) => r.url.endsWith('/admissions/2026-000001/state') && r.method === 'PATCH',
+    );
+    req.flush(
+      { message: 'Transición de estado no permitida' },
+      { status: 409, statusText: 'Conflict' },
+    );
+    await flushResource();
+
+    expect(store.updateStateResult()).toBeUndefined();
+    expect((store.updateStateError() as HttpErrorResponse).status).toBe(409);
   });
 });

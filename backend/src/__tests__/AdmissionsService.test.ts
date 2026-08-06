@@ -582,8 +582,12 @@ describe("AdmissionsService", () => {
   describe("getCensus", () => {
     it("should return active admissions", async () => {
       jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(TipoEstado, "findAll").mockResolvedValue([
+        { id: 1, description: "REGISTRADA" },
+      ] as any);
       jest.spyOn(Admision, "findAll").mockResolvedValue([
         {
+          statusId: 1,
           toJSON: () => ({
             admissionNumber: "ADM-001",
             patient: { id: 1, documentType: { code: "CC" }, firstName: "Juan" },
@@ -600,10 +604,12 @@ describe("AdmissionsService", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].admissionNumber).toBe("ADM-001");
+      expect(result[0].state).toBe("REGISTRADA");
     });
 
     it("should return empty array when no admissions", async () => {
       jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(TipoEstado, "findAll").mockResolvedValue([] as any);
       jest.spyOn(Admision, "findAll").mockResolvedValue([] as any);
 
       const result = await service.getCensus();

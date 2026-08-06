@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import {
+  AdmissionStateResponse,
   CensusRowResponse,
   CreateAdmissionRequest,
   CreateAdmissionResponse,
@@ -35,6 +36,13 @@ export class AdmissionsService {
     return this.http.post<DischargeAdmissionResponse>(
       `${this.apiUrl}/${admissionNumber}/discharge`,
       {},
+    );
+  }
+
+  updateAdmissionState(admissionNumber: string, state: string): Observable<AdmissionStateResponse> {
+    return this.http.patch<AdmissionStateResponse>(
+      `${this.apiUrl}/${admissionNumber}/state`,
+      { state },
     );
   }
 }

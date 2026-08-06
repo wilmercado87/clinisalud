@@ -113,4 +113,5 @@ export interface CensusRowResponse {
   admissionDate: string;
   observations: string | null;
   statusId: number;
+  state: string;
 }

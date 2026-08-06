@@ -19,7 +19,10 @@ export const toPatientLookupResponse = (
 export const toAdmissionResponse = (admission: Admision): AdmissionResponse =>
   admission.toJSON() as AdmissionResponse;
 
-export const toCensusRowResponse = (admission: Admision): CensusRowResponse => {
+export const toCensusRowResponse = (
+  admission: Admision,
+  state: string,
+): CensusRowResponse => {
   const json = admission.toJSON() as CensusRowResponse;
   return {
     admissionNumber: json.admissionNumber,
@@ -29,6 +32,7 @@ export const toCensusRowResponse = (admission: Admision): CensusRowResponse => {
     admissionDate: json.admissionDate,
     observations: json.observations,
     statusId: json.statusId,
+    state,
   };
 };
 

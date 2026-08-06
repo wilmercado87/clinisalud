@@ -13,7 +13,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AdmissionStore } from '@features/admissions/store/admission.store';
-import { CensusRowResponse } from '@features/admissions/models/admissions.model';
+import {
+  ADMISSION_STATE_TRANSITIONS,
+  CensusRowResponse,
+} from '@features/admissions/models/admissions.model';
 import { ToastService } from '@core/services/toast.service';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { PAGINATION } from '@shared/utils/pagination-constants';
@@ -56,12 +59,15 @@ export class CensusComponent implements AfterViewInit {
     'room',
     'eps',
     'admissionDate',
+    'state',
     'actions',
   ];
 
   public readonly isLoadingCensus = this.store.isLoadingCensus;
   public readonly isDischarging = this.store.isDischarging;
+  public readonly isUpdatingState = this.store.isUpdatingState;
   public dischargingAdmissionNumber = signal<string | null>(null);
+  public updatingStateAdmissionNumber = signal<string | null>(null);
 
   public readonly censusTable = createTableUtils<CensusRowResponse>(this.filterPredicate);
 
@@ -96,6 +102,24 @@ export class CensusComponent implements AfterViewInit {
     });
 
     effect(() => {
+      const result = this.store.updateStateResult();
+      if (result && 'admissionNumber' in result) {
+        this.toast.success(`Admisión ${result.admissionNumber} pasó a estado ${result.state}`);
+        this.updatingStateAdmissionNumber.set(null);
+        this.store.reloadCensus();
+        this.store.clearUpdateStateResult();
+      }
+    });
+
+    effect(() => {
+      const err = this.store.updateStateError();
+      if (err) {
+        this.toast.error(getHttpErrorMessage(err, 'Error al cambiar el estado de la admisión'));
+        this.updatingStateAdmissionNumber.set(null);
+      }
+    });
+
+    effect(() => {
       if (this.store.censusError()) {
         this.toast.error('Error al cargar el censo hospitalario');
       }
@@ -119,6 +143,17 @@ export class CensusComponent implements AfterViewInit {
         this.dischargingAdmissionNumber.set(row.admissionNumber);
         this.store.dischargeAdmission(result.admissionNumber);
       });
+  }
+
+  public nextStateOf(row: CensusRowResponse): string | null {
+    return ADMISSION_STATE_TRANSITIONS[row.state as keyof typeof ADMISSION_STATE_TRANSITIONS] ?? null;
+  }
+
+  public onAdvanceState(row: CensusRowResponse): void {
+    const nextState = this.nextStateOf(row);
+    if (!nextState) return;
+    this.updatingStateAdmissionNumber.set(row.admissionNumber);
+    this.store.updateAdmissionState(row.admissionNumber, nextState);
   }
 
   private filterPredicate(data: CensusRowResponse, filter: string): boolean {
