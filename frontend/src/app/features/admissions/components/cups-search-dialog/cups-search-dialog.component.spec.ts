@@ -1,5 +1,5 @@
 // @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (búsqueda de CUPS)
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { of, throwError } from 'rxjs';
 import {
@@ -8,6 +8,8 @@ import {
 } from './cups-search-dialog.component';
 import { CatalogService } from '@core/services/catalog.service';
 import { CupsPageResponse } from '@core/models/catalog.model';
+
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 6000;
 
 describe('CupsSearchDialogComponent', () => {
   let fixture: ComponentFixture<CupsSearchDialogComponent>;
@@ -28,6 +30,20 @@ describe('CupsSearchDialogComponent', () => {
     items: [{ id: 3, code: '789', description: 'Cirugía', maxQuantity: 2, netValue: 300 }],
     total: 3,
   };
+
+  async function flushSearch(): Promise<void> {
+    fixture.detectChanges();
+    await new Promise<void>((resolve) => setTimeout(resolve, 30));
+    fixture.detectChanges();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+  }
+
+  async function typeTerm(value: string): Promise<void> {
+    component.termControl.setValue(value);
+    await new Promise<void>((resolve) => setTimeout(resolve, 350));
+    await flushSearch();
+  }
 
   beforeEach(() => {
     apiService = {
@@ -56,49 +72,49 @@ describe('CupsSearchDialogComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should not search with fewer than 3 characters', fakeAsync(() => {
-    const control = component.termControl;
-    control.setValue('ab');
-    tick(350);
+  it('should not search with fewer than 3 characters', async () => {
+    await typeTerm('ab');
 
     expect(apiService.searchCups).not.toHaveBeenCalled();
     expect(component.items()).toEqual([]);
-  }));
+  });
 
-  it('searches with fee schedule when the term has 3 or more chars', fakeAsync(() => {
-    const control = component.termControl;
-    control.setValue('123');
-    tick(350);
+  it('searches with fee schedule when the term has 3 or more chars', async () => {
+    await typeTerm('123');
 
     expect(apiService.searchCups).toHaveBeenCalledWith('123', 2, 1, 20);
     expect(component.items().length).toBe(2);
     expect(component.total()).toBe(3);
-  }));
+  });
 
-  it('loads the next page on demand', fakeAsync(() => {
-    const control = component.termControl;
-    control.setValue('consulta');
-    tick(350);
+  it('loads the next page on demand', async () => {
+    await typeTerm('consulta');
     expect(component.hasMore()).toBeTrue();
 
     component.loadMore();
-    tick();
+    await flushSearch();
 
     expect(apiService.searchCups).toHaveBeenCalledWith('consulta', 2, 2, 20);
     expect(component.items().length).toBe(3);
     expect(component.hasMore()).toBeFalse();
-  }));
+  });
 
-  it('shows an error message when the request fails', fakeAsync(() => {
-    apiService.searchCups.and.returnValue(
-      throwError(() => new Error('network')),
-    );
-    const control = component.termControl;
-    control.setValue('fallo');
-    tick(350);
+  it('shows an error message when the request fails', async () => {
+    apiService.searchCups.and.returnValue(throwError(() => new Error('network')));
+    await typeTerm('fallo');
 
     expect(component.error()).not.toBeNull();
-  }));
+  });
+
+  it('resets the results when the term is cleared', async () => {
+    await typeTerm('123');
+    expect(component.items().length).toBe(2);
+
+    await typeTerm('');
+
+    expect(component.items()).toEqual([]);
+    expect(component.total()).toBe(0);
+  });
 
   it('closes the dialog with the selected CUPS', () => {
     component.selectCups(firstPage.items[0]);

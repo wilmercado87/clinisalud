@@ -23,6 +23,7 @@ import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { PAGINATION } from '@shared/utils/pagination-constants';
 import { createTableUtils } from '@shared/utils/table-utils';
 import { getHttpErrorMessage } from '@shared/utils/http-error';
+import { ADMISSION_MESSAGES, formatMessage } from '@shared/utils/messages';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import {
   CensusDischargeDialogComponent,
@@ -78,7 +79,10 @@ export class CensusComponent implements AfterViewInit {
 
   constructor() {
     this.store.reloadCensus();
+    this.registerEffects();
+  }
 
+  private registerEffects(): void {
     effect(() => {
       const census = this.store.census();
       if (census) this.censusTable.setData(census);
@@ -87,7 +91,11 @@ export class CensusComponent implements AfterViewInit {
     effect(() => {
       const result = this.store.dischargeResult();
       if (result && 'admissionNumber' in result) {
-        this.toast.success(`Admisión ${result.admissionNumber} egresada correctamente`);
+        this.toast.success(
+          formatMessage(ADMISSION_MESSAGES.ADMISSION_DISCHARGED, {
+            admissionNumber: result.admissionNumber,
+          }),
+        );
         this.dischargingAdmissionNumber.set(null);
         this.catalogStore.invalidateCatalog('beds');
         this.store.reloadCensus();
@@ -98,7 +106,7 @@ export class CensusComponent implements AfterViewInit {
     effect(() => {
       const err = this.store.dischargeError();
       if (err) {
-        this.toast.error(getHttpErrorMessage(err, 'Error al egresar la admisión'));
+        this.toast.error(getHttpErrorMessage(err, ADMISSION_MESSAGES.ADMISSION_DISCHARGE_ERROR));
         this.dischargingAdmissionNumber.set(null);
       }
     });
@@ -106,7 +114,12 @@ export class CensusComponent implements AfterViewInit {
     effect(() => {
       const result = this.store.updateStateResult();
       if (result && 'admissionNumber' in result) {
-        this.toast.success(`Admisión ${result.admissionNumber} pasó a estado ${result.state}`);
+        this.toast.success(
+          formatMessage(ADMISSION_MESSAGES.ADMISSION_STATE_CHANGED, {
+            admissionNumber: result.admissionNumber,
+            state: result.state,
+          }),
+        );
         this.updatingStateAdmissionNumber.set(null);
         this.store.reloadCensus();
         this.store.clearUpdateStateResult();
@@ -116,14 +129,14 @@ export class CensusComponent implements AfterViewInit {
     effect(() => {
       const err = this.store.updateStateError();
       if (err) {
-        this.toast.error(getHttpErrorMessage(err, 'Error al cambiar el estado de la admisión'));
+        this.toast.error(getHttpErrorMessage(err, ADMISSION_MESSAGES.ADMISSION_STATE_CHANGE_ERROR));
         this.updatingStateAdmissionNumber.set(null);
       }
     });
 
     effect(() => {
       if (this.store.censusError()) {
-        this.toast.error('Error al cargar el censo hospitalario');
+        this.toast.error(ADMISSION_MESSAGES.CENSUS_LOAD_ERROR);
       }
     });
   }

@@ -7,6 +7,18 @@ export interface CatalogOptionUI {
   detail?: string;
 }
 
+export function findCatalogItemName(
+  items: CatalogSourceItem[],
+  id: number | null,
+): string {
+  if (id === null) return '';
+  const item = items.find(
+    (catalogItem) => 'id' in catalogItem && catalogItem.id === id,
+  );
+  if (!item || !('id' in item)) return '';
+  return String(item.name || item.description || '');
+}
+
 export function mapCatalogItemToOption(
   catalogType: string,
   item: CatalogSourceItem,

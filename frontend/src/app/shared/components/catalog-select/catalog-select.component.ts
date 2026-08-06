@@ -32,6 +32,7 @@ import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { CatalogOptionUI, mapCatalogItemToOption } from '@shared/utils/catalog-mapper';
+import { CATALOG_MESSAGES, formatMessage } from '@shared/utils/messages';
 
 @Component({
   selector: 'app-catalog-select',
@@ -75,25 +76,45 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   readonly catalogType = input.required<string>();
   readonly placeholder = input('Seleccione');
   readonly label = input('');
+  readonly required = input(false);
+  readonly errorMessage = input<string | null>(null);
 
   readonly value = signal<number | null>(null);
   readonly disabled = signal(false);
   readonly searchTerm = signal('');
   readonly optionInvalid = signal(false);
+  private readonly touched = signal(false);
 
   readonly inputControl = new FormControl('');
 
-  readonly requiredState = signal(false);
+  private readonly validatorRequired = signal(false);
 
-  readonly isRequired = this.requiredState.asReadonly();
+  readonly requiredState = computed(() => this.required() || this.validatorRequired());
+
+  readonly isRequired = computed(() => this.requiredState());
 
   readonly errorMatcher: ErrorStateMatcher = {
-    isErrorState: () => this.optionInvalid(),
+    isErrorState: () =>
+      this.optionInvalid() ||
+      (this.requiredState() &&
+        this.touched() &&
+        (this.ngControl?.control?.invalid ?? false)),
   };
 
-  readonly errorMessage = computed(() =>
-    this.optionInvalid() ? 'Ingreso no válido' : null,
-  );
+  readonly resolvedErrorMessage = computed((): string | null => {
+    const externalError = this.errorMessage();
+    if (externalError) return externalError;
+
+    if (this.optionInvalid()) return CATALOG_MESSAGES.INVALID_OPTION;
+    const control = this.ngControl?.control;
+    if (!control || !this.requiredState() || !this.touched() || !control.invalid) {
+      return null;
+    }
+    const label = this.label();
+    return label
+      ? formatMessage(CATALOG_MESSAGES.REQUIRED_FIELD, { field: label })
+      : CATALOG_MESSAGES.REQUIRED_DEFAULT;
+  });
 
   private readonly loadTrigger = signal<string | null>(null);
 
@@ -180,7 +201,7 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
     const control = this.ngControl?.control;
     if (!control) return;
     const syncRequired = () =>
-      this.requiredState.set(control.hasValidator(Validators.required));
+      this.validatorRequired.set(control.hasValidator(Validators.required));
     syncRequired();
     control.statusChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(syncRequired);
   }
@@ -199,11 +220,12 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
     this.setOptionError(this.filteredItems().length === 0);
   }
 
-  onFocus(): void {
+  onOpenPanel(): void {
     this.autoTrigger?.openPanel();
   }
 
   onBlur(): void {
+    this.touched.set(true);
     this.onTouched();
     const text = this.searchTerm().trim().toLowerCase();
 
@@ -241,6 +263,7 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   }
 
   onOptionSelected(option: MatOption<number>): void {
+    this.touched.set(true);
     const id = option.value;
     this.value.set(id);
     const item = this.items().find((i) => i.id === id);
@@ -251,6 +274,7 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   }
 
   onClear(): void {
+    this.touched.set(true);
     this.value.set(null);
     this.searchTerm.set('');
     this.setOptionError(false);
@@ -266,6 +290,7 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   }
 
   forceReset(): void {
+    this.touched.set(false);
     this.value.set(null);
     this.searchTerm.set('');
     this.setOptionError(false);

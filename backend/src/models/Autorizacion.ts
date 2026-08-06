@@ -3,6 +3,7 @@ import sequelize from "../config/database";
 import Admision from "./Admision";
 import TipoAutorizacion from "./TipoAutorizacion";
 import Cups from "./Cups";
+import Tarifario from "./Tarifario";
 import Usuario from "./Usuario";
 
 class Autorizacion extends Model {
@@ -12,11 +13,13 @@ class Autorizacion extends Model {
   public authNumber!: string;
   public mapiissCode!: string;
   public quantity!: number;
+  public feeScheduleId!: number;
   public systemUserId!: number;
 
   public admission?: Admision;
   public authType?: TipoAutorizacion;
   public cups?: Cups;
+  public feeSchedule?: Tarifario;
   public systemUser?: Usuario;
 
   public readonly createdAt!: Date;
@@ -43,6 +46,11 @@ Autorizacion.init(
       field: "FK_CODIGO_MAPIISS",
     },
     quantity: { type: DataTypes.INTEGER, defaultValue: 1, field: "CANTIDAD" },
+    feeScheduleId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "FK_TARIFARIO",
+    },
     systemUserId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -57,9 +65,15 @@ Autorizacion.init(
       { fields: ["FK_ADMISION"] },
       { fields: ["FK_TIPO_AUTORIZACION"] },
       { fields: ["FK_CODIGO_MAPIISS"] },
+      { fields: ["FK_TARIFARIO"] },
       { fields: ["ID_USUARIO"] },
       { fields: ["NUMERO_AUTORIZACION"] },
       { fields: ["FK_ADMISION", "FK_CODIGO_MAPIISS"] },
+      { 
+        fields: ["FK_ADMISION", "FK_TIPO_AUTORIZACION", "FK_CODIGO_MAPIISS", "FK_TARIFARIO"], 
+        unique: true,
+        name: "uq_autorizacion_adm_tipo_cups_tarifario"
+      },
     ],
   }
 );

@@ -20,6 +20,7 @@ import { UserUI, toUserUI } from '@features/dashboard/utils/user.mapper';
 import { ROLE_CODES } from '@shared/utils/role-constants';
 import { PAGINATION } from '@shared/utils/pagination-constants';
 import { ApiError } from '@shared/utils/status.codes';
+import { USER_MESSAGES } from '@shared/utils/messages';
 import { UserFormDialogComponent } from '@features/dashboard/components/user-form-dialog/user-form-dialog.component';
 import { PermissionsDialogComponent } from '@features/dashboard/components/permissions-dialog/permissions-dialog.component';
 import { ToastService } from '@core/services/toast.service';
@@ -69,12 +70,12 @@ export class ManagerUsersComponent implements AfterViewInit {
 
     effect(() => {
       if (this.userStore.usersError()) {
-        this.toast.error('Error al sincronizar datos del servidor');
+        this.toast.error(USER_MESSAGES.SYNC_SERVER_ERROR);
       }
 
       const toggleErr = this.userStore.toggleError() as ApiError;
       if (toggleErr) {
-        this.toast.error(toggleErr.error?.message || 'Error al cambiar estado');
+        this.toast.error(toggleErr.error?.message || USER_MESSAGES.TOGGLE_STATUS_ERROR);
         this.togglingUserId.set(null);
       }
     });

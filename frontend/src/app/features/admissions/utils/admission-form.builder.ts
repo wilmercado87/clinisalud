@@ -46,6 +46,7 @@ export function buildAuthorizationsRequest(
     authTypeId: fg.controls.authTypeId.value ?? 0,
     authNumber: fg.controls.authNumber.value,
     mapiissCode: fg.controls.mapiissCode.value,
+    feeScheduleId: fg.controls.feeScheduleId.value ?? 0,
     quantity: fg.controls.quantity.value ?? 1,
   }));
 }

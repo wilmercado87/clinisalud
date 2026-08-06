@@ -14,6 +14,7 @@ import { ToastService } from '@core/services/toast.service';
 import { MenuOption, UserResponse } from '@core/models/user.model';
 import { ROLE_CODES } from '@shared/utils/role-constants';
 import { getHttpErrorMessage } from '@shared/utils/http-error';
+import { APP_MESSAGES, USER_MESSAGES } from '@shared/utils/messages';
 import {
   allMenuOptionIds,
   buildPermissionOverrides,
@@ -117,7 +118,7 @@ export class PermissionsDialogComponent {
 
     effect(() => {
       if (this.updatePermissionsResult()) {
-        this.toast.success('Permisos actualizados correctamente');
+        this.toast.success(USER_MESSAGES.PERMISSIONS_UPDATED);
         this.dialogRef.close({ success: true });
       }
     });
@@ -211,7 +212,7 @@ export class PermissionsDialogComponent {
   }
 
   private handlePermissionSyncError(error: unknown): void {
-    this.toast.error(getHttpErrorMessage(error, 'Ocurrió un error en la operación'));
+    this.toast.error(getHttpErrorMessage(error, APP_MESSAGES.OPERATION_ERROR));
   }
 
   public onCancel(): void {

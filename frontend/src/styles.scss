@@ -81,6 +81,12 @@ body {
       border-width: 2px !important;
     }
   }
+
+  .mat-mdc-form-field-subscript-wrapper,
+  .mat-mdc-form-field-hint-wrapper,
+  .mat-mdc-form-field-error-wrapper {
+    padding-left: 0 !important;
+  }
 }
 
 // 5. TOAST CUSTOM STYLES

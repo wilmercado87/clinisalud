@@ -137,6 +137,7 @@ describe('admission-form-validator', () => {
 
     it('maps auth errors including min quantity', () => {
       const group = new FormGroup({
+        authTypeId: new FormControl<number | null>(null),
         authNumber: new FormControl<string>(''),
         feeScheduleId: new FormControl<number | null>(null),
         mapiissCode: new FormControl<string>(''),
@@ -144,15 +145,16 @@ describe('admission-form-validator', () => {
       });
       applyRequiredValidators(
         group,
-        ['authNumber', 'feeScheduleId', 'mapiissCode', 'quantity'],
+        ['authTypeId', 'authNumber', 'feeScheduleId', 'mapiissCode', 'quantity'],
         { quantity: [Validators.min(1)] },
         true,
       );
       const errors = extractFieldErrors(group, AUTH_ERROR_RULES);
-      expect(errors.authNumber).toBe('El número de autorización es requerido');
-      expect(errors.feeScheduleId).toBe('Seleccione el tarifario');
-      expect(errors.mapiissCode).toBe('Seleccione el código MAPIISS con la lupa de búsqueda');
-      expect(errors.quantity).toBe('La cantidad mínima es 1');
+      expect(errors.authTypeId).toBe('Seleccione Tipo Autorización');
+      expect(errors.authNumber).toBe('N° Autorización requerido');
+      expect(errors.feeScheduleId).toBe('Seleccione Tarifario');
+      expect(errors.mapiissCode).toBe('Seleccione MAPIISS');
+      expect(errors.quantity).toBe('Mínimo 1');
     });
   });
 

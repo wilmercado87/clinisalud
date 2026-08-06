@@ -3,6 +3,7 @@ import { Component, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { AdmissionFormComponent } from './admission-form.component';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import { AdmissionStore } from '@features/admissions/store/admission.store';
@@ -24,6 +25,7 @@ import { PatientLookupResponse } from '@features/admissions/models/admissions.mo
 class MockCatalogSelectComponent implements ControlValueAccessor {
   readonly catalogType = input.required<string>();
   readonly label = input('');
+  readonly required = input(false);
 
   private onChange: (value: number | null) => void = () => {};
 
@@ -59,7 +61,10 @@ describe('AdmissionFormComponent', () => {
   let component: AdmissionFormComponent;
   let fixture: ComponentFixture<AdmissionFormComponent>;
   let store: MockAdmissionStore;
-  let catalogStore: { invalidateCatalog: jasmine.Spy };
+  let catalogStore: {
+    getCatalog: jasmine.Spy;
+    invalidateCatalog: jasmine.Spy;
+  };
 
   const patient: PatientLookupResponse = {
     id: 7,
@@ -92,7 +97,10 @@ describe('AdmissionFormComponent', () => {
     store.clearCreateResult = jasmine.createSpy('clearCreateResult').and.callFake(() => {
       store.createResult.set(null);
     });
-    catalogStore = { invalidateCatalog: jasmine.createSpy('invalidateCatalog') };
+    catalogStore = {
+      getCatalog: jasmine.createSpy('getCatalog').and.returnValue([]),
+      invalidateCatalog: jasmine.createSpy('invalidateCatalog'),
+    };
 
     await TestBed.configureTestingModule({
       imports: [AdmissionFormComponent],
@@ -196,8 +204,8 @@ describe('AdmissionFormComponent', () => {
       component.admissionForm.patchValue({ roomId: 5, observations: 'Ingreso por urgencias' });
       await flushEffects();
 
-      expect(component['patientStatus']()).toBe('VALID');
-      expect(component['admissionStatus']()).toBe('VALID');
+      expect(component['patientFormSignals'].status()).toBe('VALID');
+      expect(component['admissionFormSignals'].status()).toBe('VALID');
       expect(component.canSubmit()).toBeTrue();
 
       component.onSubmit();
@@ -313,15 +321,17 @@ describe('AdmissionFormComponent', () => {
 
     it('includes the authorizations when enabled', async () => {
       await fillValidForm();
-      component.toggleAuthorizations(true);
-      component.addAuthEntry();
-      component.authEntries()[0].patchValue({
-        authTypeId: 5,
-        authNumber: 'AUTH-001',
-        feeScheduleId: 2,
-        mapiissCode: 'MAPIISS-1',
-        quantity: 2,
-      });
+      component.appendAuthEntries([
+        {
+          authTypeId: 5,
+          authNumber: 'AUTH-001',
+          feeScheduleId: 2,
+          mapiissCode: 'MAPIISS-1',
+          quantity: 2,
+          description: 'Consulta',
+          maxQuantity: 3,
+        },
+      ]);
       await flushEffects();
 
       component.onSubmit();
@@ -364,7 +374,7 @@ describe('AdmissionFormComponent', () => {
       expect(catalogStore.invalidateCatalog).toHaveBeenCalledWith('beds');
       expect(component.mode()).toBe('IDLE');
       expect(component.patientForm.controls.document.value).toBe('');
-      expect(component.showAuthorizations()).toBeFalse();
+      expect(component.authEntries()).toEqual([]);
     });
 
     it('does not re-fire the success feedback nor reset the form on a later patient search', async () => {
@@ -408,6 +418,111 @@ describe('AdmissionFormComponent', () => {
         type: 'error',
         message: 'La cama seleccionada no está disponible',
       });
+    });
+  });
+
+  describe('required marks', () => {
+    // Orden de aparición en el template: 0 paciente Tipo Documento, 1 Género,
+    // 2 Tipo Usuario, 3 acompañante Tipo Documento, 4 Parentesco, 5 EPS, 6 Cama.
+    function selectAt(index: number): MockCatalogSelectComponent {
+      return fixture.debugElement.queryAll(By.css('app-catalog-select'))[index]
+        .componentInstance as MockCatalogSelectComponent;
+    }
+
+    async function goToNotFound(): Promise<void> {
+      component.patientForm.patchValue({ documentTypeId: 1, document: '999999999' });
+      component.onSearchPatient();
+      store.isLookingUp.set(true);
+      store.isLookingUp.set(false);
+      store.lookupError.set(
+        new HttpErrorResponse({
+          status: 404,
+          statusText: 'Not Found',
+          error: { message: 'Paciente no encontrado' },
+        }),
+      );
+      await flushEffects();
+    }
+
+    it('marks Género and Tipo Usuario as required only when the patient is not found', async () => {
+      expect(component.mode()).toBe('IDLE');
+      expect(selectAt(1).required()).toBeFalse();
+      expect(selectAt(2).required()).toBeFalse();
+
+      await goToNotFound();
+
+      expect(component.mode()).toBe('NOT_FOUND');
+      expect(selectAt(1).required()).toBeTrue();
+      expect(selectAt(2).required()).toBeTrue();
+    });
+
+    it('marks companion Tipo Documento and Parentesco required only while the name has data', async () => {
+      expect(selectAt(3).required()).toBeFalse();
+      expect(selectAt(4).required()).toBeFalse();
+
+      component.companionForm.patchValue({ firstName: 'Luis' });
+      await flushEffects();
+
+      expect(selectAt(3).required()).toBeTrue();
+      expect(selectAt(4).required()).toBeTrue();
+
+      component.companionForm.patchValue({ firstName: '' });
+      await flushEffects();
+
+      expect(selectAt(3).required()).toBeFalse();
+      expect(selectAt(4).required()).toBeFalse();
+    });
+  });
+
+  describe('authorizations button', () => {
+    it('stays disabled until the patient search completes and disables again on cancel', async () => {
+      expect(component.mode()).toBe('IDLE');
+      expect(component.dataEnabled()).toBeFalse();
+
+      component.patientForm.patchValue({ documentTypeId: 1, document: '1020304050' });
+      component.onSearchPatient();
+      expect(component.dataEnabled()).toBeFalse();
+
+      store.isLookingUp.set(true);
+      store.isLookingUp.set(false);
+      store.patientFound.set(patient);
+      await flushEffects();
+      expect(component.mode()).toBe('FOUND');
+      expect(component.dataEnabled()).toBeTrue();
+
+      component.onCancel();
+      expect(component.mode()).toBe('IDLE');
+      expect(component.dataEnabled()).toBeFalse();
+    });
+
+    it('cancel also clears the forms and the registered authorizations', () => {
+      component.mode.set('FOUND');
+      component.patientForm.patchValue({
+        documentTypeId: 1,
+        document: '1020304050',
+        firstName: 'Ana',
+      });
+      component.companionForm.patchValue({ firstName: 'Luis' });
+      component.appendAuthEntries([
+        {
+          authTypeId: 5,
+          authNumber: 'AUTH-001',
+          feeScheduleId: 2,
+          mapiissCode: 'MAPIISS-1',
+          quantity: 2,
+          description: 'Consulta',
+          maxQuantity: 3,
+        },
+      ]);
+
+      component.onCancel();
+
+      expect(component.mode()).toBe('IDLE');
+      expect(component.patientForm.controls.document.value).toBe('');
+      expect(component.patientForm.controls.firstName.value).toBe('');
+      expect(component.companionForm.controls.firstName.value).toBe('');
+      expect(component.authEntries()).toEqual([]);
+      expect(component.dataEnabled()).toBeFalse();
     });
   });
 });

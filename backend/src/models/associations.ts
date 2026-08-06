@@ -94,6 +94,7 @@ export function initAssociations() {
   Autorizacion.belongsTo(Admision, { foreignKey: "admissionNumber", as: "admission" });
   Autorizacion.belongsTo(TipoAutorizacion, { foreignKey: "authTypeId", as: "authType" });
   Autorizacion.belongsTo(Cups, { foreignKey: "mapiissCode", targetKey: "mapiissCode", as: "cups" });
+  Autorizacion.belongsTo(Tarifario, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   Autorizacion.belongsTo(Usuario, { foreignKey: "systemUserId", as: "systemUser" });
 
   // === [MÓDULO 2B: ACOMPAÑANTE] ===

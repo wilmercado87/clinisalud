@@ -131,6 +131,11 @@
       margin-top: 2px !important;
     }
 
+    .mat-mdc-form-field-hint-wrapper,
+    .mat-mdc-form-field-error-wrapper {
+      padding-left: 0;
+    }
+
     .mat-mdc-form-field mat-icon {
       color: v.$navy-500 !important;
       opacity: 0.8;

@@ -45,7 +45,11 @@ export class BillabilityService {
 
       const requested = item.quantity ?? 1;
       const authorizations = await Autorizacion.findAll({
-        where: { admissionNumber: payload.admissionNumber, mapiissCode: cups.mapiissCode },
+        where: { 
+          admissionNumber: payload.admissionNumber, 
+          mapiissCode: cups.mapiissCode,
+          feeScheduleId: cups.feeScheduleId,
+        },
       });
       const hasAuthNumber = authorizations.some((a) => (a.authNumber ?? "").trim().length > 0);
       const authorizedQuantity = authorizations.reduce((acc, a) => acc + a.quantity, 0);

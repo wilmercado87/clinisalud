@@ -149,6 +149,8 @@ export const ERROR_MESSAGES_ADMISION = {
   ADMISSION_NUMBER_REQUIRED: 'Número de admisión es requerido',
   AUTH_MAPIISS_NOT_FOUND: 'El código MAPIISS {mapiissCode} no existe en el tarifario',
   AUTH_TYPE_NOT_FOUND: 'El tipo de autorización no es válido',
+  AUTH_FEE_SCHEDULE_REQUIRED: 'Tarifario es requerido para la autorización',
+  AUTH_FEE_SCHEDULE_MISMATCH: 'El tarifario no coincide con el CUPS seleccionado',
   AUTH_QUANTITY_EXCEEDS_MAX: 'La cantidad excede el máximo permitido ({maxQuantity}) para el servicio',
   ADMISSION_STATE_REQUIRED: 'El estado de la admisión es requerido',
   ADMISSION_STATE_INVALID: 'El estado no es válido',

@@ -18,6 +18,7 @@ export interface AuthorizationData {
   authNumber: string;
   mapiissCode: string;
   quantity?: number;
+  feeScheduleId: number;
 }
 
 export interface CreateAdmissionRequest {

@@ -123,6 +123,7 @@
             catalogType="genders"
             label="Género"
             formControlName="genderId"
+            [required]="mode() === 'NOT_FOUND'"
           />
           <mat-form-field appearance="outline">
             <mat-label>Edad</mat-label>
@@ -144,6 +145,7 @@
             catalogType="user-types"
             label="Tipo Usuario"
             formControlName="userTypeId"
+            [required]="mode() === 'NOT_FOUND'"
           />
           <mat-form-field appearance="outline">
             <mat-label>Dirección</mat-label>
@@ -208,6 +210,7 @@
             catalogType="document-types"
             label="Tipo Documento"
             formControlName="documentTypeId"
+            [required]="companionActive()"
           />
           <mat-form-field appearance="outline">
             <mat-label>Documento</mat-label>
@@ -237,6 +240,7 @@
             catalogType="parentescos"
             label="Parentesco"
             formControlName="relationshipId"
+            [required]="companionActive()"
           />
           <mat-form-field appearance="outline">
             <mat-label>Teléfono</mat-label>
@@ -291,106 +295,62 @@
 
     <mat-card appearance="outlined" class="admission-form__card admission-form__card--auth">
       <mat-card-header>
-        <mat-card-title>
-          Autorizaciones
-          <mat-slide-toggle
-            [checked]="showAuthorizations()"
-            (change)="toggleAuthorizations($event.checked)"
-            class="admission-form__toggle"
-          >
-            Agregar
-          </mat-slide-toggle>
-        </mat-card-title>
+        <mat-card-title>Autorizaciones</mat-card-title>
+        <mat-card-subtitle>
+          Registre las autorizaciones previas de los servicios que las requieran según el
+          contrato de la EPS.
+        </mat-card-subtitle>
       </mat-card-header>
-      @if (showAuthorizations()) {
-        <mat-card-content>
-          @for (auth of authEntries(); track $index) {
-            <div class="admission-form__auth-block">
-              <div class="admission-form__auth-row">
-                <app-catalog-select
-                  catalogType="authorization-types"
-                  label="Tipo Autorización"
-                  [formControl]="auth.controls.authTypeId"
-                />
-                <mat-form-field appearance="outline">
-                  <mat-label>N° Autorización</mat-label>
-                  <input
-                    matInput
-                    [formControl]="auth.controls.authNumber"
-                    placeholder="Número"
-                    required
-                  />
-                  @if (authErrors()[$index].authNumber) {
-                    <mat-error>{{ authErrors()[$index].authNumber }}</mat-error>
-                  }
-                </mat-form-field>
-                <app-catalog-select
-                  catalogType="fee-schedules"
-                  label="Tarifario"
-                  [formControl]="auth.controls.feeScheduleId"
-                />
-                <mat-form-field appearance="outline">
-                  <mat-label>Código MAPIISS</mat-label>
-                  <input
-                    matInput
-                    [formControl]="auth.controls.mapiissCode"
-                    placeholder="Busque con la lupa"
-                    readonly
-                    required
-                  />
-                  <button
-                    matSuffix
-                    mat-icon-button
-                    type="button"
-                    class="admission-form__lupa"
-                    (click)="openCupsSearch($index)"
-                    [disabled]="auth.controls.feeScheduleId.value === null"
-                  >
-                    <mat-icon>search</mat-icon>
-                  </button>
-                  @if (authErrors()[$index].mapiissCode) {
-                    <mat-error>{{ authErrors()[$index].mapiissCode }}</mat-error>
-                  }
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Cantidad</mat-label>
-                  <input
-                    matInput
-                    type="number"
-                    [formControl]="auth.controls.quantity"
-                    min="1"
-                    placeholder="1"
-                    required
-                  />
-                  @if (auth.controls.maxQuantity.value !== null) {
-                    <mat-hint>Máx: {{ auth.controls.maxQuantity.value }}</mat-hint>
-                  }
-                  @if (authErrors()[$index].quantity) {
-                    <mat-error>{{ authErrors()[$index].quantity }}</mat-error>
-                  }
-                </mat-form-field>
-                <button mat-icon-button color="warn" type="button" (click)="removeAuthEntry($index)">
-                  <mat-icon>remove_circle</mat-icon>
-                </button>
-              </div>
-              <mat-form-field appearance="outline" class="admission-form__field--full">
-                <mat-label>Descripción del CUPS</mat-label>
-                <textarea
-                  matInput
-                  [formControl]="auth.controls.description"
-                  rows="2"
-                  placeholder="Descripción del procedimiento seleccionado"
-                  readonly
-                ></textarea>
-              </mat-form-field>
-            </div>
-          }
-          <button mat-stroked-button type="button" (click)="addAuthEntry()">
+      <mat-card-content>
+        @if (authRows().length === 0) {
+          <p class="admission-form__empty">Sin autorizaciones registradas.</p>
+        } @else {
+          <table class="admission-form__auth-table">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>N° Autorización</th>
+                <th>Código MAPIISS</th>
+                <th>Cantidad</th>
+                <th class="admission-form__auth-table--actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of authRows(); track $index) {
+                <tr>
+                  <td>{{ row.authTypeName }}</td>
+                  <td>{{ row.authNumber }}</td>
+                  <td>{{ row.mapiissCode }}</td>
+                  <td>{{ row.quantity }}</td>
+                  <td class="admission-form__auth-table--actions">
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      type="button"
+                      aria-label="Quitar autorización"
+                      (click)="removeAuthEntry($index)"
+                    >
+                      <mat-icon>remove_circle</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+        <div class="admission-form__auth-actions">
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            [disabled]="!dataEnabled()"
+            (click)="openAuthorizationsDialog()"
+          >
             <mat-icon>add</mat-icon>
             Agregar autorización
           </button>
-        </mat-card-content>
-      }
+        </div>
+      </mat-card-content>
     </mat-card>
   </form>
 
@@ -421,6 +381,8 @@
     >
       @if (isCreating()) {
         <mat-spinner diameter="20" />
+      } @else {
+        <mat-icon>save</mat-icon>
       }
       Registrar Admisión
     </button>

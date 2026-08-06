@@ -1,9 +1,20 @@
-import { Component, inject, effect, computed, ChangeDetectionStrategy, signal, ViewChildren, QueryList, DestroyRef, Signal } from '@angular/core';
+import {
+  Component,
+  inject,
+  effect,
+  computed,
+  ChangeDetectionStrategy,
+  signal,
+  ViewChildren,
+  QueryList,
+  DestroyRef,
+  Signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -12,7 +23,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -20,9 +30,6 @@ import { AdmissionStore } from '@features/admissions/store/admission.store';
 import {
   ADMISSION_ERROR_RULES,
   applyRequiredValidators,
-  applyAuthCupsSelection,
-  AUTH_ERROR_RULES,
-  clearAuthCupsSelection,
   COMPANION_ERROR_RULES,
   COMPANION_FORMAT_VALIDATORS,
   COMPANION_REQUIRED_KEYS,
@@ -31,14 +38,12 @@ import {
   PATIENT_REQUIRED_KEYS,
 } from '@features/admissions/utils/admission-form-validator';
 import { extractFieldErrors } from '@shared/utils/form-field-errors';
+import { findCatalogItemName } from '@shared/utils/catalog-mapper';
+import { ADMISSION_MESSAGES, formatMessage } from '@shared/utils/messages';
 import { PatientLookupResponse } from '@features/admissions/models/admissions.model';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
-import { CupsSearchItem } from '@core/models/catalog.model';
-import {
-  CupsSearchDialogComponent,
-  CupsSearchDialogData,
-} from '@features/admissions/components/cups-search-dialog/cups-search-dialog.component';
+import { AuthEntryDialogComponent } from '@features/admissions/components/auth-entry-dialog/auth-entry-dialog.component';
 import { startOfToday } from '@shared/utils/form-validators';
 import { HTTP_STATUS } from '@shared/utils/status.codes';
 import { getHttpErrorMessage, getHttpErrorStatus } from '@shared/utils/http-error';
@@ -48,6 +53,7 @@ import {
   AdmissionForm,
   AdmissionFormValue,
   AuthFormGroup,
+  AuthFormValue,
   CompanionForm,
   CompanionFormValue,
   FormMode,
@@ -70,6 +76,18 @@ export type FormFeedback = {
   message: string;
 };
 
+interface TrackableForm<TValue> {
+  status: string;
+  statusChanges: Observable<string>;
+  getRawValue(): TValue;
+  valueChanges: Observable<Partial<TValue>>;
+}
+
+interface FormTrackSignals<TValue> {
+  status: Signal<string>;
+  value: Signal<Partial<TValue>>;
+}
+
 @Component({
   selector: 'app-admission-form',
   imports: [
@@ -83,7 +101,6 @@ export type FormFeedback = {
     MatCardModule,
     MatDividerModule,
     MatProgressSpinnerModule,
-    MatSlideToggleModule,
     MatDatepickerModule,
     MatNativeDateModule,
     MatDialogModule,
@@ -108,6 +125,7 @@ export class AdmissionFormComponent {
 
   readonly mode = signal<FormMode>('IDLE');
   private lookupRequested = false;
+  private readonly lastSearchKey = signal<string | null>(null);
 
   readonly searchEnabled = computed(() => this.mode() === 'IDLE' || this.mode() === 'NOT_FOUND');
   readonly dataEnabled = computed(() => this.mode() === 'NOT_FOUND' || this.mode() === 'FOUND');
@@ -120,69 +138,81 @@ export class AdmissionFormComponent {
 
   readonly feedback = signal<FormFeedback | null>(null);
 
-  readonly showAuthorizations = signal(false);
   readonly authEntries = signal<AuthFormGroup[]>([]);
   readonly companionActive = signal(false);
 
-  private readonly authRevision = signal(0);
-  private readonly authEntrySubscriptions: Subscription[] = [];
   private blurTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly patientForm: PatientForm = createPatientForm(this.today);
   readonly companionForm: CompanionForm = createCompanionForm();
   readonly admissionForm: AdmissionForm = createAdmissionForm();
 
-  private readonly patientStatus: Signal<string>;
-  private readonly patientValue: Signal<Partial<PatientFormValue>>;
-  private readonly companionStatus: Signal<string>;
-  private readonly companionValue: Signal<Partial<CompanionFormValue>>;
-  private readonly admissionStatus: Signal<string>;
-  private readonly admissionValue: Signal<Partial<AdmissionFormValue>>;
+  private patientFormSignals!: FormTrackSignals<PatientFormValue>;
+  private companionFormSignals!: FormTrackSignals<CompanionFormValue>;
+  private admissionFormSignals!: FormTrackSignals<AdmissionFormValue>;
 
   readonly patientErrors = computed(() => {
-    this.patientStatus();
-    this.patientValue();
+    this.patientFormSignals.status();
+    this.patientFormSignals.value();
     return extractFieldErrors(this.patientForm, PATIENT_ERROR_RULES);
   });
 
   readonly companionErrors = computed(() => {
-    this.companionStatus();
-    this.companionValue();
+    this.companionFormSignals.status();
+    this.companionFormSignals.value();
     return extractFieldErrors(this.companionForm, COMPANION_ERROR_RULES);
   });
 
   readonly admissionErrors = computed(() => {
-    this.admissionStatus();
-    this.admissionValue();
+    this.admissionFormSignals.status();
+    this.admissionFormSignals.value();
     return extractFieldErrors(this.admissionForm, ADMISSION_ERROR_RULES);
   });
 
-  readonly authErrors = computed(() => {
-    this.authRevision();
-    return this.authEntries().map((fg) => extractFieldErrors(fg, AUTH_ERROR_RULES));
-  });
+  readonly authRows = computed(() =>
+    this.authEntries().map((fg) => {
+      const values = fg.getRawValue();
+      return {
+        authTypeName: findCatalogItemName(
+          this.catalogStore.getCatalog('authorization-types'),
+          values.authTypeId,
+        ),
+        authNumber: values.authNumber,
+        mapiissCode: values.mapiissCode,
+        quantity: values.quantity,
+      };
+    }),
+  );
 
   readonly canSubmit = computed(() =>
     this.dataEnabled() &&
     !this.activeAdmission() &&
-    this.patientStatus() === 'VALID' &&
-    this.companionStatus() === 'VALID' &&
-    this.admissionStatus() === 'VALID' &&
-    (!this.showAuthorizations() || this.authEntries().every((fg) => fg.valid)) &&
+    this.patientFormSignals.status() === 'VALID' &&
+    this.companionFormSignals.status() === 'VALID' &&
+    this.admissionFormSignals.status() === 'VALID' &&
+    this.authEntries().every((fg) => fg.valid) &&
     !this.isCreating()
   );
 
   constructor() {
-    this.patientStatus = toSignal(this.patientForm.statusChanges, { initialValue: this.patientForm.status });
-    this.patientValue = toSignal(this.patientForm.valueChanges, { initialValue: this.patientForm.getRawValue() });
-    this.companionStatus = toSignal(this.companionForm.statusChanges, { initialValue: this.companionForm.status });
-    this.companionValue = toSignal(this.companionForm.valueChanges, { initialValue: this.companionForm.getRawValue() });
-    this.admissionStatus = toSignal(this.admissionForm.statusChanges, { initialValue: this.admissionForm.status });
-    this.admissionValue = toSignal(this.admissionForm.valueChanges, { initialValue: this.admissionForm.getRawValue() });
+    this.initFormSignals();
     this.applyFormState();
     this.registerEffects();
     this.subscribeToFormChanges();
     this.destroyRef.onDestroy(() => this.clearBlurTimer());
+  }
+
+  private initFormSignals(): void {
+    this.patientFormSignals = this.trackForm(this.patientForm);
+    this.companionFormSignals = this.trackForm(this.companionForm);
+    this.admissionFormSignals = this.trackForm(this.admissionForm);
+  }
+
+  private trackForm<TValue>(form: TrackableForm<TValue>): FormTrackSignals<TValue> {
+    return {
+      status: toSignal(form.statusChanges, { initialValue: form.status }),
+      value: toSignal(form.valueChanges, { initialValue: form.getRawValue() }),
+    };
   }
 
   private clearBlurTimer(): void {
@@ -217,6 +247,7 @@ export class AdmissionFormComponent {
     effect(() => this.watchCreateError());
     effect(() => {
       this.mode();
+      this.companionActive();
       this.patientForm.updateValueAndValidity();
       this.companionForm.updateValueAndValidity();
       this.admissionForm.updateValueAndValidity();
@@ -252,7 +283,7 @@ export class AdmissionFormComponent {
       return;
     }
     this.mode.set('IDLE');
-    this.setFeedback('error', getHttpErrorMessage(err, 'Error al buscar el paciente'));
+    this.setFeedback('error', getHttpErrorMessage(err, ADMISSION_MESSAGES.PATIENT_LOOKUP_ERROR));
     this.applyFormState();
   }
 
@@ -265,7 +296,9 @@ export class AdmissionFormComponent {
     if (patient.activeAdmission) {
       this.setFeedback(
         'error',
-        `El paciente ya tiene una admisión activa (${patient.activeAdmission.admissionNumber}). Debe egresarla para crear una nueva admisión`,
+        formatMessage(ADMISSION_MESSAGES.ACTIVE_ADMISSION_EXISTS, {
+          admissionNumber: patient.activeAdmission.admissionNumber,
+        }),
       );
     }
   }
@@ -273,7 +306,12 @@ export class AdmissionFormComponent {
   private watchCreateResult(): void {
     const result = this.createResult();
     if (result && 'admissionNumber' in result) {
-      this.setFeedback('success', `Admisión ${result.admissionNumber} registrada correctamente`);
+      this.setFeedback(
+        'success',
+        formatMessage(ADMISSION_MESSAGES.ADMISSION_CREATED, {
+          admissionNumber: result.admissionNumber,
+        }),
+      );
       this.catalogStore.invalidateCatalog('beds');
       this.resetAll();
       this.store.clearCreateResult();
@@ -283,7 +321,7 @@ export class AdmissionFormComponent {
   private watchCreateError(): void {
     const err = this.createError();
     if (err) {
-      this.setFeedback('error', getHttpErrorMessage(err, 'Error al registrar admisión'));
+      this.setFeedback('error', getHttpErrorMessage(err, ADMISSION_MESSAGES.ADMISSION_CREATE_ERROR));
     }
   }
 
@@ -291,9 +329,14 @@ export class AdmissionFormComponent {
     const docTypeId = this.patientForm.controls.documentTypeId.value;
     const doc = this.patientForm.controls.document.value?.trim();
     if (!docTypeId || !doc) {
-      this.setFeedback('info', 'Seleccione tipo de documento e ingrese número');
+      this.setFeedback('info', ADMISSION_MESSAGES.PATIENT_LOOKUP_INVALID_INPUT);
       return;
     }
+
+    const searchKey = `${docTypeId}|${doc}`;
+    if (this.lastSearchKey() === searchKey) return;
+
+    this.lastSearchKey.set(searchKey);
 
     this.clearFeedback();
     this.mode.set('SEARCHING');
@@ -303,24 +346,28 @@ export class AdmissionFormComponent {
   }
 
   onDocumentBlur(): void {
-    if (this.mode() !== 'IDLE') return;
+    const docTypeId = this.patientForm.controls.documentTypeId.value;
     const doc = this.patientForm.controls.document.value?.trim();
-    if (!doc) return;
+    if (!docTypeId || !doc) return;
+
+    if (this.mode() !== 'IDLE' && this.mode() !== 'NOT_FOUND') return;
+
     this.clearBlurTimer();
     this.blurTimer = setTimeout(() => {
       this.blurTimer = null;
-      if (this.mode() === 'IDLE') this.onSearchPatient();
+      if (this.mode() === 'IDLE' || this.mode() === 'NOT_FOUND') this.onSearchPatient();
     }, 150);
   }
 
   onCancel(): void {
     this.clearFeedback();
+    this.lastSearchKey.set(null);
     this.resetAll();
   }
 
   onSubmit(): void {
     if (!this.canSubmit()) {
-      this.setFeedback('info', 'Complete los campos requeridos para registrar la admisión');
+      this.setFeedback('info', ADMISSION_MESSAGES.REQUIRED_FIELDS);
       return;
     }
 
@@ -338,76 +385,40 @@ export class AdmissionFormComponent {
         admission: this.admissionForm.getRawValue(),
         companion: this.companionForm.getRawValue(),
         authForms: this.authEntries(),
-        authorizationsEnabled: this.showAuthorizations(),
+        authorizationsEnabled: this.authEntries().length > 0,
       }),
     );
   }
 
-  addAuthEntry(): void {
-    const fg = createAuthEntryForm();
-    this.authEntries.update((entries) => [...entries, fg]);
-    const subscription = fg.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.bumpAuthRevision());
-    this.authEntrySubscriptions.push(subscription);
-    const feeScheduleSubscription = fg.controls.feeScheduleId.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => clearAuthCupsSelection(fg));
-    this.authEntrySubscriptions.push(feeScheduleSubscription);
-    this.bumpAuthRevision();
-  }
-
-  removeAuthEntry(index: number): void {
-    this.authEntrySubscriptions[index]?.unsubscribe();
-    this.authEntrySubscriptions.splice(index, 1);
-    this.authEntries.update((entries) => entries.filter((_, i) => i !== index));
-    this.bumpAuthRevision();
-  }
-
-  toggleAuthorizations(checked: boolean): void {
-    this.showAuthorizations.set(checked);
-    this.bumpAuthRevision();
-  }
-
-  openCupsSearch(index: number): void {
-    const fg = this.authEntries()[index];
-    if (!fg) return;
-
-    const feeScheduleId = fg.controls.feeScheduleId.value;
-    if (feeScheduleId === null) {
-      this.setFeedback('info', 'Seleccione el tarifario antes de buscar el CUPS');
-      return;
-    }
-
-    const dialogRef = this.dialog.open(CupsSearchDialogComponent, {
-      width: '560px',
-      maxWidth: '90vw',
-      data: {
-        feeScheduleId,
-        feeScheduleName: this.feeScheduleName(feeScheduleId),
-      } satisfies CupsSearchDialogData,
+  openAuthorizationsDialog(): void {
+    const dialogRef = this.dialog.open(AuthEntryDialogComponent, {
+      width: '1200px',
+      maxWidth: '95vw',
+      autoFocus: false,
     });
 
     dialogRef
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((cups?: CupsSearchItem) => {
-        if (!cups) return;
-        applyAuthCupsSelection(fg, cups);
-        this.bumpAuthRevision();
+      .subscribe((values?: AuthFormValue[]) => {
+        if (!values || values.length === 0) return;
+        this.appendAuthEntries(values);
       });
   }
 
-  private feeScheduleName(feeScheduleId: number): string {
-    const item = this.catalogStore
-      .getCatalog('fee-schedules')
-      .find((catalogItem) => 'name' in catalogItem && catalogItem.id === feeScheduleId);
-    if (!item || !('name' in item)) return `#${feeScheduleId}`;
-    return item.name;
+  appendAuthEntries(values: AuthFormValue[]): void {
+    const entries = values.map((value) => {
+      const fg = createAuthEntryForm();
+      fg.patchValue(value);
+      return fg;
+    });
+    this.authEntries.update((list) => [...list, ...entries]);
   }
 
-  private bumpAuthRevision(): void {
-    this.authRevision.update((n) => n + 1);
+  removeAuthEntry(index: number): void {
+    const fg = this.authEntries()[index];
+    if (!fg) return;
+    this.authEntries.update((list) => list.filter((_, i) => i !== index));
   }
 
   private syncAgeFromBirthDate(date: Date | string | null): void {
@@ -439,10 +450,9 @@ export class AdmissionFormComponent {
     this.companionForm.reset();
     this.admissionForm.reset();
     this.catalogSelects?.forEach((select) => select.forceReset());
-    this.showAuthorizations.set(false);
     this.authEntries.set([]);
-    this.bumpAuthRevision();
     this.mode.set('IDLE');
+    this.lastSearchKey.set(null);
     this.applyFormState();
   }
 

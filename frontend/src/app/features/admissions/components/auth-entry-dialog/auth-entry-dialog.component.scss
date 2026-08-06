@@ -1,0 +1,65 @@
+.auth-dialog {
+  min-width: 0;
+}
+
+.auth-dialog h2 {
+  margin: 0;
+  padding: 16px 24px 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.auth-dialog__content {
+  overflow: auto;
+  padding-top: 16px !important;
+  padding-bottom: 8px;
+}
+
+.auth-dialog__entry {
+  margin-bottom: 16px;
+
+  &--last {
+    margin-bottom: 0;
+  }
+}
+
+.auth-dialog__row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.9fr 1.2fr 0.7fr 40px;
+  gap: 10px;
+  align-items: start;
+}
+
+.auth-dialog__row .mat-mdc-form-field-icon-suffix .mat-mdc-icon-button {
+  width: 40px;
+  height: 40px;
+}
+
+.auth-dialog__row mat-error {
+  white-space: nowrap;
+}
+
+.auth-dialog__desc {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.auth-dialog__remove {
+  transform: scale(0.9);
+}
+
+.auth-dialog__add {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.auth-dialog__actions {
+  padding: 8px 24px 16px;
+}
+
+::ng-deep {
+  .mat-mdc-form-field-hint-wrapper,
+  .mat-mdc-form-field-error-wrapper {
+    padding-left: 0;
+  }
+}

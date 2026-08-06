@@ -18,6 +18,7 @@ import Autorizacion from "../models/Autorizacion";
 import Acompanante from "../models/Acompanante";
 import TipoAutorizacion from "../models/TipoAutorizacion";
 import Cups from "../models/Cups";
+import Tarifario from "../models/Tarifario";
 
 const expectedAdmissionNumber = () => {
   const todayPrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -256,7 +257,7 @@ describe("AdmissionsService", () => {
       const dataWithAuth = {
         ...validData,
         authorizations: [
-          { authTypeId: 1, authNumber: "AUTH-001", mapiissCode: "CUP-001", quantity: 1 },
+          { authTypeId: 1, authNumber: "AUTH-001", mapiissCode: "CUP-001", quantity: 1, feeScheduleId: 1 },
         ],
       };
 
@@ -277,7 +278,8 @@ describe("AdmissionsService", () => {
       } as any);
       const bulkCreateSpy = jest.spyOn(Autorizacion, "bulkCreate").mockResolvedValue([] as any);
       jest.spyOn(TipoAutorizacion, "findByPk").mockResolvedValue({ id: 1 } as any);
-      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-001", maxQuantity: 10 } as any);
+      jest.spyOn(Tarifario, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-001", maxQuantity: 10, feeScheduleId: 1 } as any);
 
       const result = await service.createAdmission(dataWithAuth, 1, "admin@test.com", "SUPER_ADMIN");
 
@@ -405,12 +407,13 @@ describe("AdmissionsService", () => {
       } as any);
       const bulkCreateSpy = jest.spyOn(Autorizacion, "bulkCreate").mockResolvedValue([] as any);
       jest.spyOn(TipoAutorizacion, "findByPk").mockResolvedValue({ id: 1 } as any);
-      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-010", maxQuantity: 10 } as any);
+      jest.spyOn(Tarifario, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-010", maxQuantity: 10, feeScheduleId: 1 } as any);
 
       await service.createAdmission(
         {
           ...validData,
-          authorizations: [{ authTypeId: 1, authNumber: "AUTH-010", mapiissCode: "CUP-010" }],
+          authorizations: [{ authTypeId: 1, authNumber: "AUTH-010", mapiissCode: "CUP-010", feeScheduleId: 1 }],
         },
         1,
         "admin@test.com",

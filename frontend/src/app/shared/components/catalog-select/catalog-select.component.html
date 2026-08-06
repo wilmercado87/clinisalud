@@ -11,7 +11,7 @@
     [required]="isRequired()"
     [matAutocomplete]="auto"
     (input)="onInput($event)"
-    (focus)="onFocus()"
+    (mousedown)="onOpenPanel()"
     (blur)="onBlur()"
   />
   <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event.option)">
@@ -35,7 +35,7 @@
     </button>
   }
 
-  @if (errorMessage(); as message) {
+  @if (resolvedErrorMessage(); as message) {
     <mat-error>{{ message }}</mat-error>
   }
 </mat-form-field>

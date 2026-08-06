@@ -9,6 +9,7 @@ import { NotificationStore } from '@core/stores/notification-store/notification.
 import { ToastService } from '@core/services/toast.service';
 import { toNotificationUI } from '@core/utils/notification.mapper';
 import { PAGINATION } from '@shared/utils/pagination-constants';
+import { NOTIFICATION_MESSAGES } from '@shared/utils/messages';
 import { NotificationFilteredListComponent } from '@features/dashboard/components/notification-filtered-list/notification-filtered-list.component';
 import {
   NotificationsListData,
@@ -62,7 +63,7 @@ export class NotificationsComponent {
 
     effect(() => {
       if (this.notificationStore.markAllResult() !== undefined) {
-        this.toast.success('Notificaciones marcadas como leídas');
+        this.toast.success(NOTIFICATION_MESSAGES.MARKED_READ);
         this.notificationStore.loadUnreadCount();
         this.loadPage(this.currentPage());
       }
@@ -70,13 +71,13 @@ export class NotificationsComponent {
 
     effect(() => {
       if (this.notificationStore.markReadError()) {
-        this.toast.error('Error al marcar notificación');
+        this.toast.error(NOTIFICATION_MESSAGES.MARK_READ_ERROR);
       }
     });
 
     effect(() => {
       if (this.notificationStore.markAllError()) {
-        this.toast.error('Error al marcar notificaciones');
+        this.toast.error(NOTIFICATION_MESSAGES.MARK_ALL_READ_ERROR);
       }
     });
   }

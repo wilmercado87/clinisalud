@@ -26,6 +26,7 @@ import { CatalogSelectComponent } from '@shared/components/catalog-select/catalo
 import { ROLE_CODES } from '@shared/utils/role-constants';
 import { USER_ERROR_RULES } from '@features/dashboard/utils/user-form-validator';
 import { extractFieldErrors } from '@shared/utils/form-field-errors';
+import { USER_MESSAGES } from '@shared/utils/messages';
 import {
   allMenuOptionIds,
   collectGroupIds,
@@ -175,7 +176,7 @@ export class UserFormDialogComponent {
       if (res && this.formSubmitted) {
         this.created.set(true);
         this.emailSent.set(res.emailSent === true);
-        this.toast.success('¡Usuario registrado con éxito!');
+        this.toast.success(USER_MESSAGES.USER_CREATED);
       }
     });
 

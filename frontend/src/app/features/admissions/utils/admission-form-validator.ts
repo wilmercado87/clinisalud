@@ -101,14 +101,15 @@ export const ADMISSION_ERROR_RULES = {
 } satisfies Record<string, [string, string][]>;
 
 export const AUTH_ERROR_RULES = {
-  authNumber: [['required', 'El número de autorización es requerido']],
-  feeScheduleId: [['required', 'Seleccione el tarifario']],
-  mapiissCode: [['required', 'Seleccione el código MAPIISS con la lupa de búsqueda']],
+  authTypeId: [['required', 'Seleccione Tipo Autorización']],
+  authNumber: [['required', 'N° Autorización requerido']],
+  feeScheduleId: [['required', 'Seleccione Tarifario']],
+  mapiissCode: [['required', 'Seleccione MAPIISS']],
   quantity: [
-    ['required', 'La cantidad es requerida'],
-    ['invalidNumeric', 'Solo se permiten números'],
-    ['min', 'La cantidad mínima es 1'],
-    ['max', 'La cantidad supera el máximo permitido'],
+    ['required', 'Cantidad requerida'],
+    ['invalidNumeric', 'Solo números'],
+    ['min', 'Mínimo 1'],
+    ['max', 'Excede el máximo'],
   ],
 } satisfies Record<string, [string, string][]>;
 

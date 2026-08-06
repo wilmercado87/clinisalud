@@ -5,6 +5,7 @@ import Convenio from "../../models/Convenio";
 import TipoEstado from "../../models/TipoEstado";
 import TipoAutorizacion from "../../models/TipoAutorizacion";
 import Cups from "../../models/Cups";
+import Tarifario from "../../models/Tarifario";
 import Autorizacion from "../../models/Autorizacion";
 import Acompanante from "../../models/Acompanante";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
@@ -143,6 +144,7 @@ export class AdmissionsService {
     for (const authorization of authorizations) {
       await this.assertAuthTypeExists(authorization.authTypeId, t);
       const cups = await this.assertMapiissCodeExists(authorization.mapiissCode, t);
+      await this.assertFeeScheduleMatchesCups(authorization.feeScheduleId, cups, t);
       this.assertQuantityWithinMax(authorization, cups);
     }
   }
@@ -158,6 +160,23 @@ export class AdmissionsService {
       );
     }
     return cups;
+  }
+
+  private async assertFeeScheduleMatchesCups(
+    feeScheduleId: number,
+    cups: Cups,
+    t: Transaction,
+  ): Promise<void> {
+    if (!feeScheduleId) {
+      throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.AUTH_FEE_SCHEDULE_REQUIRED);
+    }
+    const tarifario = await Tarifario.findByPk(feeScheduleId, { transaction: t });
+    if (!tarifario) {
+      throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.AUTH_FEE_SCHEDULE_REQUIRED);
+    }
+    if (cups.feeScheduleId !== feeScheduleId) {
+      throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.AUTH_FEE_SCHEDULE_MISMATCH);
+    }
   }
 
   private async assertAuthTypeExists(authTypeId: number, t: Transaction): Promise<void> {
@@ -248,6 +267,7 @@ export class AdmissionsService {
       authTypeId: a.authTypeId,
       authNumber: a.authNumber,
       mapiissCode: a.mapiissCode,
+      feeScheduleId: a.feeScheduleId,
       quantity: a.quantity || 1,
       systemUserId: userId,
     }));
