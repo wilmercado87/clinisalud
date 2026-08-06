@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { HTTP_STATUS, ERROR_MESSAGES, JWT_CONFIG } from '../constants';
 import { ApiError } from './ErrorHandlerMiddleware';
+import Usuario from '../models/Usuario';
 
 const JWT_SECRET = process.env.JWT_SECRET || JWT_CONFIG.SECRET_FALLBACK;
 
@@ -15,7 +16,7 @@ export interface AuthRequest extends Request {
   };
 }
 
-export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticateToken = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader?.split(' ')[1];
 
@@ -35,10 +36,18 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
       throw ApiError.unauthorized(ERROR_MESSAGES.INVALID_TOKEN);
     }
 
+    const user = await Usuario.findByPk(decoded.id);
+    if (!user || !user.isActive) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        success: false,
+        message: ERROR_MESSAGES.USER_INACTIVE,
+      });
+    }
+
     req.user = {
       id: decoded.id,
       role: decoded.role,
-      email: decoded.email || '',
+      email: user.email || '',
       iat: decoded.iat,
       exp: decoded.exp,
     };

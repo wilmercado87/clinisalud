@@ -6,6 +6,12 @@ import { AuthStore } from '@core/stores/auth-store/auth.store';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authStore = inject(AuthStore);
   const token = authStore.getToken();
+  const currentUser = authStore.currentUser();
+
+  if (token && currentUser && !currentUser.isActive && !req.url.includes('/auth/login')) {
+    authStore.logout();
+    return throwError(() => new HttpErrorResponse({ status: 401, statusText: 'Usuario inactivo' }));
+  }
 
   let cloned = req;
   if (token) {

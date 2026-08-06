@@ -1,5 +1,6 @@
 import request from "supertest";
 import jwt from "jsonwebtoken";
+import Usuario from "../models/Usuario";
 
 const mockLookupPatient = jest.fn();
 const mockCreateAdmission = jest.fn();
@@ -12,6 +13,12 @@ jest.mock("../modules/admissions/admissions.service", () => ({
     getCensus: mockGetCensus,
   })),
 }));
+
+jest.spyOn(Usuario, "findByPk").mockResolvedValue({
+  id: 1,
+  isActive: true,
+  email: "admin@test.com",
+} as any);
 
 const app = require("../app").default;
 

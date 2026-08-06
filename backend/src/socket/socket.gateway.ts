@@ -2,6 +2,7 @@ import { Server as HttpServer } from "http";
 import jwt from "jsonwebtoken";
 import { Server, Socket } from "socket.io";
 import { JWT_CONFIG } from "../constants";
+import Usuario from "../models/Usuario";
 
 let io: Server | null = null;
 
@@ -13,7 +14,7 @@ export function initSocketGateway(httpServer: HttpServer): Server {
     },
   });
 
-  io.on("connection", (socket: Socket) => {
+  io.on("connection", async (socket: Socket) => {
     const token = socket.handshake.auth?.token;
     if (!token) {
       socket.disconnect();
@@ -23,6 +24,11 @@ export function initSocketGateway(httpServer: HttpServer): Server {
     try {
       const secret = process.env["JWT_SECRET"] || JWT_CONFIG.SECRET_FALLBACK;
       const decoded = jwt.verify(token, secret) as { id: number; role: string };
+      const user = await Usuario.findByPk(decoded.id);
+      if (!user || !user.isActive) {
+        socket.disconnect();
+        return;
+      }
       socket.data.userId = decoded.id;
       socket.data.role = decoded.role;
 
