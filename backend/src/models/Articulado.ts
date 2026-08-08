@@ -29,7 +29,7 @@ Articulado.init(
     mapiissCode: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      field: "FK_CODIGO_CUPS"
+      field: "FK_CODIGO_MAPIISS"
     },
     description: { type: DataTypes.TEXT, field: "DESCRIPCION" },
     paragraphType: { type: DataTypes.STRING(100), allowNull: false, field: "TIPO_PARAGRAFO" },
@@ -40,7 +40,7 @@ Articulado.init(
     timestamps: false,
     indexes: [
       { fields: ["FK_TARIFARIO"] },
-      { fields: ["FK_CODIGO_CUPS"] },
+      { fields: ["FK_CODIGO_MAPIISS"] },
       { fields: ["COD_ARTICULO"] },
       { fields: ["FK_TARIFARIO", "COD_ARTICULO"] },
     ],

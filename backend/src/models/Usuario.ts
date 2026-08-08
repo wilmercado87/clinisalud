@@ -83,6 +83,16 @@ Usuario.init(
       allowNull: false,
       field: "FK_ROL",
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "FECHA_CREACION",
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "FECHA_ACTUALIZACION",
+    },
   },
   {
     sequelize,

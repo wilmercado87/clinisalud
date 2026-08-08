@@ -96,8 +96,8 @@ export class CatalogsService {
     return (await Diagnostico.findAll({
       where: {
         [Op.or]: [
-          { code: { [Op.like]: term } },
-          { description: { [Op.like]: term } },
+          { code: { [Op.iLike]: term } },
+          { description: { [Op.iLike]: term } },
         ],
       },
       limit,
@@ -119,8 +119,8 @@ export class CatalogsService {
       where: {
         feeScheduleId,
         [Op.or]: [
-          { mapiissCode: { [Op.like]: term } },
-          { mapiissDescription: { [Op.like]: term } },
+          { mapiissCode: { [Op.iLike]: term } },
+          { mapiissDescription: { [Op.iLike]: term } },
         ],
       },
       limit: pageSize,

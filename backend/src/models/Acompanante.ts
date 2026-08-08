@@ -71,6 +71,16 @@ Acompanante.init(
       allowNull: false,
       field: "TELEFONO",
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "FECHA_CREACION",
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "FECHA_ACTUALIZACION",
+    },
   },
   {
     sequelize,

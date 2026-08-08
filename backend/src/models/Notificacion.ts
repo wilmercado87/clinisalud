@@ -62,6 +62,11 @@ Notificacion.init(
       allowNull: true,
       field: "ETIQUETA_ACCION",
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "FECHA_CREACION",
+    },
   },
   {
     sequelize,
@@ -71,7 +76,7 @@ Notificacion.init(
     indexes: [
       { fields: ["TIPO"] },
       { fields: ["ID_ACTOR"] },
-      { fields: ["createdAt"] },
+      { fields: ["FECHA_CREACION"] },
     ],
   },
 );

@@ -56,6 +56,16 @@ Autorizacion.init(
       allowNull: false,
       field: "ID_USUARIO",
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "FECHA_CREACION",
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "FECHA_ACTUALIZACION",
+    },
   },
   {
     sequelize,

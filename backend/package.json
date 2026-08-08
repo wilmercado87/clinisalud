@@ -6,6 +6,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "seed": "ts-node src/seed.ts",
+    "db:schema": "pg_dump \"${DATABASE_URL:-postgresql://clinisalud:clinisalud@localhost:5432/clinisalud}\" --schema-only > clinisalud.sql",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
@@ -20,6 +21,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^9.0.3",
+    "pg": "^8.22.0",
     "sequelize": "^6.37.3",
     "socket.io": "^4.8.3",
     "sqlite3": "^5.1.7",

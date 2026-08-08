@@ -78,6 +78,16 @@ Admision.init(
       allowNull: true,
       field: "FECHA_EGRESO",
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "FECHA_CREACION",
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "FECHA_ACTUALIZACION",
+    },
   },
   {
     sequelize,

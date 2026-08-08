@@ -4,6 +4,7 @@ export const autoMapCsvRow = (model: any, row: any) => {
 
   for (const [key, config] of Object.entries(attributes)) {
     const attributeConfig = config as any;
+    if (key === "createdAt" || key === "updatedAt") continue;
     // Buscamos el nombre de la columna en el CSV (por field o por la llave CamelCase)
     const csvKey = attributeConfig.field || key;
     let rawValue = row[csvKey];
