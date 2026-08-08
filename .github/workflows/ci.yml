@@ -1,0 +1,127 @@
+name: CI - Compilación, calidad y pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-ci:
+    name: Backend (tsc + jest + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm test -- --ci --runInBand
+      - run: npm run build
+
+  frontend-ci:
+    name: Frontend (tsc + build producción)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit -p tsconfig.app.json
+      - run: npm run build -- --configuration production
+
+  quality-gates:
+    name: Gates de calidad (sin LLM)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Ejecutar gates determinísticos
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/quality-gates.mjs
+
+  code-review:
+    name: Revisión de código (opencode)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && vars.OPENCODE_API_KEY_SET == 'true'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar opencode
+        run: npm i -g opencode-ai
+      - name: Revisar diff contra skills del proyecto
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          case "$BASE_SHA" in
+            ""|0000000000000000000000000000000000000000) echo "Sin base (PR nuevo) - se revisa el diff contra main" ; BASE_SHA="origin/main" ;;
+          esac
+          git diff "$BASE_SHA...HEAD" --name-only > /tmp/changed.txt
+          opencode run --model openai/gpt-4o-mini --format jsonl <<'PROMPT' > review.jsonl
+          Actúa como ingeniero senior (skills: .opencode/skills/clinisalud-simple/SKILL.md, .opencode/skills/angular-architect/SKILL.md, docs/spec/CLINISALUD-SPEC-CORE.md, docs/CONVENCION-API.md).
+          Revisa los archivos listados en /tmp/changed.txt (lee el diff con git diff BASE_SHA...HEAD):
+          - Violaciones de clean code (nombres, complejidad, duplicación, any explícito).
+          - Invariantes de negocio del spec (@spec:INV-...) no cubiertas por tests.
+          - Convenciones de la API (rutas kebab-case, body camelCase) y de BD (columnas UPPER).
+          Devuelve UN SOLO JSON: {"findings":[{"rule":"INV-XX","severity":"error|warning","file":"...","line":N,"message":"..."}]}
+          PROMPT
+          echo "JSON_SIZE=$(wc -c < review.jsonl)" >> "$GITHUB_OUTPUT"
+      - name: Comentar hallazgos en el PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let findings = [];
+            try {
+              const lines = fs.readFileSync('review.jsonl', 'utf8').trim().split('\n');
+              for (const l of lines) {
+                const j = JSON.parse(l);
+                if (j && j.findings) findings = findings.concat(j.findings);
+              }
+            } catch (e) {
+              core.warning('No se pudo parsear review.jsonl: ' + e.message);
+            }
+            if (!findings.length) { core.info('Sin hallazgos del agente'); return; }
+            const body = [
+              '### 🤖 Revisión opencode (clean code + spec)',
+              '',
+              findings.map(x =>
+                `- **[${String(x.severity).toUpperCase()}]** ${x.rule || 'INV'} \`${x.file}${x.line ? ':' + x.line : ''}\` — ${x.message}`
+              ).join('\n'),
+              ''
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });

@@ -1,0 +1,116 @@
+name: CD - Despliegue por tag (versión)
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  db-sync:
+    name: Sincronizar esquema BD (Neon)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Aplicar cambios no destructivos de esquema
+        run: npm run db:alter
+      - name: Verificar que db/clinisalud.sql refleja la BD real
+        run: |
+          pg_dump "$DATABASE_URL" --schema-only --no-owner --no-privileges > /tmp/live.sql
+          if diff -q <(grep -v '^--' /tmp/live.sql) <(grep -v '^--' db/clinisalud.sql) >/dev/null; then
+            echo "OK Esquema sincronizado con db/clinisalud.sql"
+          else
+            echo "ERROR db/clinisalud.sql esta desactualizado vs BD real:"
+            diff <(grep -v '^--' /tmp/live.sql) <(grep -v '^--' db/clinisalud.sql) | head -60
+            exit 1
+          fi
+        shell: bash
+
+  deploy-api:
+    name: Deploy API (Render)
+    needs: db-sync
+    runs-on: ubuntu-latest
+    env:
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+    steps:
+      - name: Disparar deploy del backend
+        run: |
+          curl -fsS -X POST "https://api.render.com/v1/services/srv-d9rb73navr4c738rgid0/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"branch":"main"}'
+      - name: Esperar que /health responda healthy (max 12 min)
+        run: |
+          for i in $(seq 1 72); do
+            if curl -fsS --max-time 8 "https://clinisalud-api.onrender.com/health" 2>/dev/null | grep -q '"healthy"'; then
+              echo "OK API healthy tras deploy"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "TIMEOUT API no respondio healthy tras el deploy"
+          exit 1
+        shell: bash
+
+  deploy-frontend:
+    name: Deploy Frontend (Render)
+    needs: deploy-api
+    runs-on: ubuntu-latest
+    env:
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+    steps:
+      - name: Disparar deploy del frontend
+        run: |
+          curl -fsS -X POST "https://api.render.com/v1/services/srv-d9rj15afngtc73dg22n0/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"branch":"main"}'
+      - name: Esperar HTTP 200 del frontend (max 12 min)
+        run: |
+          for i in $(seq 1 72); do
+            if curl -fsS --max-time 8 -o /dev/null "https://clinisalud-frontend.onrender.com/" 2>/dev/null; then
+              echo "OK Frontend 200"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "ERROR Frontend no respondio 200"
+          exit 1
+        shell: bash
+
+  smoke:
+    name: Smoke test (login + catalogo)
+    needs: [deploy-api, deploy-frontend]
+    runs-on: ubuntu-latest
+    env:
+      API_URL: https://clinisalud-api.onrender.com
+      SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+      SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+    steps:
+      - name: Login + busqueda cups
+        run: |
+          TOKEN=$(curl -fsS -X POST "$API_URL/api/v1/auth/login" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"$SMOKE_EMAIL\",\"password\":\"$SMOKE_PASSWORD\"}" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+          test -n "$TOKEN" || { echo "ERROR Login fallo"; exit 1; }
+          echo "OK Login correcto"
+          TOTAL=$(curl -fsS "$API_URL/api/v1/catalogs/cups/search?q=electro&feeScheduleId=1" \
+            -H "Authorization: Bearer $TOKEN" | grep -o '"total":[0-9]*' | head -1)
+          echo "Busqueda cups: $TOTAL"
+          test -n "$TOTAL" || { echo "ERROR Busqueda sin total"; exit 1; }

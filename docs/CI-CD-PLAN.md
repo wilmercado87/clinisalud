@@ -1,146 +1,208 @@
 ---
 name: ci-cd
-description: Plan CI/CD profesional multi-agente para CLINISALUD - Docker, GitHub Actions, agentes de revisión con skills, E2E Playwright y monitoreo en Render (Free) + Neon (Postgres Free)
+description: Plan CI/CD para CLINISALUD — CI automático en push/PR (compilación, tests, gates y agente de revisión opencode) + CD manual solo por tag de versión vX.Y.Z (sync BD Neon no destructivo + deploy Render + smoke test)
 ---
 
-# CLINISALUD CI/CD - Plan de Implementación
+# CLINISALUD CI/CD - Plan de Implementación (v2, especializado en CI+CD)
 
-## Contexto
+## Objetivo
 
-Automatizar el pipeline del proyecto (Angular 19 standalone + Express/Sequelize/PostgreSQL + Socket.io) con:
-
-- **CI automático**: compilación, calidad de código y pruebas en cada push/PR a `main`.
-- **Agentes de revisión** (opencode CLI en CI): revisan código contra las skills del stack y las reglas de negocio del proyecto.
-- **CD**: auto-deploy desde `main` vía Render (Web Service + Static Site), sin tarjeta de crédito.
-- **E2E Playwright** + **monitoreo** (pendiente, sección Fase 4/5).
+- **CI**: cada push/PR a `main` → compila, corre pruebas unitarias, gates de calidad y revisión de código (clean code + spec).
+- **CD**: **solo** cuando se crea un **tag de versión** (`git tag vX.Y.Z`) → sincroniza el esquema de BD (Neon) con los modelos, despliega API + Frontend en Render y valida salud real (health + login + búsqueda).
 
 ## Decisiones tomadas (no re-preguntar)
 
 | Decisión | Valor |
 |---|---|
-| Hosting | **Render Free** (Web Service backend + Static Site frontend) — sin tarjeta, auto-deploy desde `main` |
-| Base de datos | **Neon Free** (PostgreSQL serverless, 0.5GB, scale-to-zero) — sin tarjeta, sin expiración |
-| Descartado | Oracle Cloud Free VM (exige tarjeta de crédito), Railway/Fly.io (tarjeta), Koyeb (dudoso) |
-| Agentes de revisión | opencode CLI dentro de GitHub Actions (usa las skills directamente) — pendiente |
-| E2E + monitoreo | Playwright (on-demand + nightly) + métricas de Render/Neon — pendiente |
-| Rollback | Re-deploy de un commit anterior en Render (Deploys → Promote) |
-
-## Estado actual (2026-08-08) — ✅ PRODUCCIÓN DESPLEGADA
-
-| Componente | URL | Estado |
-|---|---|---|
-| Frontend (Angular 19) | https://clinisalud-frontend.onrender.com | ✅ live |
-| Backend (Express/Docker) | https://clinisalud-api.onrender.com | ✅ live, `/health` healthy |
-| BD PostgreSQL | Neon (`ep-cool-field-ax9397a5...`) | ✅ 41 tablas, 21.426 cups migrados |
-
-Validado en prod: login admin 200 + JWT, búsqueda cups 200 (0.76s), migración completa desde local con `pg_dump`.
-
-## Hallazgos críticos del repo (resueltos)
-
-1. ~~PAT expuesto en remote~~ → ✅ remote limpio (`https://github.com/wilmercado87/clinisalud.git`); git local usa keychain `wilmercado87` + `gh` CLI (scopes repo/workflow/write:packages). NO tocar la credencial `215178476` (exwmerc_bci).
-2. ~~`sequelize.sync({force:true})` en cada boot~~ → ✅ gate `DB_SYNC=force` (solo explícito); default no destructivo (`backend/src/index.ts:21`).
-3. ~~Frontend sin env prod~~ → ✅ `environment.prod.ts` con `apiUrl` absoluto de Render + `fileReplacements` en `angular.json`.
-4. ~~SQLite~~ → ✅ **PostgreSQL** (`DATABASE_URL`); en prod: **Neon** con SSL (`dialectOptions.ssl` auto en `database.ts`, solo fuera de localhost).
-5. Socket.io → ✅ el frontend conecta a la origin del API (Render expone WebSockets directo, sin proxy Nginx necesario).
-6. Tests: backend jest **111/111** ✅; frontend karma (pendiente ChromeHeadless en CI).
-7. Sin lint → gates determinísticos propios (pendiente, Fase 2).
-8. `.nvmrc` = v20.
-
-## Arquitectura de despliegue (actual)
-
-```
-main ──► GitHub (push)
-         ├─► Render Web Service "clinisalud-api"  (backend/Dockerfile, plan free, /health)
-         │     env: DATABASE_URL→Neon, JWT_SECRET, DB_SYNC=normal, PORT=3000
-         └─► Render Static Site "clinisalud-frontend" (ng build production → dist/frontend/browser)
-                 │
-                 ▼
-         Neon Postgres (serverless, scale-to-zero)
-```
-
-- Deploy automático en cada push a `main` (Render auto-deploy).
-- `render.yaml` blueprint versionado en la raíz (los servicios ya existen vía API; el blueprint queda como declaración).
-- Migración de datos: `scripts/db-export.sh` (pg_dump local → psql destino).
-
-## Límites conocidos del free tier
-
-- **Render free**: apps duermen tras ~15 min sin tráfico; cold start 30–60s. 750h/mes, 512MB RAM. Solo 1 servicio Postgres free propio (no usado — usamos Neon).
-- **Neon free**: 0.5GB, 100 CU-h/mes (~3h/día activo), scale-to-zero, sin expiración.
-- BD actual: ~51MB → cabe con holgura.
+| CI trigger | `push` + `pull_request` a `main` |
+| CD trigger | `push` de tag `v*` (ej. `v1.0.0`). Sin tag → NO hay deploy |
+| Hosting | Render (Web Service `clinisalud-api` + Static Site `clinisalud-frontend`) |
+| BD | Neon PostgreSQL serverless (SSL, `sslmode=require`) |
+| Sincronización de esquema | `npm run db:alter` = `sequelize.sync({ alter: { drop: false } })` — crea tablas/columnas faltantes, **jamás dropea** datos |
+| Verificación de esquema | `pg_dump --schema-only` de la BD real vs `backend/db/clinisalud.sql`; si difieren **el CD falla** (el dev regenera con `npm run db:schema` y commitea) |
+| Rollback | Render → Deploys → **Promote** un deploy anterior |
+| Revisión de código | Agente opencode CLI en CI (opcional, requiere `OPENCODE_API_KEY`) + gates determinísticos sin LLM |
 
 ---
 
-## Fase 0 — Seguridad y preparación ✅ COMPLETADA
+## Diagrama del pipeline
 
-1. ✅ Remote sin PAT; auth local vía keychain `wilmercado87` + `gh` (no tocar exwmerc_bci).
-2. ✅ Gate `DB_SYNC=force` implementado (no destructivo en prod).
-3. ✅ `environment.prod.ts` + `fileReplacements`.
-4. ✅ `.env.example` actualizado a PostgreSQL; `database.ts` con SSL condicional (Neon).
+```
+push / PR a main
+   │
+   ▼
+jobs ci.yml
+   ├────────── backend-ci   (npm ci, tsc, jest 111, build)
+   ├────────── frontend-ci  (npm ci, tsc, ng build --configuration production)
+   ├────────── quality-gates (gates sin LLM: any ∄, @spec:INV-…; node scripts/quality-gates.mjs)
+   └────────── code-review (SÓLO PR y si hay OPENCODE_API_KEY; comment en PR)
 
-## Fase 1 — Docker (local) ✅ COMPLETADA
+git tag vX.Y.Z + push
+   │
+   ▼
+jobs cd.yml
+   ├── db-sync            (npm run db:alter → Neon; pg_dump vs db/clinisalud.sql; diff≠0 → FAIL)
+   ├── deploy-api         (← db-sync OK)  → POST Render /deploys api + esperar /health "healthy"
+   ├── deploy-frontend    (← deploy-api)  → POST Render /deploys front → esperar HTTP 200
+   └── smoke              (← ambos)        → login admin + búsqueda CUPS → ✓ o FAIL
+```
 
-5. ✅ `backend/Dockerfile` multi-stage (node:20-alpine; `npm ci` → `tsc` → runtime solo prod deps). Fix: `csv-parser` movido a `dependencies` (lo usa `seed.ts` en runtime); `openapi-types` agregado al lock.
-6. ✅ `frontend/Dockerfile` multi-stage (`ng build --configuration production` → nginx:alpine).
-7. ✅ `frontend/nginx.conf` (proxy `/api/` y `/socket.io/` con Upgrade) — **usado solo local/compose**; en Render no aplica (static + API separados).
-8. ✅ `docker-compose.yml` (db postgres:16 + backend + frontend + healthchecks) — **para local/validación**.
-9. ✅ `.dockerignore` en backend y frontend.
-10. ✅ Verificación local completa con Colima (Docker 29, Compose v2): health + login + cups + socket.io 200.
+---
 
-## Fase 2 — CI automático (`.github/workflows/ci.yml`) ⏳ PENDIENTE
+## Fase 1 — CI (`.github/workflows/ci.yml`)
 
-11. Triggers: `push` a main + `pull_request`.
-12. Job `build-test` (ubuntu-latest, node 20, caché npm):
-    - Backend: `npm ci`, `npx tsc --noEmit`, `npm test` (jest 111).
-    - Frontend: `npm ci`, `npx tsc --noEmit -p tsconfig.app.json`, `ng build --configuration production`, karma con ChromeHeadless (instalar `google-chrome-stable`).
-13. Job `quality-gates` determinístico (`scripts/quality-gates.mjs`): prohibir `any` nuevo, trazabilidad `@spec:INV-...`, convenciones CONVENCION-API.md.
-14. Job `review-agents` (solo PR, `dorny/paths-filter`):
-    - Instalar opencode: `npm i -g opencode-ai`.
-    - **A1**: `opencode run` con `.opencode/skills/clinisalud-simple/SKILL.md` + `.opencode/skills/angular-architect/SKILL.md` → JSON → comentario en PR.
-    - **A2**: `opencode run` con `docs/spec/CLINISALUD-SPEC-CORE.md` + `docs/CONVENCION-API.md` → invariantes/trazabilidad/nomenclatura → comentario en PR.
-    - Permissions: `pull-requests: write`. Requiere secret API key LLM.
+### Jobs
 
-## Fase 3 — CD ✅ COMPLETADA (Render auto-deploy; se eliminó el plan VM/GHCR)
+| Job | Pasos | Falla |
+|---|---|---|
+| `backend-ci` | `npm ci` → `npx tsc --noEmit` → `npm test` (jest, 111 tests) → `npm run build` | Cualquiera |
+| `frontend-ci` | `npm ci` → `npx tsc --noEmit -p tsconfig.app.json` → `ng build --configuration production` | Cualquiera |
+| `quality-gates` | `node scripts/quality-gates.mjs`: prohíbe `any` explícito nuevo en `backend/src` y `frontend/src`; advierte si tests modificados no citan `@spec:INV-...` | `any` nuevo (los avisos no bloquean) |
+| `code-review` | Solo `pull_request` y si `OPENCODE_API_KEY_SET=true`. Instalación `opencode-ai` (npm), ejecuta `opencode run` con las skills del proyecto (clinisalud-simple, angular-architect, spec core, convención API) sobre el diff y comenta `🤖 Revisión opencode` en el PR | No bloquea (es consultivo). Dormido si no hay key |
 
-15. ✅ Servicios creados vía Render API (formato `servicePOST` con `type: web_service|static_site`, `serviceDetails.{runtime,plan,healthCheckPath}`).
-16. ✅ Env vars: `DATABASE_URL` (Neon), `JWT_SECRET`, `NODE_ENV`, `PORT`, `DB_SYNC=normal`.
-17. ✅ Healthcheck `/health` (ya existía en `app.ts:24`).
-18. ✅ Migración de datos: `pg_dump` local → `psql` a Neon (41 tablas, cups, articulados, admin).
-19. Rollback: Render → Deploys → Promote commit anterior.
-- ~~vm-setup.sh / cd.yml GHCR+SSH~~ → eliminados (obsoletos con Render).
+### Secretos de CI
 
-## Fase 4 — E2E Playwright (`.github/workflows/e2e.yml`) ⏳ PENDIENTE
+| Secret | Para qué | Status |
+|---|---|---|
+| `OPENCODE_API_KEY` | Agente de revisión (job `code-review`) | ⏳ **PENDIENTE** — sin provider hoy; job dormido. Variable `OPENCODE_API_KEY_SET=false` controla el interruptor |
+| — | Gates sin LLM | No requiere secrets |
 
-20. Proyecto `e2e/` con `@playwright/test` contra `https://clinisalud-frontend.onrender.com`:
-    - Auth: login exitoso, inválido, logout.
-    - Gestor usuarios: crear usuario, toggle estado, editar permisos.
-    - Perfil: actualizar datos/email, cambio de contraseña + relogin.
-    - Admisiones: crear admisión (paciente nuevo/existente), validar cama ocupada.
-21. Config: `playwright.config.ts` con `E2E_BASE_URL`, workers paralelos, reporte HTML + JUnit.
-22. Triggers: `workflow_dispatch` + `schedule` nightly; `opencode run` analizando fallos → artifact/issue.
+### Activar el agente cuando tengas API key (Gemini/OpenRouter/Anthropic gratis)
 
-## Fase 5 — Monitoreo ⏳ PENDIENTE (adaptado a Render/Neon, sin VM)
+```bash
+gh secret set OPENCODE_API_KEY --body "tu-key"
+gh variable set OPENCODE_API_KEY_SET --body "true"
+```
 
-23. En vez de Prometheus/Grafana en VM: métricas nativas Render (CPU/RAM en dashboard), Neon (uso/compute), `GET /health` como probe periódico (UptimeRobot free o workflow GH nightly).
-24. `.github/workflows/perf-report.yml` (workflow_dispatch + nightly): curl `/health` + latencia p95, reporte de estabilidad → artifact/issue.
-25. Umbrales: p95 < 500ms, 5xx < 1%.
+El job usa el modelo `gpt-4o-mini` en `code-review` (rendimiento/precio) — cámbialo en línea 69 de `ci.yml` si tu provider es otro (ej. `google/gemini-2.0-flash`, `openai/gpt-4o-mini`, `anthropic/claude-3-5-sonnet`).
 
-## Fase 6 — Verificación y documentación ✅ PARCIAL
+---
 
-26. ✅ `render.yaml` blueprint + esta guía; `scripts/db-export.sh`.
-27. ✅ Verificación prod: health, login, cups search (0.76s), frontend 200.
-- ⏳ `CI-CD.md` final con diagrama/troubleshooting + PR de ejemplo con agentes.
+## Fase 2 — CD (`clinisalud/.github/workflows/cd.yml`)
 
-## Checklist de ejecución
+### Trigger
 
-- [x] Fase 0: PAT local seguro, gate DB_SYNC, environment.prod.ts, .env.example PG
-- [x] Fase 1: Dockerfiles + compose + nginx + health + dockerignore + validación Colima
-- [ ] Fase 2: ci.yml con build-test + quality-gates + review-agents (A1/A2)
-- [x] Fase 3: deploy Render+Neon (auto-deploy desde main, rollback por Promote)
-- [ ] Fase 4: e2e Playwright + e2e.yml (manual + nightly)
-- [ ] Fase 5: monitoreo healthcheck + perf-report.yml
-- [ ] Fase 6: CI-CD.md + PR de ejemplo con agentes
+```bash
+git tag v1.2.3 && git push origin v1.2.3
+```
 
-## Pedidos al usuario al inicio de la ejecución (restantes)
+> Un tag en cualquier commit de main. `workflow_dispatch` NO existe en CD a propósito: solo tags.
 
-1. API key LLM (OpenAI/Anthropic/Gemini) como secret para los agentes A1/A2 (Fase 2).
-2. Nada más: el deploy ya está vivo y no requiere credenciales adicionales.
+### Jobs (en cadena)
+
+| Job | Qué hace | Si falla |
+|---|---|---|
+| `db-sync` | `npm ci` → `npm run db:alter` (no destructivo) → `pg_dump --schema-only` de Neon vs `backend/db/clinisalud.sql` (ignora comentarios) | STOP: no deploy. Dif → ejecutar `npm run db:schema`, committear, tag nuevo |
+| `deploy-api` | `POST https://api.staff.com/v1/services/<ID-api>/deploys` (branch main) → poll `/health` hasta `"healthy"` (máx 12 min) | Detiene el resto |
+| `deploy-frontend` | `POST .../deploys` front → poll 200 (máx 12 min) | Detiene el resto |
+| `smoke` | Login real `SMOKE_EMAIL/SMOKE_PASSWORD` + JWT + búsqueda CUPS (total ≥ 0) | Fracaso = versión producida sospechosa (puede haber sido desplegado) |
+
+### Tabla de secrets de CD (ya configurada via `gh secret set`)
+
+| Secret | Valor (dónde) | Estado |
+|---|---|---|
+| `DATABASE_URL` | Neon `postgresql://neondb_owner:****@ep-cool-field-.../neondb?sslmode=require` | ✅ seteado |
+| `RENDER_API_KEY` | Render (workspace teaser) `rnd_P909...` | ✅ seteado |
+| `SMOKE_EMAIL` | `admin@clinisalud.com` | ✅ seteado |
+| `SMOKE_PASSWORD` | `Admin2026!` | ✅ seteado |
+
+### ID de servicios Render (hardcodeados en `cd.yml`)
+
+| Servicio | ID |
+|---|---|
+| API | `srv-d9rb73navr4c738rgid0` |
+| Frontend | `srv-d9rj15afngtc73dg22n0` |
+
+---
+
+## Fase 3 — Sincronización de base de datos (el corazón del CD)
+
+### Cómo funciona `db:alter` (backend)
+
+```bash
+cd backend && npm run db:alter   # usa DATABASE_URL
+```
+
+- Conecta a la BD.
+- Por cada tab, si **la tabla no existe** → la crea con `model.sync()`.
+- Si existe → compara **columnas reales vs modelo** → agrega las faltantes con `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`.
+- **Nunca** borra tablas, columnas, índices ni datos (`drop: false`).
+- Si algo falla → `process.exit(1)` → CD se detiene.
+
+### Flujo de cambio de esquema (para desarrolladores)
+
+1. Modifica/agrega un modelo en `backend/src/models/*.ts`.
+2. Local: `npm run db:alter` (aplica a tu BD or `DATABASE_URL` local) y luego `npm run db:schema` → regenera `backend/db/clinisalud.sql`.
+3. Commitea el cambio + el dump actualizado (CI lo valida).
+4. Creamos tag → el CD hace `db:alter` (tablas/columnas nuevas a Neon) y después despliega la API nueva.
+
+> Si olvidaste el paso 2, el job `db-sync` del CD **falla con el diff exacto** — nunca despliegas con esquema dividido.
+
+### Casos límite conocidos
+- `Db: alter` no crea foreign keys nuevas si la tabla ya existe (solo columnas). Para FKs nuevas: re-ejecutar migration manual o recrear tabla (migración abierta).
+- Índices únicos con nombre muy largo (≥63 chars) que PG trunca: Sequelize puede intentar crearlos → error `relation ... already exists`. Fix: nombre corto en el modelo (ej. `name: "ux_usuario_opcion"`).
+- `alter` no re-sincroniza tipos ya existentes (solo agrega columnas faltantes). Cambios de tipo se hacen con `npm run db:schema` manual.
+
+---
+
+## Fase 4 — Rutina de release (rebuild → tag)
+
+```bash
+# 1. Trabajo limpio en main
+git checkout main && git pull origin main
+
+# 2. (Desde este repo) validar local
+cd backend && npm test && npm run build
+
+# 3. Versión + tag (ej. v1.2.0)
+git tag v1.2.0 -m "Release v1.2.0: <resumen>"
+git push origin v1.2.0
+
+# 4. Monitorear el CD
+gh run list --workflow cd.yml   # o en Actions
+```
+
+Políticas de versión sugeridas:
+- `v1.0.0` = primer release estable.
+- `vX.Y.Z`: mayor/feature/patch según semver.
+- Para corregir urgentemente: `git checkout v1.0.0 -b hotfix` → fix → `git tag v1.0.1` sobre el fix.
+
+---
+
+## Rollback (si algo se rompe en prod)
+
+1. Render Dashboard → servicio afectado → **Deploys** → elegir el anterior a `Promote`.
+2. Si el problema es esquema BD (sincronizado en `db-sync`) y el código viejo no soporta las columnas nuevas: **regenerar `db:clone` o ajustar** — el esquema es no destructivo, así que lo nuevo conserva columnas extras sin afectar dato; rollback de API es seguro.
+3. Verificar con `curl https://clinisalud-api.onrender.com/health` y el smoke.
+
+---
+
+## Troubleshooting
+
+| Problema | Causa probable | Solución |
+|---|---|---|
+| CI falla `tsc` | Tipo error en el diff | Corrige tipos, corre `npx tsc --noEmit` local |
+| `db-sync` falla con diff | `db/clinisalud.sql` desactualizado | `cd backend && npm run db:schema && git commit` |
+| `db:alter` error "relation ... already exists" | índice largo en modelo | Añade `name:` corto al índice del modelo, regenera schema |
+| Deploy API no responde healthy | Render cold start lento o build error | Espera 12 min (lo hace el poll), revisa Logs de Render |
+| `code-review` no corre | Sin `OPENCODE_API_KEY` / `OPENCODE_API_KEY_SET` | Mira la sección «Activar el agente» |
+| Frontend 200 pero pantalla en blanco | Build viejo cacheado | Render → Deploy → Force build (o redeploy limpio) |
+
+---
+
+## Pendientes (fuera de este plan)
+
+- **Plan de pruebas automatizadas (E2E Playwright + reportes)** → vivir en `docs/E2E-PLAN.md` (recreación futura, no mixtas con CI/CD).
+- Monitoreo continuo `Fase 5` del plan original (métricas Render + uptime) — igual postergado.
+- Pruebas unitarias del frontend vía Jest/Vitest para correr en `frontend-ci` (hoy solo build; el karma no está en CI).
+
+---
+
+## Checkbox final
+
+- [x] `ci.yml` con backend-ci/frontend-ci/quality-gates/code-review
+- [x] `render` 2 services con `autoDeploy=no`
+- [x] `DATABASE_URL`, `RENDER_API_KEY`, `SMOKE_EMAIL/PASSWORD` en GitHub Secrets
+- [x] `db:alter` no destructivo + `db-verify` bloqueante
+- [x] Validación: push → CI verde + tag `v1.2.0` → CD completo + smoke
+- [ ] `OPENCODE_API_KEY` + variable activadora (cuando el usuario tenga proveedor)

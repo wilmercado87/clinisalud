@@ -34,7 +34,7 @@ SobreescrituraMenuUsuario.init(
     sequelize,
     tableName: "sobreescritura_menu_usuario",
     timestamps: false,
-    indexes: [{ unique: true, fields: ["FK_USUARIO", "FK_OPCION_MENU"] }]
+    indexes: [{ unique: true, name: "ux_sobreescritura_usuario_opcion", fields: ["FK_USUARIO", "FK_OPCION_MENU"] }]
   }
 );
 

@@ -28,7 +28,7 @@ PermisoRolMenu.init(
     sequelize,
     tableName: "permiso_rol_menu",
     timestamps: false,
-    indexes: [{ unique: true, fields: ["FK_ROL", "FK_OPCION_MENU"] }],
+    indexes: [{ unique: true, name: "ux_permiso_rol_opcion", fields: ["FK_ROL", "FK_OPCION_MENU"] }],
   }
 );
 

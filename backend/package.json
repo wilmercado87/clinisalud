@@ -6,6 +6,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "seed": "ts-node src/seed.ts",
+    "db:alter": "ts-node src/scripts/db-alter.ts",
     "db:schema": "pg_dump \"${DATABASE_URL:-postgresql://clinisalud:clinisalud@localhost:5432/clinisalud}\" --schema-only > db/clinisalud.sql",
     "test": "jest",
     "test:watch": "jest --watch",

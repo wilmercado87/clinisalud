@@ -6,7 +6,7 @@
 
 | Documento | Descripción |
 |---|---|
-| [CI-CD-PLAN.md](./CI-CD-PLAN.md) | Plan CI/CD: estado real (producción desplegada en Render + Neon) y fases pendientes (CI, agentes de revisión, E2E, monitoreo) |
+| [CI-CD-PLAN.md](./CI-CD-PLAN.md) | Plan CI+CD: CI en push/PR (compilación, tests, gates, agente opencode) + CD solo por tag `vX.Y.Z` (sync Neon no destructivo + deploy Render + smoke) |
 | [CONVENCION-API.md](./CONVENCION-API.md) | Convenciones de la API REST (rutas kebab-case plural, body camelCase, naming, códigos HTTP) |
 | [TESTING.md](./TESTING.md) | Guía de testing del backend (jest, cómo correr la suite) |
 | [spec/CLINISALUD-SPEC-CORE.md](./spec/CLINISALUD-SPEC-CORE.md) | Especificación core del dominio (invariantes de negocio) |
