@@ -74,11 +74,11 @@ npm run dev     # Servidor en puerto 3000
 | `npm run seed` | Ejecutar seed |
 | `npm test` | Ejecutar tests |
 | `npm run test:watch` | Tests en watch mode |
-| `npm run db:schema` | Regenerar `clinisalud.sql` desde la BD actual |
+| `npm run db:schema` | Regenerar `db/clinisalud.sql` desde la BD actual |
 
 ## Base de datos
 
-Persistencia en **PostgreSQL** (Homebrew, local: `postgresql://clinisalud:clinisalud@localhost:5432/clinisalud`, configurable por `DATABASE_URL`). El esquema nace de los modelos Sequelize (`src/models/` + `src/models/associations.ts`) y queda reflejado en el archivo `clinisalud.sql` (artefacto de referencia único, generado con `pg_dump --schema-only` y regenerable con `npm run db:schema`).
+Persistencia en **PostgreSQL** (Homebrew, local: `postgresql://clinisalud:clinisalud@localhost:5432/clinisalud`, configurable por `DATABASE_URL`). El esquema nace de los modelos Sequelize (`src/models/` + `src/models/associations.ts`) y queda reflejado en el archivo `db/clinisalud.sql` (artefacto de referencia único, generado con `pg_dump --schema-only` y regenerable con `npm run db:schema`).
 
 El arranque normal del servidor **no** modifica la BD; la reestructuración completa (destructiva, pierde datos) solo ocurre con `DB_SYNC=force npm run dev` + seed desde `tablas_clinisalud/*.csv`.
 

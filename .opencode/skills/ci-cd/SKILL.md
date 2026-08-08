@@ -91,7 +91,7 @@ La Fase 1 (docker build local) descarga ~1.5 GB; CI/CD corre en la nube (0 MB en
 14. Job `review-agents` (solo PR, skip si no cambia código con `dorny/paths-filter`):
     - Instalar opencode: `npm i -g opencode-ai`.
     - **A1**: `opencode run` con prompt que carga `.opencode/skills/clinisalud-simple/SKILL.md` + `.opencode/skills/angular-architect/SKILL.md` y revisa el diff → salida JSON → comentario en PR con `actions/github-script`.
-    - **A2**: `opencode run` con `CLINISALUD-SPEC-CORE.md` + `backend/CONVENCION-API.md` → valida invariantes de negocio, trazabilidad y nomenclatura → comentario en PR.
+    - **A2**: `opencode run` con `docs/spec/CLINISALUD-SPEC-CORE.md` + `docs/CONVENCION-API.md` → valida invariantes de negocio, trazabilidad y nomenclatura → comentario en PR.
     - Permissions: `pull-requests: write`.
 
 ## Fase 3 — CD controlado (`.github/workflows/cd.yml`)

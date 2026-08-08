@@ -96,7 +96,7 @@ main ──► GitHub (push)
 14. Job `review-agents` (solo PR, `dorny/paths-filter`):
     - Instalar opencode: `npm i -g opencode-ai`.
     - **A1**: `opencode run` con `.opencode/skills/clinisalud-simple/SKILL.md` + `.opencode/skills/angular-architect/SKILL.md` → JSON → comentario en PR.
-    - **A2**: `opencode run` con `CLINISALUD-SPEC-CORE.md` + `backend/CONVENCION-API.md` → invariantes/trazabilidad/nomenclatura → comentario en PR.
+    - **A2**: `opencode run` con `docs/spec/CLINISALUD-SPEC-CORE.md` + `docs/CONVENCION-API.md` → invariantes/trazabilidad/nomenclatura → comentario en PR.
     - Permissions: `pull-requests: write`. Requiere secret API key LLM.
 
 ## Fase 3 — CD ✅ COMPLETADA (Render auto-deploy; se eliminó el plan VM/GHCR)
