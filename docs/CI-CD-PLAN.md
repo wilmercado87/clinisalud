@@ -92,7 +92,7 @@ git tag v1.2.3 && git push origin v1.2.3
 
 | Job | Qué hace | Si falla |
 |---|---|---|
-| `db-sync` | `npm ci` → `npm run db:alter` (no destructivo) → `pg_dump --schema-only` de Neon vs `backend/db/clinisalud.sql` (ignora comentarios) | STOP: no deploy. Dif → ejecutar `npm run db:schema`, committear, tag nuevo |
+| `db-sync` | `npm ci` → `npm run db:alter` (no destructivo) → `pg_dump --schema-only` (contenedor `postgres:18-alpine`) de Neon vs `backend/db/clinisalud.sql` (filtro: comentarios/`restrict`/`transaction_timeout`/`CREATE SCHEMA public`/vacías) | STOP: no deploy. Dif → ejecutar `npm run db:schema`, committear, tag nuevo |
 | `deploy-api` | `POST https://api.staff.com/v1/services/<ID-api>/deploys` (branch main) → poll `/health` hasta `"healthy"` (máx 12 min) | Detiene el resto |
 | `deploy-frontend` | `POST .../deploys` front → poll 200 (máx 12 min) | Detiene el resto |
 | `smoke` | Login real `SMOKE_EMAIL/SMOKE_PASSWORD` + JWT + búsqueda CUPS (total ≥ 0) | Fracaso = versión producida sospechosa (puede haber sido desplegado) |
@@ -183,6 +183,7 @@ Políticas de versión sugeridas:
 |---|---|---|
 | CI falla `tsc` | Tipo error en el diff | Corrige tipos, corre `npx tsc --noEmit` local |
 | `db-sync` falla con diff | `db/clinisalud.sql` desactualizado | `cd backend && npm run db:schema && git commit` |
+| `pg_dump: server version mismatch` | pg_dump del runner más viejo que Neon (PG 18) | El job ya usa `postgres:18-alpine` (Docker); no instalar cliente por apt (no existe en repos estándar) |
 | `db:alter` error "relation ... already exists" | índice largo en modelo | Añade `name:` corto al índice del modelo, regenera schema |
 | Deploy API no responde healthy | Render cold start lento o build error | Espera 12 min (lo hace el poll), revisa Logs de Render |
 | `code-review` no corre | Sin `OPENCODE_API_KEY` / `OPENCODE_API_KEY_SET` | Mira la sección «Activar el agente» |
