@@ -14,9 +14,25 @@ jobs:
   backend-ci:
     name: Backend (tsc + jest + build)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: clinisalud
+          POSTGRES_PASSWORD: clinisalud
+          POSTGRES_DB: clinisalud
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U clinisalud"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: backend
+    env:
+      DATABASE_URL: postgresql://clinisalud:clinisalud@localhost:5432/clinisalud
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,6 +41,10 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
+      - name: Cargar esquema canónico + estados base
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f db/clinisalud.sql
+          psql "$DATABASE_URL" -q -c "INSERT INTO tipo_estado (\"ID_TIPO_ESTADO\", \"DESCRIPCION_TIPO_ESTADO\") VALUES (1,'ACTIVO'),(2,'INACTIVO'),(3,'REGISTRADA'),(4,'EN_ATENCION'),(5,'CON_EPICRISIS'),(6,'FACTURADA'),(7,'EGRESADA') ON CONFLICT DO NOTHING;"
       - run: npx tsc --noEmit
       - run: npm test -- --ci --runInBand
       - run: npm run build

@@ -1,16 +1,18 @@
 import "dotenv/config";
 import sequelize from "../config/database";
 import { initAssociations } from "../models/associations";
+import type { ModelAttributeColumnOptions } from "sequelize";
 
-function toSqlType(attribute: any): string | null {
-  if (attribute.type && typeof attribute.type.toSql === "function") {
+function toSqlType(attribute: ModelAttributeColumnOptions): string | null {
+  const type = attribute.type as { toSql?: () => string } | undefined;
+  if (type && typeof type.toSql === "function") {
     try {
-      return attribute.type.toSql();
+      return type.toSql();
     } catch {
       return null;
     }
   }
-  if (typeof attribute.type === "string") return attribute.type;
+  if (typeof type === "string") return type;
   return null;
 }
 
@@ -27,10 +29,16 @@ async function listTables(): Promise<string[]> {
     console.log("✅ Conexión a base de datos establecida.");
 
     const q = sequelize.getQueryInterface();
-    const existingTables = await listTables();
+    let existingTables = await listTables();
+
+    if (existingTables.length === 0) {
+      console.error("❌ Base vacía: el esquema debe inicializarse con el dump canónico: psql -f db/clinisalud.sql");
+      process.exit(1);
+    }
+
     const changes: string[] = [];
 
-    for (const model of Object.values(sequelize.models)) {
+    for (const model of Object.values(sequelize.models) as (typeof sequelize.models[string])[]) {
       const tableName = model.getTableName() as string;
 
       if (!existingTables.includes(tableName)) {
