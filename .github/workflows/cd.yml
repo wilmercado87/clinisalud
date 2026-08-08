@@ -30,14 +30,10 @@ jobs:
         run: npm ci
       - name: Aplicar cambios no destructivos de esquema
         run: npm run db:alter
-      - name: Instalar pg_dump acorde a Neon (PG 18)
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client-18
       - name: Verificar que db/clinisalud.sql refleja la BD real
         run: |
-          export PATH="/usr/lib/postgresql/18/bin:$PATH"
-          pg_dump "$DATABASE_URL" --schema-only --no-owner --no-privileges --schema=public > /tmp/live.sql
+          docker run --rm -e PG_URL="$DATABASE_URL" postgres:18-alpine \
+            sh -c 'pg_dump "$PG_URL" --schema-only --no-owner --no-privileges --schema=public' > /tmp/live.sql
           normalize() { grep -v '^--' | grep -v 'restrict' | grep -v '^SET transaction_timeout' | grep -v '^CREATE SCHEMA public' | grep -v 'COMMENT ON SCHEMA public' | grep -v '^[[:space:]]*$'; }
           if diff -q <(normalize < /tmp/live.sql) <(normalize < db/clinisalud.sql) >/dev/null; then
             echo "OK Esquema sincronizado con db/clinisalud.sql"
