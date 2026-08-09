@@ -153,6 +153,36 @@
     letter-spacing: 0.3px;
     background-color: v.$color-blue-light-50;
     color: v.$navy-500;
+
+    &--registered {
+      background-color: v.$color-gray-light-300;
+      color: v.$color-gray-700;
+    }
+
+    &--in-care {
+      background-color: v.$color-blue-light-100;
+      color: v.$color-blue-light-600;
+    }
+
+    &--epicrisis {
+      background-color: v.$color-alert-bg;
+      color: v.$color-alert-text;
+    }
+
+    &--billed {
+      background-color: v.$color-green-light-100;
+      color: v.$color-green-light-600;
+    }
+
+    &--discharged {
+      background-color: v.$color-red-light-150;
+      color: v.$color-red-400;
+    }
+
+    &--default {
+      background-color: v.$color-blue-light-50;
+      color: v.$navy-500;
+    }
   }
 
   &__paginator {

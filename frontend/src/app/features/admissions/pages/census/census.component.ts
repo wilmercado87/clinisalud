@@ -25,6 +25,7 @@ import { createTableUtils } from '@shared/utils/table-utils';
 import { getHttpErrorMessage } from '@shared/utils/http-error';
 import { ADMISSION_MESSAGES, formatMessage } from '@shared/utils/messages';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+import { AdmissionStatePipe } from '@features/admissions/pipes/admission-state.pipe';
 import {
   CensusDischargeDialogComponent,
   DischargeDialogResult,
@@ -43,6 +44,7 @@ import {
     MatButtonModule,
     MatProgressSpinnerModule,
     EmptyStateComponent,
+    AdmissionStatePipe,
   ],
   templateUrl: './census.component.html',
   styleUrl: './census.component.scss',
