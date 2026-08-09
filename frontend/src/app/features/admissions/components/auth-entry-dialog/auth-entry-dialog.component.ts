@@ -78,10 +78,7 @@ export class AuthEntryDialogComponent {
     if (list.length === 0) return false;
     const hasErrors = this.errors().some((e) => Object.keys(e).length > 0);
     if (hasErrors) return false;
-    return list.every((fg) => {
-      this.entryValues.get(fg)?.();
-      return fg.valid;
-    });
+    return list.every((fg) => fg.valid);
   });
 
   constructor() {
@@ -125,13 +122,14 @@ export class AuthEntryDialogComponent {
     const authNumberIndex = this.buildAuthNumberIndex(entries);
     const compositeKeyIndex = this.buildCompositeKeyIndex(entries);
 
-    return entries.map((fg, index) =>
-      this.mergeErrors(
+    return entries.map((fg, index) => {
+      this.entryValues.get(fg)?.();
+      return this.mergeErrors(
         this.getBaseErrors(fg),
         this.checkDuplicateAuthNumber(fg, index, authNumberIndex),
         this.checkDuplicateCompositeKey(fg, index, compositeKeyIndex),
-      ),
-    );
+      );
+    });
   }
 
   private buildAuthNumberIndex(entries: AuthFormGroup[]): ErrorMap {

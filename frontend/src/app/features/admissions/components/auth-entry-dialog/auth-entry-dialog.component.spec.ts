@@ -25,6 +25,7 @@ import { CupsSearchItem } from '@core/models/catalog.model';
 class MockCatalogSelectComponent implements ControlValueAccessor {
   readonly catalogType = input.required<string>();
   readonly label = input('');
+  readonly errorMessage = input<string | null>(null);
 
   private onChange: (value: number | null) => void = () => {};
 
@@ -131,6 +132,29 @@ describe('AuthEntryDialogComponent', () => {
   it('does not apply while a row is invalid even if others are complete', () => {
     fillEntry(component.entries()[0]);
     component.addEntry();
+    fixture.detectChanges();
+    expect(component.canApply()).toBeFalse();
+  });
+
+  it('enables Aplicar when every field is completed one by one', () => {
+    const entry = component.entries()[0];
+    entry.controls.authTypeId.setValue(5);
+    expect(component.canApply()).toBeFalse();
+    entry.controls.authNumber.setValue('AUTH-001');
+    expect(component.canApply()).toBeFalse();
+    entry.controls.feeScheduleId.setValue(2);
+    expect(component.canApply()).toBeFalse();
+    entry.controls.mapiissCode.setValue('MAPIISS-1');
+    expect(component.canApply()).toBeTrue();
+    entry.controls.quantity.setValue(2);
+    expect(component.canApply()).toBeTrue();
+  });
+
+  it('disables Aplicar again when a completed entry becomes invalid', () => {
+    const entry = component.entries()[0];
+    fillEntry(entry);
+    expect(component.canApply()).toBeTrue();
+    entry.controls.authNumber.setValue('');
     fixture.detectChanges();
     expect(component.canApply()).toBeFalse();
   });

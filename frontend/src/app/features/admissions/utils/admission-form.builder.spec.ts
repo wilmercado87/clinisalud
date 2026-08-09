@@ -1,3 +1,4 @@
+// @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (build del request)
 import { applyAdmissionFormState, buildAdmissionRequest, buildAuthorizationsRequest, buildCompanionRequest, toApiBirthDate } from './admission-form.builder';
 import {
   createAdmissionForm,
@@ -62,7 +63,7 @@ describe('admission-form.builder', () => {
 
       const authorizations = buildAuthorizationsRequest([form], true);
       expect(authorizations).toEqual([
-        { authTypeId: 2, authNumber: 'AUTH-001', mapiissCode: 'CUP-X', quantity: 3 },
+        { authTypeId: 2, authNumber: 'AUTH-001', mapiissCode: 'CUP-X', feeScheduleId: 0, quantity: 3 },
       ]);
     });
 

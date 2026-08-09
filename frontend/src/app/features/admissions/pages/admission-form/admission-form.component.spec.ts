@@ -1,3 +1,4 @@
+// @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (request de autorizaciones)
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -338,7 +339,7 @@ describe('AdmissionFormComponent', () => {
 
       const payload = store.createAdmission.calls.mostRecent().args[0];
       expect(payload.authorizations).toEqual([
-        { authTypeId: 5, authNumber: 'AUTH-001', mapiissCode: 'MAPIISS-1', quantity: 2 },
+        { authTypeId: 5, authNumber: 'AUTH-001', mapiissCode: 'MAPIISS-1', feeScheduleId: 2, quantity: 2 },
       ]);
     });
 
