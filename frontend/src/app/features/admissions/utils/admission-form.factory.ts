@@ -67,7 +67,7 @@ export function createCompanionForm(): CompanionForm {
 export function createAdmissionForm(): AdmissionForm {
   return new FormGroup({
     epsId: createControl<number | null>(null, Validators.required),
-    roomId: createControl<number | null>(null, Validators.required),
+    roomId: createControl<number | null>(null),
     observations: createControl<string>('', Validators.required),
   });
 }

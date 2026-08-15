@@ -78,6 +78,8 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   readonly label = input('');
   readonly required = input(false);
   readonly errorMessage = input<string | null>(null);
+  readonly includeOccupiedBeds = input(false);
+  readonly clearable = input(true);
 
   readonly value = signal<number | null>(null);
   readonly disabled = signal(false);
@@ -137,13 +139,26 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   readonly items = computed<CatalogOptionUI[]>(() => {
     const raw = this.itemsResource.value() ?? [];
     const type = this.catalogType();
-    return raw.map((item) => mapCatalogItemToOption(type, item));
+    const available = type === 'beds' && !this.includeOccupiedBeds()
+      ? raw.filter((item) => 'bedStatus' in item && item.bedStatus === 0)
+      : raw;
+    return available.map((item) => mapCatalogItemToOption(type, item));
   });
+
+  isOptionDisabled(item: CatalogOptionUI): boolean {
+    if (this.catalogType() !== 'beds' || !this.includeOccupiedBeds()) {
+      return false;
+    }
+    return item.detail === 'Ocupada' && item.id !== this.value();
+  }
 
   readonly filteredItems = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
     const list = this.items();
     if (!term) return list;
+    const current =
+      this.value() !== null ? this.selectedDescription().trim().toLowerCase() : '';
+    if (term === current) return list;
     return list.filter((i) => i.description.toLowerCase().includes(term));
   });
 
@@ -235,7 +250,11 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
     }
 
     const match = this.items().find((i) => i.description.trim().toLowerCase() === text);
-    if (!match) {
+    if (!match || this.isOptionDisabled(match)) {
+      if (this.value() !== null) {
+        this.restoreSelectedDescription();
+        return;
+      }
       this.value.set(null);
       this.onChange(null);
       this.setOptionError(true);

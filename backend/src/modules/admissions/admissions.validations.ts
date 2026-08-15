@@ -15,7 +15,7 @@ export const createAdmissionValidation = [
   body("documentTypeId").isInt({ min: 1 }).withMessage(ERROR_MESSAGES_ADMISION.DOCUMENT_TYPE_REQUIRED),
   body("document").isLength({ min: 1, max: 30 }).withMessage(ERROR_MESSAGES_ADMISION.DOCUMENT_REQUIRED),
   body("epsId").isInt({ min: 1 }).withMessage(ERROR_MESSAGES_ADMISION.EPS_REQUIRED),
-  body("roomId").isInt({ min: 1 }).withMessage(ERROR_MESSAGES_ADMISION.BED_REQUIRED),
+  body("roomId").optional({ values: "null" }).isInt({ min: 1 }).withMessage(ERROR_MESSAGES_ADMISION.BED_REQUIRED),
   body("companion").optional().isObject().withMessage(ERROR_MESSAGES_ADMISION.COMPANION_OBJECT),
   body("companion.firstName").optional({ values: "falsy" }).isString().withMessage(ERROR_MESSAGES_ADMISION.COMPANION_FIRST_NAME_INVALID),
   body("companion.lastName").optional({ values: "falsy" }).isString().withMessage(ERROR_MESSAGES_ADMISION.COMPANION_LAST_NAME_INVALID),
@@ -35,6 +35,19 @@ export const dischargeAdmissionValidation = [
   param("admissionNumber")
     .isLength({ min: 1, max: 50 })
     .withMessage(ERROR_MESSAGES_ADMISION.ADMISSION_NUMBER_REQUIRED),
+];
+
+export const updateAdmissionValidation = [
+  param("admissionNumber")
+    .isLength({ min: 1, max: 50 })
+    .withMessage(ERROR_MESSAGES_ADMISION.ADMISSION_NUMBER_REQUIRED),
+  body("roomId").optional({ values: "null" }).isInt({ min: 1 }).withMessage(ERROR_MESSAGES_ADMISION.BED_REQUIRED),
+  body("observations").optional({ values: "null" }).isString().withMessage(ERROR_MESSAGES_ADMISION.OBSERVATIONS_INVALID),
+  body("authorizations").optional().isArray().withMessage(ERROR_MESSAGES_ADMISION.AUTHORIZATIONS_ARRAY),
+  body("authorizations.*.authTypeId").isInt({ min: 1 }).withMessage(ERROR_MESSAGES_ADMISION.AUTH_TYPE_REQUIRED),
+  body("authorizations.*.authNumber").isLength({ min: 1, max: 50 }).withMessage(ERROR_MESSAGES_ADMISION.AUTH_NUMBER_REQUIRED),
+  body("authorizations.*.mapiissCode").isLength({ min: 1, max: 30 }).withMessage(ERROR_MESSAGES_ADMISION.AUTH_MAPIISS_REQUIRED),
+  body("authorizations.*.quantity").optional().isInt({ min: 1 }).withMessage(ERROR_MESSAGES_ADMISION.AUTH_QUANTITY_MIN),
 ];
 
 export const updateAdmissionStateValidation = [

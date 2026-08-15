@@ -69,6 +69,19 @@ export const updateAdmissionState = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const updateAdmission = async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await admissionsService.updateAdmission(
+      req.params.admissionNumber,
+      req.body,
+      req.user!.id,
+    );
+    res.status(HTTP_STATUS.OK).json(result);
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "updateAdmission");
+  }
+};
+
 export const evaluateBillability = async (req: AuthRequest, res: Response) => {
   try {
     const result = await admissionsService.evaluateBillability(req.body);

@@ -10,6 +10,8 @@ import {
   DischargeAdmissionResponse,
   PatientLookupRequest,
   PatientLookupResponse,
+  UpdateAdmissionRequest,
+  UpdateAdmissionResponse,
 } from '@features/admissions/models/admissions.model';
 
 @Injectable({ providedIn: 'root' })
@@ -44,5 +46,12 @@ export class AdmissionsService {
       `${this.apiUrl}/${admissionNumber}/state`,
       { state },
     );
+  }
+
+  updateAdmission(
+    admissionNumber: string,
+    data: UpdateAdmissionRequest,
+  ): Observable<UpdateAdmissionResponse> {
+    return this.http.patch<UpdateAdmissionResponse>(`${this.apiUrl}/${admissionNumber}`, data);
   }
 }

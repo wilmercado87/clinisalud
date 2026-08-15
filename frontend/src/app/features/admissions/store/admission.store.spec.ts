@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdmissionStore } from './admission.store';
-import { AdmissionStateResponse, CreateAdmissionRequest, CreateAdmissionResponse, DischargeAdmissionResponse, PatientLookupResponse } from '@features/admissions/models/admissions.model';
+import { AdmissionStateResponse, CreateAdmissionRequest, CreateAdmissionResponse, DischargeAdmissionResponse, PatientLookupResponse, UpdateAdmissionRequest, UpdateAdmissionResponse } from '@features/admissions/models/admissions.model';
 
 async function flushResource(): Promise<void> {
   await TestBed.flushEffects();
@@ -196,6 +196,63 @@ describe('AdmissionStore', () => {
 
     expect(store.updateStateResult()).toEqual(result);
     expect(store.updateStateError()).toBeUndefined();
+  });
+
+  it('updates an active admission (INV-ADM-07)', async () => {
+    const data: UpdateAdmissionRequest = {
+      roomId: 4,
+      authorizations: [
+        { authTypeId: 1, authNumber: 'AUTH-001', mapiissCode: 'CUP-001', quantity: 1, feeScheduleId: 1 },
+      ],
+    };
+    const result: UpdateAdmissionResponse = {
+      admissionNumber: '2026-000001',
+      roomId: 4,
+      observations: null,
+      authorizations: [],
+    };
+
+    store.updateAdmission('2026-000001', data);
+    await flushResource();
+    const req = httpMock.expectOne(
+      (r) => r.url.endsWith('/admissions/2026-000001') && r.method === 'PATCH',
+    );
+    expect(req.request.body).toEqual(data);
+    req.flush(result);
+    await flushResource();
+
+    expect(store.updateResult()).toEqual(result);
+    expect(store.updateError()).toBeUndefined();
+  });
+
+  it('exposes the update error on failure (INV-ADM-07)', async () => {
+    store.updateAdmission('2026-000001', { roomId: 4 });
+    await flushResource();
+    const req = httpMock.expectOne(
+      (r) => r.url.endsWith('/admissions/2026-000001') && r.method === 'PATCH',
+    );
+    req.flush(
+      { message: 'La cama seleccionada no está disponible' },
+      { status: 409, statusText: 'Conflict' },
+    );
+    await flushResource();
+
+    expect(store.updateResult()).toBeUndefined();
+    expect((store.updateError() as HttpErrorResponse).status).toBe(409);
+  });
+
+  it('clears the update result', async () => {
+    store.updateAdmission('2026-000001', { roomId: 4 });
+    await flushResource();
+    const req = httpMock.expectOne(
+      (r) => r.url.endsWith('/admissions/2026-000001') && r.method === 'PATCH',
+    );
+    req.flush({ admissionNumber: '2026-000001', roomId: 4, authorizations: [] });
+    await flushResource();
+    store.clearUpdateResult();
+    await flushResource();
+
+    expect(store.updateResult()).toBeNull();
   });
 
   it('exposes the state transition error on failure', async () => {

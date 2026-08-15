@@ -16,6 +16,11 @@ const STATE_VIEWS: Record<AdmissionState, AdmissionStateView> = {
 
 const DEFAULT_VIEW: AdmissionStateView = { label: '', tone: 'default' };
 
+export function admissionStateLabel(state: string): string {
+  const view = STATE_VIEWS[state as AdmissionState];
+  return view?.label ?? state;
+}
+
 @Pipe({
   name: 'admissionState',
   standalone: true,

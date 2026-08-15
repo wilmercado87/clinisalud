@@ -4,6 +4,7 @@ import {
   AuthorizationData,
   CompanionData,
   CreateAdmissionRequest,
+  UpdateAdmissionRequest,
 } from '@features/admissions/models/admissions.model';
 import {
   AdmissionForm,
@@ -76,30 +77,78 @@ export function buildAdmissionRequest(params: {
     phone: patient.phone || undefined,
     email: patient.email ?? undefined,
     epsId: admission.epsId ?? 0,
-    roomId: admission.roomId ?? 0,
+    roomId: admission.roomId ?? undefined,
     observations: admission.observations || undefined,
     companion: buildCompanionRequest(companion),
     authorizations: buildAuthorizationsRequest(authForms, authorizationsEnabled),
   };
 }
 
+export function buildUpdateAdmissionRequest(params: {
+  roomId: number | null;
+  previousRoomId: number | null;
+  observations?: string | null;
+  previousObservations?: string | null;
+  authForms: AuthFormGroup[];
+  authorizationsEnabled: boolean;
+}): UpdateAdmissionRequest {
+  const {
+    roomId,
+    previousRoomId,
+    observations,
+    previousObservations,
+    authForms,
+    authorizationsEnabled,
+  } = params;
+
+  const request: UpdateAdmissionRequest = {};
+  if (roomId && roomId !== previousRoomId) {
+    request.roomId = roomId;
+  }
+  if ((observations ?? '') !== (previousObservations ?? '')) {
+    request.observations = observations ?? '';
+  }
+  const authorizations = buildAuthorizationsRequest(authForms, authorizationsEnabled);
+  if (authorizations?.length) {
+    request.authorizations = authorizations;
+  }
+  return request;
+}
+
+export function hasPendingAdmissionChanges(params: {
+  roomId: number | null;
+  currentRoomId: number | null;
+  observations: string;
+  currentObservations: string;
+}): boolean {
+  const { roomId, currentRoomId, observations, currentObservations } = params;
+  if (roomId && roomId !== currentRoomId) return true;
+  return observations !== currentObservations;
+}
+
 export function applyAdmissionFormState(
   forms: { patient: PatientForm; companion: CompanionForm; admission: AdmissionForm },
   mode: FormMode,
+  hasActiveAdmission: boolean,
 ): void {
   const searchEnabled = mode === 'IDLE' || mode === 'NOT_FOUND';
   const dataEnabled = mode === 'NOT_FOUND' || mode === 'FOUND';
+  const updateOnly = mode === 'FOUND' && hasActiveAdmission;
 
   setControl(forms.patient, 'documentTypeId', searchEnabled);
   setControl(forms.patient, 'document', searchEnabled);
 
-  PATIENT_DATA_KEYS.forEach((key) => setControl(forms.patient, key, dataEnabled));
+  PATIENT_DATA_KEYS.forEach((key) => setControl(forms.patient, key, dataEnabled && !updateOnly));
 
   Object.keys(forms.companion.controls).forEach((key) =>
-    setControl(forms.companion, key, dataEnabled),
+    setControl(forms.companion, key, dataEnabled && !updateOnly),
   );
 
-  ADMISSION_KEYS.forEach((key) => setControl(forms.admission, key, dataEnabled));
+  ADMISSION_KEYS.forEach((key) => setControl(forms.admission, key, dataEnabled && !updateOnly));
+
+  if (updateOnly) {
+    setControl(forms.admission, 'roomId', true);
+  }
 }
 
 function setControl(group: FormGroup, key: string, enabled: boolean): void {

@@ -1,0 +1,20 @@
+<div class="revert-dialog">
+  <mat-dialog-content class="revert-dialog__content">
+    <div class="revert-dialog__icon">
+      <mat-icon>undo</mat-icon>
+    </div>
+    <h2 class="revert-dialog__title">Regresar al Estado Anterior</h2>
+    <p class="revert-dialog__message">
+      ¿Desea regresar la admisión <strong>{{ data.row.admissionNumber }}</strong> al
+      estado anterior <strong>{{ data.previousState }}</strong>?<br />
+      Úselo solo para corregir errores operativos.
+    </p>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end" class="revert-dialog__actions">
+    <button mat-stroked-button color="primary" (click)="cancel()">Cancelar</button>
+    <button mat-raised-button color="primary" (click)="confirm()">
+      <mat-icon>undo</mat-icon>
+      Regresar
+    </button>
+  </mat-dialog-actions>
+</div>

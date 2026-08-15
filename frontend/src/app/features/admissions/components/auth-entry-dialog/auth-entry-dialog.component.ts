@@ -68,7 +68,6 @@ export class AuthEntryDialogComponent {
   private readonly injector = inject(Injector);
 
   readonly entries = signal<AuthFormGroup[]>([]);
-  readonly feedback = signal<string | null>(null);
   private readonly entryValues = new Map<AuthFormGroup, Signal<Partial<AuthFormValue>>>();
   private readonly lastFeeSchedule = new Map<AuthFormGroup, number | null>();
   private readonly lastAuthType = new Map<AuthFormGroup, number | null>();
@@ -221,19 +220,10 @@ export class AuthEntryDialogComponent {
     const authTypeId = fg.controls.authTypeId.value;
     if (feeScheduleId === null || authTypeId === null) return;
 
-    this.feedback.set(null);
-
     let attentionLevelId = this.attentionLevelOf(authTypeId);
     if (attentionLevelId === undefined) {
       await firstValueFrom(this.catalogStore.reloadCatalog('authorization-types'));
       attentionLevelId = this.attentionLevelOf(authTypeId);
-    }
-
-    if (attentionLevelId === undefined) {
-      this.feedback.set(
-        'No se pudo determinar el nivel de atención del Tipo de Autorización seleccionado. Vuelva a seleccionarlo e intente nuevamente.',
-      );
-      return;
     }
 
     const cupsDialogRef = this.dialog.open(CupsSearchDialogComponent, {

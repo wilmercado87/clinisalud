@@ -27,6 +27,8 @@ class MockCatalogSelectComponent implements ControlValueAccessor {
   readonly catalogType = input.required<string>();
   readonly label = input('');
   readonly required = input(false);
+  readonly includeOccupiedBeds = input(false);
+  readonly clearable = input(true);
 
   private onChange: (value: number | null) => void = () => {};
 
@@ -52,10 +54,15 @@ class MockAdmissionStore {
   readonly isCreating = signal(false);
   readonly createResult = signal<unknown>(null);
   readonly createError = signal<unknown>(null);
+  readonly isUpdating = signal(false);
+  readonly updateResult = signal<unknown>(null);
+  readonly updateError = signal<unknown>(null);
 
   lookupPatient = jasmine.createSpy('lookupPatient');
   createAdmission = jasmine.createSpy('createAdmission');
   clearCreateResult = jasmine.createSpy('clearCreateResult');
+  updateAdmission = jasmine.createSpy('updateAdmission');
+  clearUpdateResult = jasmine.createSpy('clearUpdateResult');
 }
 
 describe('AdmissionFormComponent', () => {
@@ -85,6 +92,26 @@ describe('AdmissionFormComponent', () => {
     activeAdmission: null,
   };
 
+  const patientWithActiveAdmission: PatientLookupResponse = {
+    ...patient,
+    activeAdmission: {
+      admissionNumber: 'ADM-20260804-0001',
+      admissionDate: '2026-08-04',
+      roomId: 5,
+      observations: 'Requiere control diario',
+      authorizations: [
+        {
+          authTypeId: 2,
+          authTypeName: 'Autorización Previa',
+          authNumber: 'AUTH-001',
+          mapiissCode: 'CUP-001',
+          quantity: 2,
+          feeScheduleId: 1,
+        },
+      ],
+    },
+  };
+
   async function flushEffects(): Promise<void> {
     for (let attempt = 0; attempt < 5; attempt++) {
       fixture.detectChanges();
@@ -97,6 +124,9 @@ describe('AdmissionFormComponent', () => {
     store = new MockAdmissionStore();
     store.clearCreateResult = jasmine.createSpy('clearCreateResult').and.callFake(() => {
       store.createResult.set(null);
+    });
+    store.clearUpdateResult = jasmine.createSpy('clearUpdateResult').and.callFake(() => {
+      store.updateResult.set(null);
     });
     catalogStore = {
       getCatalog: jasmine.createSpy('getCatalog').and.returnValue([]),
@@ -205,8 +235,8 @@ describe('AdmissionFormComponent', () => {
       component.admissionForm.patchValue({ roomId: 5, observations: 'Ingreso por urgencias' });
       await flushEffects();
 
-      expect(component['patientFormSignals'].status()).toBe('VALID');
-      expect(component['admissionFormSignals'].status()).toBe('VALID');
+      expect(component.facade.patientFormSignals.status()).toBe('VALID');
+      expect(component.facade.admissionFormSignals.status()).toBe('VALID');
       expect(component.canSubmit()).toBeTrue();
 
       component.onSubmit();
@@ -224,13 +254,10 @@ describe('AdmissionFormComponent', () => {
       component.onSearchPatient();
       store.isLookingUp.set(true);
       store.isLookingUp.set(false);
-      store.patientFound.set({
-        ...patient,
-        activeAdmission: { admissionNumber: 'ADM-20260804-0001', admissionDate: '2026-08-04' },
-      });
+      store.patientFound.set(patientWithActiveAdmission);
       await flushEffects();
 
-      component.admissionForm.patchValue({ roomId: 5, observations: 'Ingreso por urgencias' });
+      component.admissionForm.patchValue({ roomId: 5, observations: 'Requiere control diario' });
       await flushEffects();
 
       expect(component.activeAdmission()).not.toBeNull();
@@ -238,6 +265,247 @@ describe('AdmissionFormComponent', () => {
 
       component.onSubmit();
       expect(store.createAdmission).not.toHaveBeenCalled();
+      expect(store.updateAdmission).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('active admission update mode (INV-ADM-07)', () => {
+    async function openUpdateMode(): Promise<void> {
+      component.patientForm.patchValue({ documentTypeId: 1, document: '1020304050' });
+      component.onSearchPatient();
+      store.isLookingUp.set(true);
+      store.isLookingUp.set(false);
+      store.patientFound.set(patientWithActiveAdmission);
+      await flushEffects();
+    }
+
+    it('enables only the bed, prefilled from the active admission; observations stays disabled', async () => {
+      await openUpdateMode();
+
+      expect(component.isUpdatingMode()).toBeTrue();
+      expect(component.patientForm.controls.firstName.enabled).toBeFalse();
+      expect(component.patientForm.controls.document.enabled).toBeFalse();
+      expect(component.companionForm.controls.firstName.enabled).toBeFalse();
+      expect(component.admissionForm.controls.epsId.enabled).toBeFalse();
+      expect(component.admissionForm.controls.observations.enabled).toBeFalse();
+      expect(component.admissionForm.controls.observations.value).toBe('Requiere control diario');
+      expect(component.admissionForm.controls.roomId.enabled).toBeTrue();
+      expect(component.admissionForm.controls.roomId.value).toBeNull();
+    });
+
+    it('lists only available beds and does not allow clearing the assigned bed (INV-ADM-07)', async () => {
+      await openUpdateMode();
+
+      const bedSelect = fixture.debugElement.queryAll(By.css('app-catalog-select'))[6]
+        .componentInstance as MockCatalogSelectComponent;
+
+      expect(bedSelect.includeOccupiedBeds()).toBeFalse();
+      expect(bedSelect.clearable()).toBeFalse();
+    });
+
+    it('shows the occupied bed as an informative label above the bed field', async () => {
+      catalogStore.getCatalog = jasmine
+        .createSpy('getCatalog')
+        .and.returnValue([{ roomId: 5, bedCode: 'HAB105', bedStatus: 1, tipoCama: 'hospitalizado' }]);
+      await openUpdateMode();
+      fixture.detectChanges();
+
+      const hint = fixture.debugElement.query(By.css('.admission-form__bed-hint'));
+      expect(hint).not.toBeNull();
+      expect(hint.nativeElement.textContent.trim()).toBe('Cama ocupada: HAB105 - hospitalizado');
+    });
+
+    it('clears the bed selector after updating the bed (INV-ADM-07)', async () => {
+      catalogStore.getCatalog = jasmine
+        .createSpy('getCatalog')
+        .and.returnValue([{ roomId: 6, bedCode: 'HAB106', bedStatus: 1, tipoCama: 'hospitalizado' }]);
+      await openUpdateMode();
+      component.admissionForm.controls.roomId.setValue(6);
+      await flushEffects();
+      store.isUpdating.set(true);
+      component.onSubmit();
+      store.isUpdating.set(false);
+      store.updateResult.set({
+        admissionNumber: 'ADM-20260804-0001',
+        roomId: 6,
+        authorizations: [],
+      });
+      await flushEffects();
+      store.patientFound.set({
+        ...patientWithActiveAdmission,
+        activeAdmission: { ...patientWithActiveAdmission.activeAdmission!, roomId: 6 },
+      });
+      await flushEffects();
+      fixture.detectChanges();
+
+      expect(component.admissionForm.controls.roomId.value).toBeNull();
+      const hint = fixture.debugElement.query(By.css('.admission-form__bed-hint'));
+      expect(hint).not.toBeNull();
+      expect(hint.nativeElement.textContent.trim()).toBe('Cama ocupada: HAB106 - hospitalizado');
+    });
+
+    it('shows the existing authorizations of the active admission as read-only rows', async () => {
+      await openUpdateMode();
+
+      expect(component.existingAuthRows()).toEqual([
+        {
+          authTypeName: 'Autorización Previa',
+          authNumber: 'AUTH-001',
+          mapiissCode: 'CUP-001',
+          quantity: 2,
+        },
+      ]);
+    });
+
+    it('enables submit only when the bed, observations or authorizations change', async () => {
+      await openUpdateMode();
+      expect(component.canSubmit()).toBeFalse();
+
+      component.admissionForm.controls.roomId.setValue(5);
+      await flushEffects();
+      expect(component.canSubmit()).toBeFalse();
+
+      component.admissionForm.controls.roomId.setValue(6);
+      await flushEffects();
+      expect(component.canSubmit()).toBeTrue();
+
+      component.admissionForm.controls.roomId.setValue(5);
+      component.admissionForm.controls.observations.setValue('Otra observación');
+      await flushEffects();
+      expect(component.canSubmit()).toBeTrue();
+    });
+
+    it('updates the admission with the new bed only', async () => {
+      await openUpdateMode();
+      component.admissionForm.controls.roomId.setValue(6);
+      await flushEffects();
+
+      component.onSubmit();
+
+      expect(store.createAdmission).not.toHaveBeenCalled();
+      expect(store.updateAdmission).toHaveBeenCalledWith(
+        'ADM-20260804-0001',
+        { roomId: 6 },
+      );
+    });
+
+    it('updates the admission with the new observations only', async () => {
+      await openUpdateMode();
+      component.admissionForm.controls.observations.setValue('Paciente en observación');
+      await flushEffects();
+
+      component.onSubmit();
+
+      expect(store.updateAdmission).toHaveBeenCalledWith('ADM-20260804-0001', {
+        observations: 'Paciente en observación',
+      });
+    });
+
+    it('updates the admission with the new authorizations only', async () => {
+      await openUpdateMode();
+      component.appendAuthEntries([
+        {
+          authTypeId: 5,
+          authNumber: 'AUTH-002',
+          feeScheduleId: 2,
+          mapiissCode: 'MAPIISS-2',
+          quantity: 1,
+          description: 'Consulta',
+          maxQuantity: 3,
+        },
+      ]);
+      await flushEffects();
+
+      component.onSubmit();
+
+      expect(store.updateAdmission).toHaveBeenCalledWith('ADM-20260804-0001', {
+        authorizations: [
+          { authTypeId: 5, authNumber: 'AUTH-002', mapiissCode: 'MAPIISS-2', feeScheduleId: 2, quantity: 1 },
+        ],
+      });
+    });
+
+    it('warns when there are no pending changes', async () => {
+      await openUpdateMode();
+      component.onSubmit();
+
+      expect(store.updateAdmission).not.toHaveBeenCalled();
+      expect(component.feedback()).toEqual({
+        type: 'info',
+        message: 'Seleccione una cama o agregue autorizaciones para actualizar la admisión',
+      });
+    });
+
+    it('refreshes the patient data and invalidates the beds catalog on success', async () => {
+      await openUpdateMode();
+      component.admissionForm.controls.roomId.setValue(6);
+      await flushEffects();
+      store.isUpdating.set(true);
+      component.onSubmit();
+      store.isUpdating.set(false);
+      store.updateResult.set({ admissionNumber: 'ADM-20260804-0001', roomId: 6, authorizations: [] });
+      await flushEffects();
+
+      expect(component.feedback()).toEqual({
+        type: 'success',
+        message: 'Admisión ADM-20260804-0001 actualizada correctamente',
+      });
+      expect(store.clearUpdateResult).toHaveBeenCalled();
+      expect(catalogStore.invalidateCatalog).toHaveBeenCalledWith('beds');
+      expect(store.lookupPatient).toHaveBeenCalledWith(1, '1020304050');
+      expect(component.authEntries()).toEqual([]);
+    });
+
+    it('keeps the success message when the post-update refresh fills the patient again', async () => {
+      await openUpdateMode();
+      component.admissionForm.controls.observations.setValue('Actualizada');
+      await flushEffects();
+      store.isUpdating.set(true);
+      component.onSubmit();
+      store.isUpdating.set(false);
+      store.updateResult.set({
+        admissionNumber: 'ADM-20260804-0001',
+        roomId: 5,
+        observations: 'Actualizada',
+        authorizations: [],
+      });
+      await flushEffects();
+
+      expect(component.feedback()?.type).toBe('success');
+
+      store.patientFound.set({
+        ...patientWithActiveAdmission,
+        activeAdmission: {
+          ...patientWithActiveAdmission.activeAdmission!,
+          observations: 'Actualizada',
+        },
+      });
+      await flushEffects();
+
+      expect(component.feedback()?.type).toBe('success');
+      expect(component.admissionForm.controls.observations.value).toBe('Actualizada');
+    });
+
+    it('shows the server error on failure', async () => {
+      await openUpdateMode();
+      component.admissionForm.controls.roomId.setValue(6);
+      await flushEffects();
+      store.isUpdating.set(true);
+      component.onSubmit();
+      store.isUpdating.set(false);
+      store.updateError.set(
+        new HttpErrorResponse({
+          status: 409,
+          statusText: 'Conflict',
+          error: { message: 'La cama seleccionada no está disponible' },
+        }),
+      );
+      await flushEffects();
+
+      expect(component.feedback()).toEqual({
+        type: 'error',
+        message: 'La cama seleccionada no está disponible',
+      });
     });
   });
 

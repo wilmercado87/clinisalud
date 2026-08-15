@@ -28,6 +28,13 @@ export interface CupsSearchDialogData {
   attentionLevelId?: number;
 }
 
+interface CupsSearchParams {
+  term: string;
+  feeScheduleId: number;
+  attentionLevelId?: number;
+  page: number;
+}
+
 const CUPS_MIN_CHARS = 3;
 const CUPS_PAGE_SIZE = 20;
 const EMPTY_PAGE: CupsPageResponse = { items: [], total: 0 };
@@ -140,11 +147,4 @@ export class CupsSearchDialogComponent {
   cancel(): void {
     this.dialogRef.close();
   }
-}
-
-interface CupsSearchParams {
-  term: string;
-  feeScheduleId: number;
-  attentionLevelId?: number;
-  page: number;
 }

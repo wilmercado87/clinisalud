@@ -21,6 +21,15 @@ export interface AuthorizationData {
   feeScheduleId: number;
 }
 
+export interface AdmissionAuthorization {
+  authTypeId: number;
+  authTypeName?: string;
+  authNumber: string;
+  mapiissCode: string;
+  quantity: number;
+  feeScheduleId: number;
+}
+
 export interface CreateAdmissionRequest {
   isNewPatient: boolean;
   documentTypeId: number;
@@ -36,10 +45,23 @@ export interface CreateAdmissionRequest {
   phone?: string;
   email?: string;
   epsId: number;
-  roomId: number;
+  roomId?: number;
   observations?: string;
   companion?: CompanionData;
   authorizations?: AuthorizationData[];
+}
+
+export interface UpdateAdmissionRequest {
+  roomId?: number;
+  observations?: string;
+  authorizations?: AuthorizationData[];
+}
+
+export interface UpdateAdmissionResponse {
+  admissionNumber: string;
+  roomId: number | null;
+  observations: string | null;
+  authorizations: AdmissionAuthorization[];
 }
 
 export interface PatientLookupResponse {
@@ -60,6 +82,9 @@ export interface PatientLookupResponse {
   activeAdmission: {
     admissionNumber: string;
     admissionDate: string;
+    roomId: number | null;
+    observations: string | null;
+    authorizations: AdmissionAuthorization[];
   } | null;
   documentType?: { id: number; code: string; description: string } | null;
   gender?: { id: number; description: string } | null;
@@ -113,6 +138,14 @@ export const ADMISSION_STATE_TRANSITIONS: Record<AdmissionState, AdmissionState 
   [ADMISSION_STATES.REGISTERED]: ADMISSION_STATES.IN_CARE,
   [ADMISSION_STATES.IN_CARE]: ADMISSION_STATES.WITH_EPICRISIS,
   [ADMISSION_STATES.WITH_EPICRISIS]: ADMISSION_STATES.BILLED,
+  [ADMISSION_STATES.BILLED]: null,
+  [ADMISSION_STATES.DISCHARGED]: null,
+};
+
+export const ADMISSION_STATE_REVERSE_TRANSITIONS: Record<AdmissionState, AdmissionState | null> = {
+  [ADMISSION_STATES.REGISTERED]: null,
+  [ADMISSION_STATES.IN_CARE]: ADMISSION_STATES.REGISTERED,
+  [ADMISSION_STATES.WITH_EPICRISIS]: ADMISSION_STATES.IN_CARE,
   [ADMISSION_STATES.BILLED]: null,
   [ADMISSION_STATES.DISCHARGED]: null,
 };

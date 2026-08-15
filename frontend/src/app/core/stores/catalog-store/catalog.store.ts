@@ -26,11 +26,7 @@ export class CatalogStore {
 
     if (!this.observables.has(type)) {
       const source: Observable<CatalogSourceItem[]> = type === 'beds'
-        ? this.catalogApi.getBeds(0, 100).pipe(
-            map((page) =>
-              page.items.filter((item) => 'bedStatus' in item && item.bedStatus === 0),
-            ),
-          )
+        ? this.catalogApi.getBeds(undefined, 100).pipe(map((page) => page.items))
         : this.catalogApi.getCatalog(type);
       this.observables.set(
         type,

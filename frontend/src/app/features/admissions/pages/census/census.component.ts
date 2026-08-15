@@ -15,6 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AdmissionStore } from '@features/admissions/store/admission.store';
 import {
+  ADMISSION_STATE_REVERSE_TRANSITIONS,
   ADMISSION_STATE_TRANSITIONS,
   CensusRowResponse,
 } from '@features/admissions/models/admissions.model';
@@ -25,11 +26,15 @@ import { createTableUtils } from '@shared/utils/table-utils';
 import { getHttpErrorMessage } from '@shared/utils/http-error';
 import { ADMISSION_MESSAGES, formatMessage } from '@shared/utils/messages';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
-import { AdmissionStatePipe } from '@features/admissions/pipes/admission-state.pipe';
+import { AdmissionStatePipe, admissionStateLabel } from '@features/admissions/pipes/admission-state.pipe';
 import {
   CensusDischargeDialogComponent,
   DischargeDialogResult,
 } from '@features/admissions/components/census-discharge-dialog/census-discharge-dialog.component';
+import {
+  CensusRevertStateDialogComponent,
+  RevertStateDialogResult,
+} from '@features/admissions/components/census-revert-state-dialog/census-revert-state-dialog.component';
 
 @Component({
   selector: 'app-census',
@@ -119,7 +124,7 @@ export class CensusComponent implements AfterViewInit {
         this.toast.success(
           formatMessage(ADMISSION_MESSAGES.ADMISSION_STATE_CHANGED, {
             admissionNumber: result.admissionNumber,
-            state: result.state,
+            state: admissionStateLabel(result.state),
           }),
         );
         this.updatingStateAdmissionNumber.set(null);
@@ -167,11 +172,34 @@ export class CensusComponent implements AfterViewInit {
     return ADMISSION_STATE_TRANSITIONS[row.state as keyof typeof ADMISSION_STATE_TRANSITIONS] ?? null;
   }
 
+  public previousStateOf(row: CensusRowResponse): string | null {
+    return ADMISSION_STATE_REVERSE_TRANSITIONS[row.state as keyof typeof ADMISSION_STATE_REVERSE_TRANSITIONS] ?? null;
+  }
+
   public onAdvanceState(row: CensusRowResponse): void {
     const nextState = this.nextStateOf(row);
     if (!nextState) return;
     this.updatingStateAdmissionNumber.set(row.admissionNumber);
     this.store.updateAdmissionState(row.admissionNumber, nextState);
+  }
+
+  public onRevertState(row: CensusRowResponse): void {
+    const previousState = this.previousStateOf(row);
+    if (!previousState) return;
+
+    this.dialog
+      .open(CensusRevertStateDialogComponent, {
+        width: '440px',
+        disableClose: true,
+        data: { row, previousState: admissionStateLabel(previousState) },
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: RevertStateDialogResult | undefined) => {
+        if (!result?.confirmed) return;
+        this.updatingStateAdmissionNumber.set(row.admissionNumber);
+        this.store.updateAdmissionState(row.admissionNumber, previousState);
+      });
   }
 
   private filterPredicate(data: CensusRowResponse, filter: string): boolean {

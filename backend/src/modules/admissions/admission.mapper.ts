@@ -1,6 +1,7 @@
 import Admision from "../../models/Admision";
 import Paciente from "../../models/Paciente";
 import {
+  AdmissionAuthorization,
   AdmissionResponse,
   CensusRowResponse,
   DischargeAdmissionResponse,
@@ -10,7 +11,13 @@ import {
 export const toPatientLookupResponse = (
   patient: Paciente,
   epsId: number | null,
-  activeAdmission: { admissionNumber: string; admissionDate: string } | null,
+  activeAdmission: {
+    admissionNumber: string;
+    admissionDate: string;
+    roomId: number | null;
+    observations: string | null;
+    authorizations: AdmissionAuthorization[];
+  } | null,
 ): PatientLookupResponse => {
   const json = patient.toJSON() as PatientLookupResponse;
   return { ...json, id: patient.id, epsId, activeAdmission };

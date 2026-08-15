@@ -30,12 +30,19 @@
 ## 2. MÓDULO DE ADMISIONES, CENSO Y AUTORIZACIONES
 
 ### Invariantes y Reglas Anti-Glosa
-* `@spec:INV-ADM-01` **Control de Censo y Disponibilidad de Camas:** Todo ingreso de tipo hospitalización requiere asignar una cama (`Cama.roomId`) cuyo estado sea `0` (Disponible). Al registrar el ingreso, la cama cambia automáticamente a estado `1` (Ocupada).
+* `@spec:INV-ADM-01` **Control de Censo y Disponibilidad de Camas:** Todo ingreso de tipo hospitalización puede asignar una cama (`Admision.roomId`) cuyo estado sea `0` (Disponible); la asignación es opcional al registrar y puede hacerse después mediante actualización de la admisión activa. Al asignar la cama, esta cambia automáticamente a estado `1` (Ocupada) dentro de la misma transacción. Si una admisión activa reasigna la cama, la cama anterior vuelve a `Disponible` y la nueva pasa a `Ocupada` de forma atómica.
+* `@spec:INV-ADM-07` **Actualización de Admisión Activa:** Si el paciente consultado ya tiene una admisión activa (`statusId` diferente de `EGRESADA`), el formulario no permite crear una nueva admisión: bloquea los datos del paciente, acompañante, EPS y observaciones, y habilita únicamente la selección de cama y el registro de autorizaciones. El botón cambia a `Actualizar Admisión` y solo se habilita cuando hay cambios reales (cama distinta o autorizaciones nuevas). Las autorizaciones y la cama quedan persistidas en la admisión existente y se muestran al re-consultar el paciente (`PATCH /admissions/:admissionNumber`).
 * `@spec:INV-ADM-02` **Control de Autorizaciones por Servicio:** En el momento del ingreso o solicitud del servicio, el módulo debe registrar la solicitud de autorización a la EPS (`Autorizacion`).
 * `@spec:INV-ADM-03` **Vinculación Obligatoria para Facturación:** Se controla que todo servicio que requiera autorización previa según el contrato de la EPS tenga su respectivo número de autorización registrado (`Autorizacion.authNumber`). De lo contrario, el servicio quedará bloqueado para cobro.
+* `@spec:INV-ADM-04` **Regresión de Estado en Censo (Corrección Operativa):** Una admisión puede regresar al estado inmediatamente anterior (`EN_ATENCION → REGISTRADA`, `CON_EPICRISIS → EN_ATENCION`) desde el Censo Hospitalario para corregir errores operativos. La acción exige confirmación explícita del usuario y queda registrada en la auditoría de la admisión.
+* `@spec:INV-ADM-05` **Irreversibilidad por Integridad Financiera:** Una admisión en estado `FACTURADA` o `EGRESADA` **no puede** regresar a un estado anterior. `FACTURADA` inicia el ciclo de facturación y glosas ante la EPS; `EGRESADA` liberó la cama y cerró el egreso. Deshacer estos estados rompería la trazabilidad financiera y el control de camas.
+* `@spec:INV-ADM-06` **Registro de Fecha y Hora Local:** El registro de la admisión captura fecha y hora local (`YYYY-MM-DD HH:mm:ss`) en `Admision.admissionDate`. El Censo Hospitalario muestra el campo Fecha Ingreso con fecha y hora (hh:mm:ss) para trazabilidad operativa del ingreso.
 
 ### Máquina de Estados de la Admisión
-$$\text{REGISTRADA} \longrightarrow \text{EN\_ATENCION} \longrightarrow \text{CON\_EPICRISIS} \longrightarrow \text{FACTURADA} \longrightarrow \text{EGRESADA}$$
+$$\text{REGISTRADA} \Longleftrightarrow \text{EN\_ATENCION} \Longleftrightarrow \text{CON\_EPICRISIS} \longrightarrow \text{FACTURADA} \longrightarrow \text{EGRESADA}$$
+
+* Las flechas dobles (`⇄`) indican transiciones reversibles de corrección operativa (requieren confirmación).
+* `FACTURADA` y `EGRESADA` son estados terminales irreversibles (`@spec:INV-ADM-05`).
 
 ---
 

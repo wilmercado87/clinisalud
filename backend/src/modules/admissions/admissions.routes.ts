@@ -8,6 +8,7 @@ import {
   createAdmissionValidation,
   dischargeAdmissionValidation,
   updateAdmissionStateValidation,
+  updateAdmissionValidation,
   billabilityCheckValidation,
 } from "./admissions.validations";
 
@@ -60,6 +61,15 @@ router.patch(
   validateParams(updateAdmissionStateValidation),
   validateBody(updateAdmissionStateValidation),
   AdmissionsController.updateAdmissionState,
+);
+
+router.patch(
+  "/admissions/:admissionNumber",
+  authenticateToken,
+  admissionsRoles,
+  validateParams(updateAdmissionValidation),
+  validateBody(updateAdmissionValidation),
+  AdmissionsController.updateAdmission,
 );
 
 router.post(

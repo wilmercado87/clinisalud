@@ -934,7 +934,7 @@ ALTER SEQUENCE public."tipo_acceso_ID_TIPO_ACCESO_seq" OWNED BY public.tipo_acce
 CREATE TABLE public.tipo_autorizacion (
     "ID_TIPO_AUTORIZACION" integer NOT NULL,
     "DESCRIPCION_TIPO_AUTORIZACION" character varying(100) NOT NULL,
-    "FK_NIVEL_ATENCION" integer
+    "FK_NIVEL_ATENCION" integer NOT NULL
 );
 
 

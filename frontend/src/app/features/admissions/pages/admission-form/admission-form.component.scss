@@ -106,6 +106,11 @@
       background: rgba(185, 28, 28, 0.1);
       color: #b91c1c;
     }
+
+    &--info {
+      background: var(--mat-sys-surface-container-high, #fff1c2);
+      color: var(--mat-sys-on-surface, #4d3a00);
+    }
   }
 
   &__divider {
@@ -117,6 +122,24 @@
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-top: 8px;
+  }
+
+  &__bed-field {
+    position: relative;
+    min-width: 0;
+  }
+
+  &__bed-hint {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    line-height: 1.2;
+    color: var(--mat-sys-on-surface-variant, #5b5b5b);
   }
 
   &__toggle {

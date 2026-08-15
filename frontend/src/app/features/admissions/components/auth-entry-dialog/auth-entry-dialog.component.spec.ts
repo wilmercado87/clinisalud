@@ -242,19 +242,6 @@ describe('AuthEntryDialogComponent', () => {
     expect(dialogConfig.data.attentionLevelId).toBe(2);
   });
 
-  it('shows a visible feedback when the level cannot be determined', async () => {
-    catalogData['authorization-types'] = authTypes.map(({ attentionLevelId: _removed, ...item }) => item);
-    reloadResult = catalogData['authorization-types'];
-
-    const entry = component.entries()[0];
-    fillEntry(entry);
-    await component.openCupsSearch(0);
-
-    expect(reloadCatalogSpy).toHaveBeenCalledWith('authorization-types');
-    expect(dialog.open).not.toHaveBeenCalled();
-    expect(component.feedback()).toContain('nivel de atención');
-  });
-
   it('applies the selected CUPS after the search dialog closes', async () => {
     const cups: CupsSearchItem = {
       id: 10,

@@ -36,10 +36,19 @@ export interface CreateAdmissionRequest {
   phone?: string;
   email?: string;
   epsId: number;
-  roomId: number;
+  roomId?: number;
   observations?: string;
   companion?: CompanionData;
   authorizations?: AuthorizationData[];
+}
+
+export interface AdmissionAuthorization {
+  authTypeId: number;
+  authTypeName?: string;
+  authNumber: string;
+  mapiissCode: string;
+  quantity: number;
+  feeScheduleId: number;
 }
 
 export interface PatientLookupResponse {
@@ -60,6 +69,9 @@ export interface PatientLookupResponse {
   activeAdmission: {
     admissionNumber: string;
     admissionDate: string;
+    roomId: number | null;
+    observations: string | null;
+    authorizations: AdmissionAuthorization[];
   } | null;
   documentType?: { id: number; code: string; description: string } | null;
   gender?: { id: number; description: string } | null;
@@ -91,6 +103,19 @@ export interface DischargeAdmissionResponse {
   statusId: number;
   roomId: number | null;
   dischargedAt: Date;
+}
+
+export interface UpdateAdmissionRequest {
+  roomId?: number;
+  observations?: string;
+  authorizations?: AuthorizationData[];
+}
+
+export interface UpdateAdmissionResponse {
+  admissionNumber: string;
+  roomId: number | null;
+  observations: string | null;
+  authorizations: AdmissionAuthorization[];
 }
 
 export interface AdmissionStateResponse {

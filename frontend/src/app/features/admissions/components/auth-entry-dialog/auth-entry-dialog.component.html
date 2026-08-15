@@ -1,9 +1,6 @@
 <div class="auth-dialog">
   <h2 mat-dialog-title>Agregar Autorizaciones</h2>
   <mat-dialog-content class="auth-dialog__content">
-    @if (feedback()) {
-      <div class="auth-dialog__feedback">{{ feedback() }}</div>
-    }
     @for (entry of entries(); track $index) {
       <div class="auth-dialog__entry">
         <div class="auth-dialog__row">

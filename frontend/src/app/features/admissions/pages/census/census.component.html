@@ -93,17 +93,31 @@
           <div class="census__actions">
             @if (isUpdatingState() && updatingStateAdmissionNumber() === row.admissionNumber) {
               <mat-spinner diameter="20"></mat-spinner>
-            } @else if (nextStateOf(row)) {
-              <button
-                mat-stroked-button
-                color="primary"
-                class="census__advance-btn"
-                (click)="onAdvanceState(row)"
-                [disabled]="isUpdatingState()"
-              >
-                <mat-icon>double_arrow</mat-icon>
-                Avanzar
-              </button>
+            } @else {
+              @if (nextStateOf(row)) {
+                <button
+                  mat-stroked-button
+                  color="primary"
+                  class="census__advance-btn"
+                  (click)="onAdvanceState(row)"
+                  [disabled]="isUpdatingState()"
+                >
+                  <mat-icon>double_arrow</mat-icon>
+                  Avanzar
+                </button>
+              }
+              @if (previousStateOf(row)) {
+                <button
+                  mat-stroked-button
+                  color="primary"
+                  class="census__revert-btn"
+                  (click)="onRevertState(row)"
+                  [disabled]="isUpdatingState()"
+                >
+                  <mat-icon>undo</mat-icon>
+                  Retroceder
+                </button>
+              }
             }
             @if (isDischarging() && dischargingAdmissionNumber() === row.admissionNumber) {
               <mat-spinner diameter="20"></mat-spinner>

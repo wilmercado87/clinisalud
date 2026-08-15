@@ -2,7 +2,10 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { AdmissionsService } from '@features/admissions/services/admissions.service';
-import { CreateAdmissionRequest } from '@features/admissions/models/admissions.model';
+import {
+  CreateAdmissionRequest,
+  UpdateAdmissionRequest,
+} from '@features/admissions/models/admissions.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdmissionStore {
@@ -35,6 +38,23 @@ export class AdmissionStore {
   readonly createResult = this.createResource.value.asReadonly();
   readonly isCreating = this.createResource.isLoading;
   readonly createError = this.createResource.error;
+
+  private readonly updateTrigger = signal<{
+    admissionNumber: string;
+    data: UpdateAdmissionRequest;
+  } | null>(null);
+
+  private readonly updateResource = rxResource({
+    request: () => this.updateTrigger(),
+    loader: ({ request }) => {
+      if (!request) return of(null);
+      return this.api.updateAdmission(request.admissionNumber, request.data);
+    },
+  });
+
+  readonly updateResult = this.updateResource.value.asReadonly();
+  readonly isUpdating = this.updateResource.isLoading;
+  readonly updateError = this.updateResource.error;
 
   private readonly censusResource = rxResource({
     loader: () => this.api.getCensus(),
@@ -82,6 +102,14 @@ export class AdmissionStore {
 
   clearCreateResult(): void {
     this.createTrigger.set(null);
+  }
+
+  updateAdmission(admissionNumber: string, data: UpdateAdmissionRequest): void {
+    this.updateTrigger.set({ admissionNumber, data });
+  }
+
+  clearUpdateResult(): void {
+    this.updateTrigger.set(null);
   }
 
   reloadCensus(): void {

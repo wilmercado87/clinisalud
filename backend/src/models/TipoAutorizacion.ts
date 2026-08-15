@@ -13,6 +13,7 @@ TipoAutorizacion.init(
     description: { type: DataTypes.STRING(100), allowNull: false, field: "DESCRIPCION_TIPO_AUTORIZACION" },
     attentionLevelId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
       field: "FK_NIVEL_ATENCION",
     },
   },

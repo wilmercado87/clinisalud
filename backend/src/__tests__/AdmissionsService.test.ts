@@ -76,7 +76,7 @@ describe("AdmissionsService", () => {
       expect(result).toHaveProperty("activeAdmission", null);
     });
 
-    it("should include activeAdmission when latest admission is not discharged", async () => {
+    it("should include activeAdmission with bed and authorizations when latest admission is not discharged (INV-ADM-07)", async () => {
       jest.spyOn(Paciente, "findOne").mockResolvedValue({
         id: 1,
         toJSON: () => ({ id: 1, firstName: "Juan" }),
@@ -86,7 +86,21 @@ describe("AdmissionsService", () => {
         admissionDate: "2026-08-04",
         epsId: 7,
         statusId: 3,
+        roomId: 5,
+        observations: "Requiere control diario",
       } as any);
+      jest.spyOn(Autorizacion, "findAll").mockResolvedValue([
+        {
+          toJSON: () => ({
+            authTypeId: 2,
+            authNumber: "AUTH-001",
+            mapiissCode: "CUP-001",
+            quantity: 2,
+            feeScheduleId: 1,
+            authType: { id: 2, description: "Autorización Previa" },
+          }),
+        },
+      ] as any);
 
       const result = await service.lookupPatient({ documentTypeId: 1, document: "12345" });
 
@@ -94,6 +108,44 @@ describe("AdmissionsService", () => {
       expect(result!.activeAdmission).toEqual({
         admissionNumber: "ADM-20260804-0001",
         admissionDate: "2026-08-04",
+        roomId: 5,
+        observations: "Requiere control diario",
+        authorizations: [
+          {
+            authTypeId: 2,
+            authTypeName: "Autorización Previa",
+            authNumber: "AUTH-001",
+            mapiissCode: "CUP-001",
+            quantity: 2,
+            feeScheduleId: 1,
+          },
+        ],
+      });
+    });
+
+    it("should include activeAdmission with null bed and empty authorizations when none exist (INV-ADM-07)", async () => {
+      jest.spyOn(Paciente, "findOne").mockResolvedValue({
+        id: 1,
+        toJSON: () => ({ id: 1, firstName: "Juan" }),
+      } as any);
+      jest.spyOn(Admision, "findOne").mockResolvedValue({
+        admissionNumber: "ADM-20260804-0001",
+        admissionDate: "2026-08-04",
+        epsId: 7,
+        statusId: 3,
+        roomId: null,
+        observations: null,
+      } as any);
+      jest.spyOn(Autorizacion, "findAll").mockResolvedValue([] as any);
+
+      const result = await service.lookupPatient({ documentTypeId: 1, document: "12345" });
+
+      expect(result!.activeAdmission).toEqual({
+        admissionNumber: "ADM-20260804-0001",
+        admissionDate: "2026-08-04",
+        roomId: null,
+        observations: null,
+        authorizations: [],
       });
     });
 
@@ -579,6 +631,201 @@ describe("AdmissionsService", () => {
       await expect(
         service.dischargeAdmission("ADM-001", 1, "admin@test.com", "ADMISIONES"),
       ).rejects.toThrow("Cama no encontrada");
+    });
+  });
+
+  describe("updateAdmission", () => {
+    const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+    const admissionNumber = "ADM-001";
+
+    beforeEach(() => {
+      jest
+        .spyOn(sequelize, "transaction")
+        .mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+      jest.spyOn(Autorizacion, "findAll").mockResolvedValue([] as any);
+    });
+
+    const createAdmissionMock = (initialRoomId: number | null) => {
+      const admission: any = {
+        admissionNumber,
+        roomId: initialRoomId,
+        observations: null,
+        statusId: 2,
+        update: jest.fn(async (patch: any) => {
+          if (patch.roomId !== undefined) admission.roomId = patch.roomId;
+          if (patch.observations !== undefined) admission.observations = patch.observations;
+        }),
+      };
+      jest.spyOn(Admision, "findByPk").mockResolvedValue(admission);
+      return admission;
+    };
+
+    it("should assign a bed to an admission without one (INV-ADM-07)", async () => {
+      const admission = createAdmissionMock(null);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      const bedSave = jest.fn().mockResolvedValue(true);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue({
+        roomId: 3,
+        bedStatus: 0,
+        save: bedSave,
+      } as any);
+
+      const result = await service.updateAdmission(admissionNumber, { roomId: 3 }, 1);
+
+      expect(bedSave).toHaveBeenCalled();
+      expect(admission.update).toHaveBeenCalledWith(
+        expect.objectContaining({ roomId: 3, systemUserId: 1 }),
+        expect.any(Object),
+      );
+      expect(result.roomId).toBe(3);
+    });
+
+    it("should release previous bed and occupy new one on reassignment (INV-ADM-07)", async () => {
+      const admission = createAdmissionMock(1);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      const bedByPk = jest.fn();
+      jest.spyOn(Cama, "findByPk").mockImplementation((async (id: number) => {
+        const isOldBed = id === 1;
+        bedByPk(isOldBed ? "old" : "new");
+        return {
+          roomId: id,
+          bedStatus: isOldBed ? 1 : 0,
+          save: jest.fn().mockResolvedValue(true),
+        } as any;
+      }) as any);
+
+      const result = await service.updateAdmission(admissionNumber, { roomId: 2 }, 1);
+
+      expect(bedByPk).toHaveBeenCalledWith("old");
+      expect(bedByPk).toHaveBeenCalledWith("new");
+      expect(result.roomId).toBe(2);
+    });
+
+    it("should not touch the bed when the same bed is sent", async () => {
+      const admission = createAdmissionMock(1);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      const bedSave = jest.fn();
+      jest.spyOn(Cama, "findByPk").mockResolvedValue({
+        roomId: 1,
+        bedStatus: 1,
+        save: bedSave,
+      } as any);
+
+      await service.updateAdmission(admissionNumber, { roomId: 1 }, 1);
+
+      expect(bedSave).not.toHaveBeenCalled();
+      expect(admission.update).not.toHaveBeenCalled();
+    });
+
+    it("should update observations when provided (INV-ADM-07)", async () => {
+      const admission = createAdmissionMock(1);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+
+      const result = await service.updateAdmission(
+        admissionNumber,
+        { observations: "Nuevas observaciones" },
+        1,
+      );
+
+      expect(admission.update).toHaveBeenCalledWith(
+        expect.objectContaining({ observations: "Nuevas observaciones", systemUserId: 1 }),
+        expect.any(Object),
+      );
+      expect(result.observations).toBe("Nuevas observaciones");
+    });
+
+    it("should persist empty observations to clear them (INV-ADM-07)", async () => {
+      const admission = createAdmissionMock(1);
+      admission.observations = "Observación anterior";
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+
+      const result = await service.updateAdmission(admissionNumber, { observations: "" }, 1);
+
+      expect(admission.update).toHaveBeenCalledWith(
+        expect.objectContaining({ observations: "", systemUserId: 1 }),
+        expect.any(Object),
+      );
+      expect(result.observations).toBe("");
+    });
+
+    it("should add authorizations to the admission (INV-ADM-07)", async () => {
+      createAdmissionMock(null);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      const bulkCreateSpy = jest.spyOn(Autorizacion, "bulkCreate").mockResolvedValue([] as any);
+      jest.spyOn(TipoAutorizacion, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Tarifario, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({
+        mapiissCode: "CUP-001",
+        maxQuantity: 10,
+        feeScheduleId: 1,
+      } as any);
+
+      const result = await service.updateAdmission(admissionNumber, {
+        authorizations: [
+          { authTypeId: 1, authNumber: "AUTH-001", mapiissCode: "CUP-001", quantity: 1, feeScheduleId: 1 },
+        ],
+      }, 1);
+
+      expect(bulkCreateSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ admissionNumber, authNumber: "AUTH-001" }),
+        ]),
+        expect.any(Object),
+      );
+      expect(result.authorizations).toEqual([]);
+    });
+
+    it("should reject a duplicate authorization with conflict (INV-ADM-07)", async () => {
+      createAdmissionMock(null);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      jest.spyOn(Autorizacion, "findAll").mockResolvedValue([
+        { authTypeId: 1, mapiissCode: "CUP-001", feeScheduleId: 1 },
+      ] as any);
+
+      await expect(
+        service.updateAdmission(admissionNumber, {
+          authorizations: [
+            { authTypeId: 1, authNumber: "AUTH-001", mapiissCode: "CUP-001", feeScheduleId: 1 },
+          ],
+        }, 1),
+      ).rejects.toThrow("ya existe para esta admisión");
+      expect(Autorizacion.bulkCreate).not.toHaveBeenCalled();
+    });
+
+    it("should throw notFound when admission does not exist", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue(null as any);
+
+      await expect(
+        service.updateAdmission("ADM-999", { roomId: 1 }, 1),
+      ).rejects.toThrow("Admisión no encontrada");
+    });
+
+    it("should throw conflict when admission is already discharged", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({
+        admissionNumber,
+        roomId: 1,
+        statusId: 5,
+        update: jest.fn(),
+      } as any);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+
+      await expect(
+        service.updateAdmission(admissionNumber, { roomId: 2 }, 1),
+      ).rejects.toThrow("ya fue egresada");
+    });
+
+    it("should throw conflict when the new bed is not available (INV-ADM-07)", async () => {
+      createAdmissionMock(null);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue({
+        roomId: 4,
+        bedStatus: 1,
+        save: jest.fn(),
+      } as any);
+
+      await expect(
+        service.updateAdmission(admissionNumber, { roomId: 4 }, 1),
+      ).rejects.toThrow("no está disponible");
     });
   });
 

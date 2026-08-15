@@ -133,6 +133,7 @@ export const ERROR_MESSAGES_ADMISION = {
   DOCUMENT_REQUIRED: 'Documento es requerido',
   EPS_REQUIRED: 'EPS es requerida',
   BED_REQUIRED: 'Cama es requerida',
+  OBSERVATIONS_INVALID: 'Observaciones deben ser texto',
   COMPANION_OBJECT: 'Acompañante debe ser un objeto',
   COMPANION_FIRST_NAME_INVALID: 'Nombre del acompañante inválido',
   COMPANION_LAST_NAME_INVALID: 'Apellido del acompañante inválido',
@@ -152,6 +153,7 @@ export const ERROR_MESSAGES_ADMISION = {
   AUTH_FEE_SCHEDULE_REQUIRED: 'Tarifario es requerido para la autorización',
   AUTH_FEE_SCHEDULE_MISMATCH: 'El tarifario no coincide con el CUPS seleccionado',
   AUTH_QUANTITY_EXCEEDS_MAX: 'La cantidad excede el máximo permitido ({maxQuantity}) para el servicio',
+  AUTH_ALREADY_EXISTS: 'La autorización ya existe para esta admisión',
   ADMISSION_STATE_REQUIRED: 'El estado de la admisión es requerido',
   ADMISSION_STATE_INVALID: 'El estado no es válido',
   ADMISSION_STATE_UNCHANGED: 'La admisión ya se encuentra en el estado {state}',
@@ -176,6 +178,11 @@ export const ADMISSION_STATE_MACHINE: Record<string, readonly string[]> = {
   [ADMISSION_STATUS.WITH_EPICRISIS]: [ADMISSION_STATUS.BILLED],
 } as const;
 
+export const ADMISSION_STATE_REVERSE_MACHINE: Record<string, readonly string[]> = {
+  [ADMISSION_STATUS.IN_CARE]: [ADMISSION_STATUS.REGISTERED],
+  [ADMISSION_STATUS.WITH_EPICRISIS]: [ADMISSION_STATUS.IN_CARE],
+} as const;
+
 export const ADMISSION_STATUSES = [
   ADMISSION_STATUS.REGISTERED,
   ADMISSION_STATUS.IN_CARE,
@@ -191,6 +198,7 @@ export const ADMISSION_ERROR_CODES = {
   ADMISSION_ALREADY_DISCHARGED: 'ADMISSION_ALREADY_DISCHARGED',
   INVALID_STATE_TRANSITION: 'INVALID_STATE_TRANSITION',
   ADMISSION_STATE_UNCHANGED: 'ADMISSION_STATE_UNCHANGED',
+  AUTH_ALREADY_EXISTS: 'AUTH_ALREADY_EXISTS',
   SERVICE_BLOCKED_FOR_BILLING: 'SERVICE_BLOCKED_FOR_BILLING',
 } as const;
 

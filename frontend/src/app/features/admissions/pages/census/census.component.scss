@@ -144,13 +144,23 @@
     }
   }
 
+  &__revert-btn {
+    color: v.$color-alert-icon !important;
+    border-color: v.$color-orange-200 !important;
+
+    mat-icon {
+      margin-right: 4px;
+    }
+  }
+
   &__state-chip {
     display: inline-block;
-    padding: 4px 10px;
+    padding: 4px 14px;
     border-radius: 999px;
     font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
     background-color: v.$color-blue-light-50;
     color: v.$navy-500;
 

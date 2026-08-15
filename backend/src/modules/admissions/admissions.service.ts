@@ -13,6 +13,7 @@ import {
   ADMISSION_ERROR_CODES,
   ADMISSION_NOTIFICATIONS,
   ADMISSION_STATE_MACHINE,
+  ADMISSION_STATE_REVERSE_MACHINE,
   ADMISSION_STATUS,
   ERROR_MESSAGES_ADMISION,
 } from "../../constants";
@@ -30,8 +31,9 @@ import {
   toPatientLookupResponse,
 } from "./admission.mapper";
 import {
-  AuthorizationData,
+  AdmissionAuthorization,
   AdmissionStateResponse,
+  AuthorizationData,
   BillabilityRequest,
   BillabilityResponse,
   CensusRowResponse,
@@ -41,6 +43,8 @@ import {
   DischargeAdmissionResponse,
   PatientLookupRequest,
   PatientLookupResponse,
+  UpdateAdmissionRequest,
+  UpdateAdmissionResponse,
 } from "./admissions.types";
 
 const ADMISSION_NUMBER_ATTEMPTS = 2;
@@ -76,6 +80,11 @@ export class AdmissionsService {
         ? {
             admissionNumber: latestAdmission.admissionNumber,
             admissionDate: latestAdmission.admissionDate,
+            roomId: latestAdmission.roomId ?? null,
+            observations: latestAdmission.observations ?? null,
+            authorizations: await this.getAuthorizationsByAdmission(
+              latestAdmission.admissionNumber,
+            ),
           }
         : null;
 
@@ -91,7 +100,9 @@ export class AdmissionsService {
     return await sequelize.transaction(async (t: Transaction) => {
       const patientId = await this.patientService.ensurePatient(data, userId, t);
       await this.assertNoActiveAdmission(patientId, t);
-      await this.bedService.occupyBed(data.roomId, t);
+      if (data.roomId) {
+        await this.bedService.occupyBed(data.roomId, t);
+      }
       await this.assertEpsExists(data.epsId, t);
       await this.assertAuthorizationsAreValid(data.authorizations, t);
 
@@ -107,6 +118,51 @@ export class AdmissionsService {
         admissionNumber,
         patient: { id: patientId, documentTypeId: data.documentTypeId, document: data.document },
         admission: toAdmissionResponse(admission),
+      };
+    });
+  }
+
+  public async updateAdmission(
+    admissionNumber: string,
+    data: UpdateAdmissionRequest,
+    userId: number,
+  ): Promise<UpdateAdmissionResponse> {
+    return await sequelize.transaction(async (t: Transaction) => {
+      const admission = await Admision.findByPk(admissionNumber, { transaction: t });
+      if (!admission) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.ADMISSION_NOT_FOUND);
+
+      const dischargedStatusId = await getStatusIdByDescription(ADMISSION_STATUS.DISCHARGED, t);
+      if (admission.statusId === dischargedStatusId) {
+        throw ApiError.conflict(
+          ERROR_MESSAGES_ADMISION.ADMISSION_ALREADY_DISCHARGED,
+          ADMISSION_ERROR_CODES.ADMISSION_ALREADY_DISCHARGED,
+        );
+      }
+
+      if (data.roomId && data.roomId !== admission.roomId) {
+        if (admission.roomId) {
+          await this.bedService.releaseBed(admission.roomId, t);
+        }
+        await this.bedService.occupyBed(data.roomId, t);
+        await admission.update({ roomId: data.roomId, systemUserId: userId }, { transaction: t });
+      }
+
+      if (data.observations !== undefined) {
+        await admission.update(
+          { observations: data.observations, systemUserId: userId },
+          { transaction: t },
+        );
+      }
+
+      await this.assertAuthorizationsAreValid(data.authorizations, t);
+      await this.assertAuthorizationsAreNew(admissionNumber, data.authorizations, t);
+      await this.createAuthorizationsIfPresent(admissionNumber, data.authorizations, userId, t);
+
+      return {
+        admissionNumber,
+        roomId: admission.roomId ?? null,
+        observations: admission.observations ?? null,
+        authorizations: await this.getAuthorizationsByAdmission(admissionNumber, t),
       };
     });
   }
@@ -141,11 +197,47 @@ export class AdmissionsService {
   ): Promise<void> {
     if (!authorizations || authorizations.length === 0) return;
 
+    const seenKeys = new Set<string>();
     for (const authorization of authorizations) {
+      const key = `${authorization.authTypeId}|${authorization.mapiissCode}|${authorization.feeScheduleId}`;
+      if (seenKeys.has(key)) {
+        throw ApiError.conflict(
+          ERROR_MESSAGES_ADMISION.AUTH_ALREADY_EXISTS,
+          ADMISSION_ERROR_CODES.AUTH_ALREADY_EXISTS,
+        );
+      }
+      seenKeys.add(key);
+
       await this.assertAuthTypeExists(authorization.authTypeId, t);
       const cups = await this.assertMapiissCodeExists(authorization.mapiissCode, t);
       await this.assertFeeScheduleMatchesCups(authorization.feeScheduleId, cups, t);
       this.assertQuantityWithinMax(authorization, cups);
+    }
+  }
+
+  private async assertAuthorizationsAreNew(
+    admissionNumber: string,
+    authorizations: AuthorizationData[] | undefined,
+    t: Transaction,
+  ): Promise<void> {
+    if (!authorizations || authorizations.length === 0) return;
+
+    const existing = await Autorizacion.findAll({
+      where: { admissionNumber },
+      attributes: ["authTypeId", "mapiissCode", "feeScheduleId"],
+      transaction: t,
+    });
+    const existingKeys = new Set(
+      existing.map((a) => `${a.authTypeId}|${a.mapiissCode}|${a.feeScheduleId}`),
+    );
+    for (const authorization of authorizations) {
+      const key = `${authorization.authTypeId}|${authorization.mapiissCode}|${authorization.feeScheduleId}`;
+      if (existingKeys.has(key)) {
+        throw ApiError.conflict(
+          ERROR_MESSAGES_ADMISION.AUTH_ALREADY_EXISTS,
+          ADMISSION_ERROR_CODES.AUTH_ALREADY_EXISTS,
+        );
+      }
     }
   }
 
@@ -202,8 +294,12 @@ export class AdmissionsService {
     registeredStatusId: number,
     t: Transaction,
   ): Promise<Admision> {
-    const today = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
     const todayPrefix = today.replace(/-/g, "");
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const admissionDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
     for (let attempt = 1; ; attempt++) {
       const todayCount = await Admision.count({
@@ -217,7 +313,7 @@ export class AdmissionsService {
           {
             admissionNumber,
             patientId,
-            admissionDate: today,
+            admissionDate,
             roomId: data.roomId,
             epsId: data.epsId,
             observations: data.observations || null,
@@ -271,7 +367,48 @@ export class AdmissionsService {
       quantity: a.quantity || 1,
       systemUserId: userId,
     }));
-    await Autorizacion.bulkCreate(authData, { transaction: t });
+    try {
+      await Autorizacion.bulkCreate(authData, { transaction: t });
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        throw ApiError.conflict(
+          ERROR_MESSAGES_ADMISION.AUTH_ALREADY_EXISTS,
+          ADMISSION_ERROR_CODES.AUTH_ALREADY_EXISTS,
+        );
+      }
+      throw error;
+    }
+  }
+
+  private async getAuthorizationsByAdmission(
+    admissionNumber: string,
+    t?: Transaction,
+  ): Promise<AdmissionAuthorization[]> {
+    const authorizations = await Autorizacion.findAll({
+      where: { admissionNumber },
+      include: [{ association: "authType", attributes: ["id", "description"] }],
+      order: [["createdAt", "ASC"]],
+      transaction: t,
+    });
+
+    return authorizations.map((auth) => {
+      const json = auth.toJSON() as {
+        authTypeId: number;
+        authNumber: string;
+        mapiissCode: string;
+        quantity: number;
+        feeScheduleId: number;
+        authType?: { id: number; description: string } | null;
+      };
+      return {
+        authTypeId: json.authTypeId,
+        authTypeName: json.authType?.description ?? undefined,
+        authNumber: json.authNumber,
+        mapiissCode: json.mapiissCode,
+        quantity: json.quantity,
+        feeScheduleId: json.feeScheduleId,
+      };
+    });
   }
 
   private notifyAdmissionCreated(
@@ -348,7 +485,10 @@ export class AdmissionsService {
       );
     }
 
-    const allowedTransitions = ADMISSION_STATE_MACHINE[currentState] ?? [];
+    const allowedTransitions = [
+      ...(ADMISSION_STATE_MACHINE[currentState] ?? []),
+      ...(ADMISSION_STATE_REVERSE_MACHINE[currentState] ?? []),
+    ];
     if (!allowedTransitions.includes(nextState)) {
       throw ApiError.conflict(
         formatMessage(ERROR_MESSAGES_ADMISION.INVALID_STATE_TRANSITION, {

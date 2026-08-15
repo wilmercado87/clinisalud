@@ -22,8 +22,13 @@ export const ADMISSION_MESSAGES = {
   ACTIVE_ADMISSION_EXISTS:
     'El paciente ya tiene una admisión activa ({admissionNumber}). Debe egresarla para crear una nueva admisión',
   ACTIVE_ADMISSION_INFO: 'El paciente ya tiene una admisión activa',
+  ACTIVE_ADMISSION_UPDATE_HINT:
+    'Admisión activa {admissionNumber}: puede asignar cama y agregar autorizaciones',
   ADMISSION_CREATED: 'Admisión {admissionNumber} registrada correctamente',
   ADMISSION_CREATE_ERROR: 'Error al registrar admisión',
+  ADMISSION_UPDATED: 'Admisión {admissionNumber} actualizada correctamente',
+  ADMISSION_UPDATE_ERROR: 'Error al actualizar la admisión',
+  UPDATE_REQUIRED_FIELDS: 'Seleccione una cama o agregue autorizaciones para actualizar la admisión',
   REQUIRED_FIELDS: 'Complete los campos requeridos para registrar la admisión',
   ADMISSION_DISCHARGED: 'Admisión {admissionNumber} egresada correctamente',
   ADMISSION_DISCHARGE_ERROR: 'Error al egresar la admisión',

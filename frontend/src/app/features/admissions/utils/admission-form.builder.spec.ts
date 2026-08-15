@@ -1,5 +1,13 @@
 // @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (build del request)
-import { applyAdmissionFormState, buildAdmissionRequest, buildAuthorizationsRequest, buildCompanionRequest, toApiBirthDate } from './admission-form.builder';
+// @spec:INV-ADM-07 — Actualización de Admisión Activa (build del request de actualización)
+import {
+  applyAdmissionFormState,
+  buildAdmissionRequest,
+  buildAuthorizationsRequest,
+  buildCompanionRequest,
+  buildUpdateAdmissionRequest,
+  toApiBirthDate,
+} from './admission-form.builder';
 import {
   createAdmissionForm,
   createAuthEntryForm,
@@ -196,6 +204,129 @@ describe('admission-form.builder', () => {
 
       expect(request.email).toBe('');
     });
+
+    it('omits roomId from the payload when no bed is selected (INV-ADM-01)', () => {
+      const request = buildAdmissionRequest({
+        isNewPatient: true,
+        patient,
+        admission: { ...admission, roomId: null },
+        companion: emptyCompanion,
+        authForms: [],
+        authorizationsEnabled: false,
+      });
+
+      expect(request.roomId).toBeUndefined();
+      expect(JSON.stringify(request)).not.toContain('roomId');
+    });
+  });
+
+  describe('buildUpdateAdmissionRequest', () => {
+    it('returns an empty request when nothing changed', () => {
+      const request = buildUpdateAdmissionRequest({
+        roomId: null,
+        previousRoomId: null,
+        authForms: [],
+        authorizationsEnabled: false,
+      });
+
+      expect(request).toEqual({});
+    });
+
+    it('sends only the changed bed when reassigning (INV-ADM-07)', () => {
+      const request = buildUpdateAdmissionRequest({
+        roomId: 2,
+        previousRoomId: 1,
+        authForms: [],
+        authorizationsEnabled: false,
+      });
+
+      expect(request).toEqual({ roomId: 2 });
+    });
+
+    it('omits roomId when the same bed is selected (INV-ADM-07)', () => {
+      const request = buildUpdateAdmissionRequest({
+        roomId: 1,
+        previousRoomId: 1,
+        authForms: [],
+        authorizationsEnabled: false,
+      });
+
+      expect(request).toEqual({});
+    });
+
+    it('includes authorizations when entries were added (INV-ADM-07)', () => {
+      const form = createAuthEntryForm();
+      form.patchValue({
+        authTypeId: 2,
+        authNumber: 'AUTH-100',
+        mapiissCode: 'CUP-100',
+        quantity: 2,
+      });
+
+      const request = buildUpdateAdmissionRequest({
+        roomId: null,
+        previousRoomId: null,
+        authForms: [form],
+        authorizationsEnabled: true,
+      });
+
+      expect(request.authorizations).toEqual([
+        { authTypeId: 2, authNumber: 'AUTH-100', mapiissCode: 'CUP-100', feeScheduleId: 0, quantity: 2 },
+      ]);
+      expect('roomId' in request).toBe(false);
+    });
+
+    it('sends only the changed observations (INV-ADM-07)', () => {
+      const request = buildUpdateAdmissionRequest({
+        roomId: null,
+        previousRoomId: null,
+        observations: 'Requiere control diario',
+        previousObservations: 'Observación anterior',
+        authForms: [],
+        authorizationsEnabled: false,
+      });
+
+      expect(request).toEqual({ observations: 'Requiere control diario' });
+    });
+
+    it('omits observations when unchanged (INV-ADM-07)', () => {
+      const request = buildUpdateAdmissionRequest({
+        roomId: 1,
+        previousRoomId: 1,
+        observations: 'Sin cambios',
+        previousObservations: 'Sin cambios',
+        authForms: [],
+        authorizationsEnabled: false,
+      });
+
+      expect(request).toEqual({});
+    });
+
+    it('sends empty observations to clear them (INV-ADM-07)', () => {
+      const request = buildUpdateAdmissionRequest({
+        roomId: null,
+        previousRoomId: null,
+        observations: '',
+        previousObservations: 'A limpiar',
+        authForms: [],
+        authorizationsEnabled: false,
+      });
+
+      expect(request).toEqual({ observations: '' });
+    });
+
+    it('sends bed and observations together when both changed (INV-ADM-07)', () => {
+      const request = buildUpdateAdmissionRequest({
+        roomId: 2,
+        previousRoomId: 1,
+        observations: 'Nueva observación',
+        previousObservations: null,
+        authForms: [],
+        authorizationsEnabled: false,
+      });
+
+      expect(request).toEqual({ roomId: 2, observations: 'Nueva observación' });
+    });
   });
 
   describe('applyAdmissionFormState', () => {
@@ -207,7 +338,7 @@ describe('admission-form.builder', () => {
 
     it('enables search controls and disables data controls on IDLE', () => {
       const { patient, companion, admission } = forms();
-      applyAdmissionFormState({ patient, companion, admission }, 'IDLE');
+      applyAdmissionFormState({ patient, companion, admission }, 'IDLE', false);
 
       expect(patient.controls.documentTypeId.enabled).toBeTrue();
       expect(patient.controls.document.enabled).toBeTrue();
@@ -218,7 +349,7 @@ describe('admission-form.builder', () => {
 
     it('enables data controls on FOUND', () => {
       const { patient, companion, admission } = forms();
-      applyAdmissionFormState({ patient, companion, admission }, 'FOUND');
+      applyAdmissionFormState({ patient, companion, admission }, 'FOUND', false);
 
       expect(patient.controls.documentTypeId.enabled).toBeFalse();
       expect(patient.controls.firstName.enabled).toBeTrue();
@@ -228,10 +359,22 @@ describe('admission-form.builder', () => {
 
     it('enables both search and data controls on NOT_FOUND', () => {
       const { patient, companion, admission } = forms();
-      applyAdmissionFormState({ patient, companion, admission }, 'NOT_FOUND');
+      applyAdmissionFormState({ patient, companion, admission }, 'NOT_FOUND', false);
 
       expect(patient.controls.document.enabled).toBeTrue();
       expect(patient.controls.birthDate.enabled).toBeTrue();
+      expect(admission.controls.roomId.enabled).toBeTrue();
+    });
+
+    it('keeps only the bed enabled when the patient has an active admission (INV-ADM-07)', () => {
+      const { patient, companion, admission } = forms();
+      applyAdmissionFormState({ patient, companion, admission }, 'FOUND', true);
+
+      expect(patient.controls.firstName.enabled).toBeFalse();
+      expect(patient.controls.document.enabled).toBeFalse();
+      expect(companion.controls.firstName.enabled).toBeFalse();
+      expect(admission.controls.epsId.enabled).toBeFalse();
+      expect(admission.controls.observations.enabled).toBeFalse();
       expect(admission.controls.roomId.enabled).toBeTrue();
     });
   });

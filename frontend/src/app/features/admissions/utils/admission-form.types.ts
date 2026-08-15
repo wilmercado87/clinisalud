@@ -2,6 +2,11 @@ import { FormControl, FormGroup } from '@angular/forms';
 
 export type FormMode = 'IDLE' | 'SEARCHING' | 'FOUND' | 'NOT_FOUND';
 
+export type FormFeedback = {
+  type: 'success' | 'error' | 'info';
+  message: string;
+};
+
 export type PatientForm = FormGroup<{
   documentTypeId: FormControl<number | null>;
   document: FormControl<string>;

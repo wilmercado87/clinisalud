@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatOption } from '@angular/material/core';
+import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { CatalogSelectComponent } from './catalog-select.component';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
@@ -41,20 +42,46 @@ class RequiredInputHostComponent {
   required = false;
 }
 
+@Component({
+  selector: 'app-catalog-select-beds-host',
+  standalone: true,
+  imports: [CatalogSelectComponent, ReactiveFormsModule],
+  template: `
+    <app-catalog-select
+      catalogType="beds"
+      label="Cama"
+      [formControl]="control"
+      [includeOccupiedBeds]="includeOccupiedBeds"
+      [clearable]="clearable"
+    />
+  `,
+})
+class BedsHostComponent {
+  control = new FormControl<number | null>(null);
+  includeOccupiedBeds = false;
+  clearable = true;
+}
+
+const BEDS_FIXTURE = [
+  { roomId: 1, bedCode: 'HAB101', bedStatus: 1, tipoCama: 'hospitalizado' },
+  { roomId: 2, bedCode: 'HAB102', bedStatus: 0, tipoCama: 'hospitalizado' },
+];
+
 describe('CatalogSelectComponent', () => {
   let fixture: ComponentFixture<HostComponent>;
   let host: HostComponent;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HostComponent, RequiredInputHostComponent],
+      imports: [HostComponent, RequiredInputHostComponent, BedsHostComponent],
       providers: [
         {
           provide: CatalogStore,
           useValue: {
             getCatalog: () => [],
             versionOf: () => 0,
-            loadCatalog: () => of([]),
+            loadCatalog: (type: string) =>
+              of(type === 'beds' ? BEDS_FIXTURE : []),
           },
         },
       ],
@@ -146,5 +173,110 @@ describe('CatalogSelectComponent', () => {
     hostFixture.componentInstance.required = false;
     hostFixture.detectChanges();
     expect(cmp.isRequired()).toBeFalse();
+  });
+
+  it('filtra camas ocupadas por defecto y las incluye deshabilitadas con includeOccupiedBeds', async () => {
+    const hostFixture = TestBed.createComponent(BedsHostComponent);
+    hostFixture.componentInstance.includeOccupiedBeds = false;
+    hostFixture.detectChanges();
+    await hostFixture.whenStable();
+    const cmp = hostFixture.debugElement.query(
+      (el) => el.componentInstance instanceof CatalogSelectComponent,
+    ).componentInstance as CatalogSelectComponent;
+
+    expect(cmp.items().map((item) => item.id)).toEqual([2]);
+    expect(cmp.isOptionDisabled(cmp.items()[0])).toBeFalse();
+
+    hostFixture.componentInstance.includeOccupiedBeds = true;
+    hostFixture.detectChanges();
+    await hostFixture.whenStable();
+
+    expect(cmp.items().map((item) => item.id)).toEqual([1, 2]);
+    const occupied = cmp.items().find((item) => item.id === 1)!;
+    expect(cmp.isOptionDisabled(occupied)).toBeTrue();
+
+    cmp.writeValue(1);
+    hostFixture.detectChanges();
+    expect(cmp.isOptionDisabled(occupied)).toBeFalse();
+    expect(cmp.selectedDescription()).toContain('HAB101');
+  });
+
+  it('keeps the assigned value when blurring with unmatched text', async () => {
+    const hostFixture = TestBed.createComponent(BedsHostComponent);
+    hostFixture.componentInstance.includeOccupiedBeds = true;
+    hostFixture.detectChanges();
+    await hostFixture.whenStable();
+    const cmp = hostFixture.debugElement.query(
+      (el) => el.componentInstance instanceof CatalogSelectComponent,
+    ).componentInstance as CatalogSelectComponent;
+
+    cmp.writeValue(1);
+    hostFixture.detectChanges();
+    expect(cmp.selectedDescription()).toContain('HAB101');
+
+    cmp.onInput({ target: { value: 'HAB' } } as unknown as Event);
+    cmp.onBlur();
+    hostFixture.detectChanges();
+
+    expect(cmp.value()).toBe(1);
+    expect(cmp.searchTerm()).toContain('HAB101');
+    expect(cmp.optionInvalid()).toBeFalse();
+  });
+
+  it('does not select a disabled occupied bed typed on blur', async () => {
+    const hostFixture = TestBed.createComponent(BedsHostComponent);
+    hostFixture.componentInstance.includeOccupiedBeds = true;
+    hostFixture.detectChanges();
+    await hostFixture.whenStable();
+    const cmp = hostFixture.debugElement.query(
+      (el) => el.componentInstance instanceof CatalogSelectComponent,
+    ).componentInstance as CatalogSelectComponent;
+
+    cmp.writeValue(2);
+    hostFixture.detectChanges();
+
+    cmp.onInput({ target: { value: 'HAB101 - hospitalizado' } } as unknown as Event);
+    cmp.onBlur();
+    hostFixture.detectChanges();
+
+    expect(cmp.value()).toBe(2);
+    expect(cmp.searchTerm()).toContain('HAB102');
+  });
+
+  it('hides the clear button when clearable is false', async () => {
+    const hostFixture = TestBed.createComponent(BedsHostComponent);
+    hostFixture.componentInstance.includeOccupiedBeds = true;
+    hostFixture.componentInstance.clearable = false;
+    hostFixture.detectChanges();
+    await hostFixture.whenStable();
+    const cmp = hostFixture.debugElement.query(
+      (el) => el.componentInstance instanceof CatalogSelectComponent,
+    ).componentInstance as CatalogSelectComponent;
+
+    cmp.writeValue(1);
+    hostFixture.detectChanges();
+    expect(hostFixture.debugElement.query(By.css('button[matSuffix]'))).toBeNull();
+
+    hostFixture.componentInstance.clearable = true;
+    hostFixture.detectChanges();
+    expect(hostFixture.debugElement.query(By.css('button[matSuffix]'))).not.toBeNull();
+  });
+
+  it('shows all options when the text matches the current selection', async () => {
+    const hostFixture = TestBed.createComponent(BedsHostComponent);
+    hostFixture.componentInstance.includeOccupiedBeds = true;
+    hostFixture.detectChanges();
+    await hostFixture.whenStable();
+    const cmp = hostFixture.debugElement.query(
+      (el) => el.componentInstance instanceof CatalogSelectComponent,
+    ).componentInstance as CatalogSelectComponent;
+
+    cmp.writeValue(1);
+    hostFixture.detectChanges();
+    expect(cmp.filteredItems().map((item) => item.id)).toEqual([1, 2]);
+
+    cmp.onInput({ target: { value: 'HAB102' } } as unknown as Event);
+    hostFixture.detectChanges();
+    expect(cmp.filteredItems().map((item) => item.id)).toEqual([2]);
   });
 });

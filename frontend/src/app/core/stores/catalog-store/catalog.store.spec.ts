@@ -24,10 +24,10 @@ describe('CatalogStore', () => {
     httpMock.verify();
   });
 
-  it('loads only available beds from the server', async () => {
+  it('loads all beds from the server without filtering by status', async () => {
     const promise = firstValueFrom(store.loadCatalog('beds'));
     const req = httpMock.expectOne((r) => r.url.endsWith('/catalogs/beds'));
-    expect(req.request.params.get('status')).toBe('0');
+    expect(req.request.params.has('status')).toBeFalse();
     expect(req.request.params.get('pageSize')).toBe('100');
     expect(req.request.headers.get('Cache-Control')).toBe('no-cache');
 
@@ -40,6 +40,7 @@ describe('CatalogStore', () => {
     });
 
     expect(await promise).toEqual([
+      { roomId: 1, bedCode: 'HAB101', bedStatus: 1, tipoCama: 'hospitalizado' },
       { roomId: 2, bedCode: 'HAB102', bedStatus: 0, tipoCama: 'hospitalizado' },
     ]);
   });

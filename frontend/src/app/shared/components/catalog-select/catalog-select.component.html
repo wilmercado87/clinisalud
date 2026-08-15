@@ -21,7 +21,7 @@
       </mat-option>
     } @else {
       @for (item of filteredItems(); track item.id) {
-        <mat-option [value]="item.id">{{ item.description }}</mat-option>
+        <mat-option [value]="item.id" [disabled]="isOptionDisabled(item)">{{ item.description }}</mat-option>
       }
       @if (filteredItems().length === 0) {
         <mat-option disabled>Sin resultados</mat-option>
@@ -29,7 +29,7 @@
     }
   </mat-autocomplete>
 
-  @if (value() !== null && !disabled()) {
+  @if (value() !== null && !disabled() && clearable()) {
     <button matSuffix mat-icon-button type="button" (click)="onClear()">
       <mat-icon>close</mat-icon>
     </button>

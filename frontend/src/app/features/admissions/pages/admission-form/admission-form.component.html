@@ -61,10 +61,11 @@
         @if (mode() === 'FOUND') {
           <div class="admission-form__badge">Paciente existente</div>
           @if (activeAdmission()) {
-            <div class="admission-form__alert admission-form__alert--error">
-              <mat-icon>warning</mat-icon>
-              El paciente ya tiene una admisión activa
-              ({{ activeAdmission()!.admissionNumber }}). Debe egresarla antes de crear una nueva.
+            <div class="admission-form__alert admission-form__alert--info">
+              <mat-icon>info</mat-icon>
+              Admisión activa
+              ({{ activeAdmission()!.admissionNumber }}): puede asignar cama y agregar
+              autorizaciones.
             </div>
           }
         } @else if (mode() === 'NOT_FOUND') {
@@ -271,11 +272,17 @@
             label="EPS"
             formControlName="epsId"
           />
-          <app-catalog-select
-            catalogType="beds"
-            label="Cama"
-            formControlName="roomId"
-          />
+          <div class="admission-form__bed-field">
+            @if (isUpdatingMode() && occupiedBedLabel(); as bedLabel) {
+              <span class="admission-form__bed-hint">Cama ocupada: {{ bedLabel }}</span>
+            }
+            <app-catalog-select
+              catalogType="beds"
+              label="Cama"
+              formControlName="roomId"
+              [clearable]="!isUpdatingMode()"
+            />
+          </div>
           <mat-form-field appearance="outline" class="admission-form__field--full">
             <mat-label>Observaciones</mat-label>
             <textarea
@@ -302,7 +309,7 @@
         </mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        @if (authRows().length === 0) {
+        @if (existingAuthRows().length === 0 && newAuthRows().length === 0) {
           <p class="admission-form__empty">Sin autorizaciones registradas.</p>
         } @else {
           <table class="admission-form__auth-table">
@@ -316,7 +323,16 @@
               </tr>
             </thead>
             <tbody>
-              @for (row of authRows(); track $index) {
+              @for (row of existingAuthRows(); track row.authNumber) {
+                <tr>
+                  <td>{{ row.authTypeName }}</td>
+                  <td>{{ row.authNumber }}</td>
+                  <td>{{ row.mapiissCode }}</td>
+                  <td>{{ row.quantity }}</td>
+                  <td class="admission-form__auth-table--actions"></td>
+                </tr>
+              }
+              @for (row of newAuthRows(); track $index) {
                 <tr>
                   <td>{{ row.authTypeName }}</td>
                   <td>{{ row.authNumber }}</td>
@@ -379,12 +395,12 @@
       (click)="onSubmit()"
       [disabled]="!canSubmit()"
     >
-      @if (isCreating()) {
+      @if (isCreating() || isUpdating()) {
         <mat-spinner diameter="20" />
       } @else {
         <mat-icon>save</mat-icon>
       }
-      Registrar Admisión
+      {{ isUpdatingMode() ? 'Actualizar Admisión' : 'Registrar Admisión' }}
     </button>
   </div>
 </div>
