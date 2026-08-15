@@ -68,8 +68,10 @@ export class AuthEntryDialogComponent {
   private readonly injector = inject(Injector);
 
   readonly entries = signal<AuthFormGroup[]>([]);
+  readonly feedback = signal<string | null>(null);
   private readonly entryValues = new Map<AuthFormGroup, Signal<Partial<AuthFormValue>>>();
   private readonly lastFeeSchedule = new Map<AuthFormGroup, number | null>();
+  private readonly lastAuthType = new Map<AuthFormGroup, number | null>();
 
   readonly errors = computed(() => this.computeEntryErrors());
 
@@ -101,6 +103,7 @@ export class AuthEntryDialogComponent {
     this.entries.update((list) => list.filter((_, i) => i !== index));
     this.entryValues.delete(fg);
     this.lastFeeSchedule.delete(fg);
+    this.lastAuthType.delete(fg);
   }
 
   private registerEffects(): void {
@@ -108,9 +111,16 @@ export class AuthEntryDialogComponent {
       for (const fg of this.entries()) {
         this.entryValues.get(fg)?.();
         const feeScheduleId = fg.controls.feeScheduleId.value;
-        const previous = this.lastFeeSchedule.get(fg);
+        const previousFeeSchedule = this.lastFeeSchedule.get(fg);
         this.lastFeeSchedule.set(fg, feeScheduleId);
-        if (previous !== undefined && previous !== null && previous !== feeScheduleId) {
+        if (previousFeeSchedule !== undefined && previousFeeSchedule !== null && previousFeeSchedule !== feeScheduleId) {
+          clearAuthCupsSelection(fg);
+        }
+
+        const authTypeId = fg.controls.authTypeId.value;
+        const previousAuthType = this.lastAuthType.get(fg);
+        this.lastAuthType.set(fg, authTypeId);
+        if (previousAuthType !== undefined && previousAuthType !== null && previousAuthType !== authTypeId) {
           clearAuthCupsSelection(fg);
         }
       }
@@ -203,12 +213,28 @@ export class AuthEntryDialogComponent {
     return errorObjects.reduce((acc, curr) => ({ ...acc, ...curr }), {});
   }
 
-  openCupsSearch(index: number): void {
+  async openCupsSearch(index: number): Promise<void> {
     const fg = this.entries()[index];
     if (!fg) return;
 
     const feeScheduleId = fg.controls.feeScheduleId.value;
-    if (feeScheduleId === null) return;
+    const authTypeId = fg.controls.authTypeId.value;
+    if (feeScheduleId === null || authTypeId === null) return;
+
+    this.feedback.set(null);
+
+    let attentionLevelId = this.attentionLevelOf(authTypeId);
+    if (attentionLevelId === undefined) {
+      await firstValueFrom(this.catalogStore.reloadCatalog('authorization-types'));
+      attentionLevelId = this.attentionLevelOf(authTypeId);
+    }
+
+    if (attentionLevelId === undefined) {
+      this.feedback.set(
+        'No se pudo determinar el nivel de atención del Tipo de Autorización seleccionado. Vuelva a seleccionarlo e intente nuevamente.',
+      );
+      return;
+    }
 
     const cupsDialogRef = this.dialog.open(CupsSearchDialogComponent, {
       width: '560px',
@@ -216,6 +242,7 @@ export class AuthEntryDialogComponent {
       data: {
         feeScheduleId,
         feeScheduleName: this.feeScheduleName(feeScheduleId),
+        attentionLevelId,
       } satisfies CupsSearchDialogData,
     });
 
@@ -223,6 +250,13 @@ export class AuthEntryDialogComponent {
       if (!cups) return;
       applyAuthCupsSelection(fg, cups);
     });
+  }
+
+  private attentionLevelOf(authTypeId: number): number | undefined {
+    const item = this.catalogStore
+      .getCatalog('authorization-types')
+      .find((catalogItem) => 'id' in catalogItem && catalogItem.id === authTypeId);
+    return item && 'attentionLevelId' in item ? item.attentionLevelId : undefined;
   }
 
   private feeScheduleName(feeScheduleId: number): string {

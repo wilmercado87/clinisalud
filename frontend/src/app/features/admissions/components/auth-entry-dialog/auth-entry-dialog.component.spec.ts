@@ -45,10 +45,38 @@ describe('AuthEntryDialogComponent', () => {
   let component: AuthEntryDialogComponent;
   let dialogRef: { close: jasmine.Spy };
   let dialog: { open: jasmine.Spy };
+  let authTypes: Array<{ id: number; name: string; description: string; attentionLevelId?: number }>;
+  let catalogData: Record<string, unknown[]>;
+  let reloadResult: unknown[];
+  let reloadCatalogSpy: jasmine.Spy;
 
   beforeEach(async () => {
     dialogRef = { close: jasmine.createSpy('close') };
     dialog = { open: jasmine.createSpy('open').and.returnValue({ afterClosed: () => of(undefined) }) };
+
+    authTypes = [
+      {
+        id: 4,
+        name: 'Aut. Urgencias',
+        description: 'Aut. Urgencias',
+        attentionLevelId: 2,
+      },
+      {
+        id: 5,
+        name: 'Aut. Cirugía Ambulatoria',
+        description: 'Aut. Cirugía Ambulatoria',
+        attentionLevelId: 2,
+      },
+    ];
+    catalogData = {
+      'authorization-types': authTypes,
+      'fee-schedules': [{ id: 2, name: 'ISS 2001', description: 'ISS 2001' }],
+    };
+    reloadResult = authTypes;
+    reloadCatalogSpy = jasmine.createSpy('reloadCatalog').and.callFake((type: string) => {
+      catalogData[type] = reloadResult;
+      return of(reloadResult);
+    });
 
     await TestBed.configureTestingModule({
       imports: [AuthEntryDialogComponent],
@@ -57,7 +85,10 @@ describe('AuthEntryDialogComponent', () => {
         { provide: MatDialog, useValue: dialog },
         {
           provide: CatalogStore,
-          useValue: { getCatalog: () => [] },
+          useValue: {
+            getCatalog: (type: string) => catalogData[type] ?? [],
+            reloadCatalog: reloadCatalogSpy,
+          },
         },
       ],
     })
@@ -166,6 +197,62 @@ describe('AuthEntryDialogComponent', () => {
     fixture.detectChanges();
     expect(entry.controls.mapiissCode.value).toBe('');
     expect(entry.controls.description.value).toBe('');
+  });
+
+  it('clears the CUPS selection when the auth type changes', () => {
+    const entry = component.entries()[0];
+    fillEntry(entry);
+    entry.controls.authTypeId.setValue(4);
+    fixture.detectChanges();
+    expect(entry.controls.mapiissCode.value).toBe('');
+    expect(entry.controls.description.value).toBe('');
+  });
+
+  it('opens the CUPS search filtered by the attention level of the auth type', () => {
+    const entry = component.entries()[0];
+    fillEntry(entry);
+    component.openCupsSearch(0);
+
+    const [, dialogConfig] = dialog.open.calls.mostRecent().args;
+    expect(dialogConfig.data).toEqual({
+      feeScheduleId: 2,
+      feeScheduleName: 'ISS 2001',
+      attentionLevelId: 2,
+    });
+  });
+
+  it('does not open the CUPS search when the auth type is missing', () => {
+    const entry = component.entries()[0];
+    entry.controls.feeScheduleId.setValue(2);
+    fixture.detectChanges();
+    component.openCupsSearch(0);
+    expect(dialog.open).not.toHaveBeenCalled();
+  });
+
+  it('reloads the catalog and opens the search when the level is missing', async () => {
+    catalogData['authorization-types'] = authTypes.map(({ attentionLevelId: _removed, ...item }) => item);
+
+    const entry = component.entries()[0];
+    fillEntry(entry);
+    await component.openCupsSearch(0);
+
+    expect(reloadCatalogSpy).toHaveBeenCalledWith('authorization-types');
+    expect(dialog.open).toHaveBeenCalled();
+    const [, dialogConfig] = dialog.open.calls.mostRecent().args;
+    expect(dialogConfig.data.attentionLevelId).toBe(2);
+  });
+
+  it('shows a visible feedback when the level cannot be determined', async () => {
+    catalogData['authorization-types'] = authTypes.map(({ attentionLevelId: _removed, ...item }) => item);
+    reloadResult = catalogData['authorization-types'];
+
+    const entry = component.entries()[0];
+    fillEntry(entry);
+    await component.openCupsSearch(0);
+
+    expect(reloadCatalogSpy).toHaveBeenCalledWith('authorization-types');
+    expect(dialog.open).not.toHaveBeenCalled();
+    expect(component.feedback()).toContain('nivel de atención');
   });
 
   it('applies the selected CUPS after the search dialog closes', async () => {

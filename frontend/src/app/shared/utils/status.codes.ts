@@ -6,6 +6,7 @@ export const HTTP_STATUS = {
   EMAIL_ALREADY_EXISTS: 405,
   DNI_ALREADY_EXISTS: 406,
   VALIDATION_ERROR: 422,
+  TOO_MANY_REQUESTS: 429,
   INTERNAL_SERVER_ERROR: 500,
 } as const;
 
@@ -17,6 +18,7 @@ export const ERROR_MAPPING: Record<number, string> = {
   [HTTP_STATUS.EMAIL_ALREADY_EXISTS]: 'Email ya existe',
   [HTTP_STATUS.DNI_ALREADY_EXISTS]: 'DNI ya existe',
   [HTTP_STATUS.VALIDATION_ERROR]: 'Error de validación',
+  [HTTP_STATUS.TOO_MANY_REQUESTS]: 'Demasiadas solicitudes, intente más tarde',
   [HTTP_STATUS.INTERNAL_SERVER_ERROR]: 'Error interno del servidor',
 };
 

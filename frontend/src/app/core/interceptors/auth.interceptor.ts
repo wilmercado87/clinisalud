@@ -7,8 +7,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authStore = inject(AuthStore);
   const token = authStore.getToken();
   const currentUser = authStore.currentUser();
+  const isAuthEndpoint =
+    req.url.includes('/auth/login') || req.url.includes('/auth/forgot-password');
 
-  if (token && currentUser && !currentUser.isActive && !req.url.includes('/auth/login')) {
+  if (token && currentUser && !currentUser.isActive && !isAuthEndpoint) {
     authStore.logout();
     return throwError(() => new HttpErrorResponse({ status: 401, statusText: 'Usuario inactivo' }));
   }
@@ -24,7 +26,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(cloned).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && !req.url.includes('/auth/login')) {
+      const isAuthEndpoint =
+        req.url.includes('/auth/login') || req.url.includes('/auth/forgot-password');
+      if ((error.status === 401 || error.status === 403) && !isAuthEndpoint) {
         authStore.logout();
       }
       return throwError(() => error);

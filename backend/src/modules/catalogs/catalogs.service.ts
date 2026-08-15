@@ -108,6 +108,7 @@ export class CatalogsService {
   async searchCups(
     q: string,
     feeScheduleId?: number,
+    attentionLevelId?: number,
     page = 1,
     pageSize = 20,
   ): Promise<CupsPageResponse> {
@@ -115,14 +116,18 @@ export class CatalogsService {
       return { items: [], total: 0 };
     }
     const term = `%${q.trim()}%`;
+    const where: Record<string, unknown> = {
+      feeScheduleId,
+      [Op.or]: [
+        { mapiissCode: { [Op.iLike]: term } },
+        { mapiissDescription: { [Op.iLike]: term } },
+      ],
+    };
+    if (attentionLevelId !== undefined) {
+      where.attentionLevelId = attentionLevelId;
+    }
     const { count, rows } = await Cups.findAndCountAll({
-      where: {
-        feeScheduleId,
-        [Op.or]: [
-          { mapiissCode: { [Op.iLike]: term } },
-          { mapiissDescription: { [Op.iLike]: term } },
-        ],
-      },
+      where,
       limit: pageSize,
       offset: (page - 1) * pageSize,
       order: [["mapiissCode", "ASC"]],

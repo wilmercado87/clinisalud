@@ -1,5 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 import { RoleService } from '@core/services/roles.service';
 import { MenuService } from '@core/services/menu.service';
 import { MenuOption } from '@core/models/user.model';
@@ -10,12 +11,22 @@ export class RoleStore {
   private readonly roleService = inject(RoleService);
   private readonly menuService = inject(MenuService);
 
+  private readonly refreshKey = signal(0);
+
   private readonly rolesResource = rxResource({
-    loader: () => this.roleService.getRoles(),
+    request: () => this.refreshKey(),
+    loader: ({ request }) => {
+      if (request === 0) return of([]);
+      return this.roleService.getRoles();
+    },
   });
 
   private readonly menuOptionsResource = rxResource({
-    loader: () => this.menuService.getMenuOptions(),
+    request: () => this.refreshKey(),
+    loader: ({ request }) => {
+      if (request === 0) return of([]);
+      return this.menuService.getMenuOptions();
+    },
   });
 
   readonly roles = this.rolesResource.value.asReadonly();
@@ -25,11 +36,11 @@ export class RoleStore {
   readonly isLoadingMenuOptions = this.menuOptionsResource.isLoading;
 
   reloadRoles(): void {
-    this.rolesResource.reload();
+    this.refreshKey.update((n) => n + 1);
   }
 
   reloadMenuOptions(): void {
-    this.menuOptionsResource.reload();
+    this.refreshKey.update((n) => n + 1);
   }
 
   reset(): void {

@@ -1,6 +1,10 @@
-ID_TIPO_AUTORIZACION;DESCRIPCION_TIPO_AUTORIZACION
-1;Aut. Urgencia
-2;Aut. Hospitalizacion
-3;Aut. Cirugia
-4;Aut. Procedimientos
-5;Aut. No Pos
+ID_TIPO_AUTORIZACION;DESCRIPCION_TIPO_AUTORIZACION;FK_NIVEL_ATENCION
+1;Aut. Consulta Externa;1
+2;Aut. Procedimientos Ambulatorios;1
+3;Aut. Procedimientos No pos;4
+4;Aut. Urgencias;2
+5;Aut. Cirugía Ambulatoria;2
+6;Aut. Hospitalización;2
+7;Aut. Hospitalización Qx;3
+8;Aut. UCE;3
+9;Aut. UCI;4

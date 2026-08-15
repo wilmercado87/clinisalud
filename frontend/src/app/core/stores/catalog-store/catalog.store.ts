@@ -104,9 +104,23 @@ export class CatalogStore {
     this.versions.update((v) => ({ ...v, [type]: (v[type] ?? 0) + 1 }));
   }
 
+  reloadCatalog(type: string): Observable<CatalogSourceItem[]> {
+    this.cache.delete(type);
+    this.observables.delete(type);
+    this.versions.update((v) => ({ ...v, [type]: (v[type] ?? 0) + 1 }));
+
+    const fresh = this.catalogApi.getCatalog(type).pipe(
+      tap((items) => this.cache.set(type, items)),
+      shareReplay(1),
+    );
+    this.observables.set(type, fresh);
+    return fresh;
+  }
+
   clearCache(): void {
     this.cache.clear();
     this.observables.clear();
+    this.versions.set({});
     this.searchDiagTrigger.set(null);
     this.municipalitiesTrigger.set(null);
     this.contractsTrigger.set(null);

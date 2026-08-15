@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import {
@@ -17,31 +17,45 @@ export class CatalogService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/catalogs`;
 
+  private readonly noCacheHeaders = new HttpHeaders({ 'Cache-Control': 'no-cache' });
+
   getCatalog(type: string): Observable<CatalogItemResponse[]> {
-    return this.http.get<CatalogItemResponse[]>(`${this.apiUrl}/${type}`);
+    return this.http.get<CatalogItemResponse[]>(`${this.apiUrl}/${type}`, {
+      headers: this.noCacheHeaders,
+    });
   }
 
   getMunicipalities(departmentId?: string): Observable<MunicipioResponse[]> {
     let params = new HttpParams();
     if (departmentId) params = params.set('departmentId', departmentId);
-    return this.http.get<MunicipioResponse[]>(`${this.apiUrl}/municipalities`, { params });
+    return this.http.get<MunicipioResponse[]>(`${this.apiUrl}/municipalities`, {
+      headers: this.noCacheHeaders,
+      params,
+    });
   }
 
   getContracts(epsId?: number): Observable<ContratoResponse[]> {
     let params = new HttpParams();
     if (epsId !== undefined) params = params.set('epsId', epsId);
-    return this.http.get<ContratoResponse[]>(`${this.apiUrl}/contracts`, { params });
+    return this.http.get<ContratoResponse[]>(`${this.apiUrl}/contracts`, {
+      headers: this.noCacheHeaders,
+      params,
+    });
   }
 
   getBeds(bedStatus?: number, pageSize?: number): Observable<BedsPageResponse> {
     let params = new HttpParams();
     if (bedStatus !== undefined) params = params.set('status', bedStatus);
     if (pageSize !== undefined) params = params.set('pageSize', pageSize);
-    return this.http.get<BedsPageResponse>(`${this.apiUrl}/beds`, { params });
+    return this.http.get<BedsPageResponse>(`${this.apiUrl}/beds`, {
+      headers: this.noCacheHeaders,
+      params,
+    });
   }
 
   searchDiagnostics(q: string): Observable<DiagnosticoResponse[]> {
     return this.http.get<DiagnosticoResponse[]>(`${this.apiUrl}/diagnostics/search`, {
+      headers: this.noCacheHeaders,
       params: new HttpParams().set('q', q),
     });
   }
@@ -51,12 +65,17 @@ export class CatalogService {
     feeScheduleId: number,
     page = 1,
     pageSize = 20,
+    attentionLevelId?: number,
   ): Observable<CupsPageResponse> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('q', q)
       .set('feeScheduleId', feeScheduleId)
       .set('page', page)
       .set('pageSize', pageSize);
-    return this.http.get<CupsPageResponse>(`${this.apiUrl}/cups/search`, { params });
+    if (attentionLevelId !== undefined) params = params.set('attentionLevelId', attentionLevelId);
+    return this.http.get<CupsPageResponse>(`${this.apiUrl}/cups/search`, {
+      headers: this.noCacheHeaders,
+      params,
+    });
   }
 }

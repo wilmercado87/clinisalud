@@ -89,6 +89,7 @@ export function initAssociations() {
   Cups.belongsTo(CentroCosto, { foreignKey: "costCenterId", as: "costCenter" });
   Cups.belongsTo(Tarifario, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   Cups.belongsTo(NivelAtencion, { foreignKey: "attentionLevelId", as: "attentionLevel" });
+  TipoAutorizacion.belongsTo(NivelAtencion, { foreignKey: "attentionLevelId", as: "attentionLevel" });
 
   // === [MÓDULO 5: AUTORIZACIONES] ===
   Autorizacion.belongsTo(Admision, { foreignKey: "admissionNumber", as: "admission" });

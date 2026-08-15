@@ -168,7 +168,7 @@ describe("CatalogsService", () => {
         ],
       } as any);
 
-      const result = await service.searchCups("123", 2, 1, 20);
+      const result = await service.searchCups("123", 2, undefined, 1, 20);
 
       expect(result.total).toBe(42);
       expect(result.items).toEqual([
@@ -179,6 +179,30 @@ describe("CatalogsService", () => {
           where: expect.objectContaining({ feeScheduleId: 2 }),
           limit: 20,
           offset: 0,
+        }),
+      );
+    });
+
+    it("should filter by attentionLevelId when provided", async () => {
+      jest.spyOn(Cups, "findAndCountAll").mockResolvedValue({ count: 0, rows: [] } as any);
+
+      await service.searchCups("123", 2, 3, 1, 20);
+
+      expect(Cups.findAndCountAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ feeScheduleId: 2, attentionLevelId: 3 }),
+        }),
+      );
+    });
+
+    it("should not include attentionLevelId filter when not provided", async () => {
+      jest.spyOn(Cups, "findAndCountAll").mockResolvedValue({ count: 0, rows: [] } as any);
+
+      await service.searchCups("123", 2, undefined, 1, 20);
+
+      expect(Cups.findAndCountAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.not.objectContaining({ attentionLevelId: undefined }),
         }),
       );
     });

@@ -11,7 +11,7 @@ export class NotificationStore {
 
   readonly refreshCounter = signal(0);
 
-  private readonly fetchParams = signal<{ limit: number; offset: number } | null>({ limit: 5, offset: 0 });
+  private readonly fetchParams = signal<{ limit: number; offset: number } | null>(null);
 
   private readonly reloadParams = computed(() => {
     const params = this.fetchParams();
@@ -31,8 +31,14 @@ export class NotificationStore {
     },
   });
 
+  private readonly unreadTrigger = signal(0);
+
   private readonly unreadResource = rxResource({
-    loader: () => this.notificationService.getUnreadCount(),
+    request: () => this.unreadTrigger(),
+    loader: ({ request }) => {
+      if (request === 0) return of(undefined);
+      return this.notificationService.getUnreadCount();
+    },
   });
 
   readonly notifications = this.notificationsResource.value.asReadonly();
@@ -95,7 +101,7 @@ private readonly markReadResource = rxResource({
   }
 
   loadUnreadCount(): void {
-    this.unreadResource.reload();
+    this.unreadTrigger.update((n) => n + 1);
   }
 
   reloadAll(): void {
@@ -115,6 +121,7 @@ private readonly markReadResource = rxResource({
   reset(): void {
     this.fetchParams.set(null);
     this.refreshCounter.set(0);
+    this.unreadTrigger.set(0);
     this.markReadTrigger.set(null);
     this.markAllTrigger.set(0);
   }

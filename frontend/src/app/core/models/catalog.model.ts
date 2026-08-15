@@ -3,6 +3,7 @@ export interface CatalogItemResponse {
   name: string;
   code?: string;
   description?: string;
+  attentionLevelId?: number;
 }
 
 export interface MunicipioResponse extends CatalogItemResponse {

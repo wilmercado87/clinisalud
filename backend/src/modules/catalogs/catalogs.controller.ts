@@ -4,7 +4,7 @@ import { handleControllerError } from "../../utils/controllerError";
 
 const catalogsService = new CatalogsService();
 
-const CACHE_MAX_AGE = 86400;
+const CACHE_MAX_AGE = 300;
 
 export const getCatalog = async (req: Request, res: Response) => {
   try {
@@ -66,9 +66,11 @@ export const searchCups = async (req: Request, res: Response) => {
     const q = typeof req.query.q === "string" ? req.query.q : "";
     const feeScheduleId =
       req.query.feeScheduleId !== undefined ? Number(req.query.feeScheduleId) : undefined;
+    const attentionLevelId =
+      req.query.attentionLevelId !== undefined ? Number(req.query.attentionLevelId) : undefined;
     const page = Math.max(1, Number(req.query.page) || 1);
     const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 20));
-    const result = await catalogsService.searchCups(q, feeScheduleId, page, pageSize);
+    const result = await catalogsService.searchCups(q, feeScheduleId, attentionLevelId, page, pageSize);
     res.json(result);
   } catch (error: unknown) {
     return handleControllerError(error, res, "searchCups");

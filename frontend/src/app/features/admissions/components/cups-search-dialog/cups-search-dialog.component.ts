@@ -25,6 +25,7 @@ import { ADMISSION_MESSAGES } from '@shared/utils/messages';
 export interface CupsSearchDialogData {
   feeScheduleId: number;
   feeScheduleName: string;
+  attentionLevelId?: number;
 }
 
 const CUPS_MIN_CHARS = 3;
@@ -71,6 +72,7 @@ export class CupsSearchDialogComponent {
   private readonly searchParams = computed<CupsSearchParams>(() => ({
     term: this.debouncedTerm().trim(),
     feeScheduleId: this.data.feeScheduleId,
+    attentionLevelId: this.data.attentionLevelId,
     page: this.page(),
   }));
 
@@ -79,7 +81,13 @@ export class CupsSearchDialogComponent {
     loader: ({ request }) =>
       request.term.length >= CUPS_MIN_CHARS
         ? this.catalogApi
-            .searchCups(request.term, request.feeScheduleId, request.page, CUPS_PAGE_SIZE)
+            .searchCups(
+              request.term,
+              request.feeScheduleId,
+              request.page,
+              CUPS_PAGE_SIZE,
+              request.attentionLevelId,
+            )
             .pipe(map((resp) => ({ ...resp, page: request.page })))
         : of({ ...EMPTY_PAGE, page: request.page }),
   });
@@ -137,5 +145,6 @@ export class CupsSearchDialogComponent {
 interface CupsSearchParams {
   term: string;
   feeScheduleId: number;
+  attentionLevelId?: number;
   page: number;
 }

@@ -62,7 +62,11 @@ describe('CupsSearchDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         {
           provide: MAT_DIALOG_DATA,
-          useValue: { feeScheduleId: 2, feeScheduleName: 'ISS 2001' } satisfies CupsSearchDialogData,
+          useValue: {
+            feeScheduleId: 2,
+            feeScheduleName: 'ISS 2001',
+            attentionLevelId: 3,
+          } satisfies CupsSearchDialogData,
         },
       ],
     });
@@ -79,10 +83,10 @@ describe('CupsSearchDialogComponent', () => {
     expect(component.items()).toEqual([]);
   });
 
-  it('searches with fee schedule when the term has 3 or more chars', async () => {
+  it('searches with fee schedule and attention level when the term has 3 or more chars', async () => {
     await typeTerm('123');
 
-    expect(apiService.searchCups).toHaveBeenCalledWith('123', 2, 1, 20);
+    expect(apiService.searchCups).toHaveBeenCalledWith('123', 2, 1, 20, 3);
     expect(component.items().length).toBe(2);
     expect(component.total()).toBe(3);
   });
@@ -94,9 +98,31 @@ describe('CupsSearchDialogComponent', () => {
     component.loadMore();
     await flushSearch();
 
-    expect(apiService.searchCups).toHaveBeenCalledWith('consulta', 2, 2, 20);
+    expect(apiService.searchCups).toHaveBeenCalledWith('consulta', 2, 2, 20, 3);
     expect(component.items().length).toBe(3);
     expect(component.hasMore()).toBeFalse();
+  });
+
+  it('searches without attention level when the dialog has none', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [CupsSearchDialogComponent],
+      providers: [
+        { provide: CatalogService, useValue: apiService },
+        { provide: MatDialogRef, useValue: dialogRef },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: { feeScheduleId: 2, feeScheduleName: 'ISS 2001' } satisfies CupsSearchDialogData,
+        },
+      ],
+    });
+    fixture = TestBed.createComponent(CupsSearchDialogComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    await typeTerm('123');
+
+    expect(apiService.searchCups).toHaveBeenCalledWith('123', 2, 1, 20, undefined);
   });
 
   it('shows an error message when the request fails', async () => {
