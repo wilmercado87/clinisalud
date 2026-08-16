@@ -27,7 +27,7 @@ describe('CatalogStore', () => {
   it('loads all beds from the server without filtering by status', async () => {
     const promise = firstValueFrom(store.loadCatalog('beds'));
     const req = httpMock.expectOne((r) => r.url.endsWith('/catalogs/beds'));
-    expect(req.request.params.has('status')).toBeFalse();
+    expect(req.request.params.has('status')).toBe(false);
     expect(req.request.params.get('pageSize')).toBe('100');
     expect(req.request.headers.get('Cache-Control')).toBe('no-cache');
 
@@ -74,7 +74,7 @@ describe('CatalogStore', () => {
 
     const reload = firstValueFrom(store.reloadCatalog('authorization-types'));
     const req = httpMock.expectOne((r) => r.url.endsWith('/catalogs/authorization-types'));
-    expect(req.request.headers.has('Cache-Control')).toBeTrue();
+    expect(req.request.headers.has('Cache-Control')).toBe(true);
 
     req.flush([
       { id: 1, name: 'Nuevo', description: 'Nuevo', attentionLevelId: 2 } satisfies CatalogItemResponse,

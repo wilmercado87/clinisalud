@@ -6,7 +6,23 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "jest": {
+    "preset": "jest-preset-angular",
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/test-setup.ts"
+    ],
+    "moduleNameMapper": {
+      "^@env/(.*)$": "<rootDir>/src/environments/$1",
+      "^@core/(.*)$": "<rootDir>/src/app/core/$1",
+      "^@shared/(.*)$": "<rootDir>/src/app/shared/$1",
+      "^@features/(.*)$": "<rootDir>/src/app/features/$1",
+      "^@layout/(.*)$": "<rootDir>/src/app/layout/$1",
+      "^.+\\.(scss|sass|less|css)$": "identity-obj-proxy"
+    }
   },
   "private": true,
   "dependencies": {
@@ -29,13 +45,11 @@
     "@angular-devkit/build-angular": "^19.2.25",
     "@angular/cli": "^19.2.25",
     "@angular/compiler-cli": "^19.2.21",
-    "@types/jasmine": "~5.1.0",
-    "jasmine-core": "~5.1.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
+    "@types/jest": "^30.0.0",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
+    "jest-preset-angular": "^16.2.0",
     "typescript": "~5.8.3"
   }
 }

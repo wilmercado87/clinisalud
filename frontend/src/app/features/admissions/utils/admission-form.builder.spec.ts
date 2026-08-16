@@ -340,42 +340,42 @@ describe('admission-form.builder', () => {
       const { patient, companion, admission } = forms();
       applyAdmissionFormState({ patient, companion, admission }, 'IDLE', false);
 
-      expect(patient.controls.documentTypeId.enabled).toBeTrue();
-      expect(patient.controls.document.enabled).toBeTrue();
-      expect(patient.controls.firstName.enabled).toBeFalse();
-      expect(companion.controls.firstName.enabled).toBeFalse();
-      expect(admission.controls.epsId.enabled).toBeFalse();
+      expect(patient.controls.documentTypeId.enabled).toBe(true);
+      expect(patient.controls.document.enabled).toBe(true);
+      expect(patient.controls.firstName.enabled).toBe(false);
+      expect(companion.controls.firstName.enabled).toBe(false);
+      expect(admission.controls.epsId.enabled).toBe(false);
     });
 
     it('enables data controls on FOUND', () => {
       const { patient, companion, admission } = forms();
       applyAdmissionFormState({ patient, companion, admission }, 'FOUND', false);
 
-      expect(patient.controls.documentTypeId.enabled).toBeFalse();
-      expect(patient.controls.firstName.enabled).toBeTrue();
-      expect(companion.controls.firstName.enabled).toBeTrue();
-      expect(admission.controls.observations.enabled).toBeTrue();
+      expect(patient.controls.documentTypeId.enabled).toBe(false);
+      expect(patient.controls.firstName.enabled).toBe(true);
+      expect(companion.controls.firstName.enabled).toBe(true);
+      expect(admission.controls.observations.enabled).toBe(true);
     });
 
     it('enables both search and data controls on NOT_FOUND', () => {
       const { patient, companion, admission } = forms();
       applyAdmissionFormState({ patient, companion, admission }, 'NOT_FOUND', false);
 
-      expect(patient.controls.document.enabled).toBeTrue();
-      expect(patient.controls.birthDate.enabled).toBeTrue();
-      expect(admission.controls.roomId.enabled).toBeTrue();
+      expect(patient.controls.document.enabled).toBe(true);
+      expect(patient.controls.birthDate.enabled).toBe(true);
+      expect(admission.controls.roomId.enabled).toBe(true);
     });
 
     it('keeps only the bed enabled when the patient has an active admission (INV-ADM-07)', () => {
       const { patient, companion, admission } = forms();
       applyAdmissionFormState({ patient, companion, admission }, 'FOUND', true);
 
-      expect(patient.controls.firstName.enabled).toBeFalse();
-      expect(patient.controls.document.enabled).toBeFalse();
-      expect(companion.controls.firstName.enabled).toBeFalse();
-      expect(admission.controls.epsId.enabled).toBeFalse();
-      expect(admission.controls.observations.enabled).toBeFalse();
-      expect(admission.controls.roomId.enabled).toBeTrue();
+      expect(patient.controls.firstName.enabled).toBe(false);
+      expect(patient.controls.document.enabled).toBe(false);
+      expect(companion.controls.firstName.enabled).toBe(false);
+      expect(admission.controls.epsId.enabled).toBe(false);
+      expect(admission.controls.observations.enabled).toBe(false);
+      expect(admission.controls.roomId.enabled).toBe(true);
     });
   });
 });

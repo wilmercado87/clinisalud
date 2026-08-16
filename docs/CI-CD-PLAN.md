@@ -195,7 +195,6 @@ Políticas de versión sugeridas:
 
 - **Plan de pruebas automatizadas (E2E Playwright + reportes)** → vivir en `docs/E2E-PLAN.md` (recreación futura, no mixtas con CI/CD).
 - Monitoreo continuo `Fase 5` del plan original (métricas Render + uptime) — igual postergado.
-- Pruebas unitarias del frontend vía Jest/Vitest para correr en `frontend-ci` (hoy solo build; el karma no está en CI).
 
 ---
 

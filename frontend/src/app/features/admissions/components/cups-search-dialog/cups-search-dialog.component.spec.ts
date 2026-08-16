@@ -9,15 +9,15 @@ import {
 import { CatalogService } from '@core/services/catalog.service';
 import { CupsPageResponse } from '@core/models/catalog.model';
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 6000;
+jest.setTimeout(6000);
 
 describe('CupsSearchDialogComponent', () => {
   let fixture: ComponentFixture<CupsSearchDialogComponent>;
   let component: CupsSearchDialogComponent;
   let apiService: {
-    searchCups: jasmine.Spy;
+    searchCups: jest.Mock;
   };
-  let dialogRef: { close: jasmine.Spy };
+  let dialogRef: { close: jest.Mock };
 
   const firstPage: CupsPageResponse = {
     items: [
@@ -47,13 +47,12 @@ describe('CupsSearchDialogComponent', () => {
 
   beforeEach(() => {
     apiService = {
-      searchCups: jasmine
-        .createSpy('searchCups')
-        .and.callFake((_q: string, feeScheduleId: number, page: number) =>
+      searchCups: jest.fn()
+        .mockImplementation((_q: string, feeScheduleId: number, page: number) =>
           of(page === 1 ? firstPage : secondPage),
         ),
     };
-    dialogRef = { close: jasmine.createSpy('close') };
+    dialogRef = { close: jest.fn() };
 
     TestBed.configureTestingModule({
       imports: [CupsSearchDialogComponent],
@@ -93,14 +92,14 @@ describe('CupsSearchDialogComponent', () => {
 
   it('loads the next page on demand', async () => {
     await typeTerm('consulta');
-    expect(component.hasMore()).toBeTrue();
+    expect(component.hasMore()).toBe(true);
 
     component.loadMore();
     await flushSearch();
 
     expect(apiService.searchCups).toHaveBeenCalledWith('consulta', 2, 2, 20, 3);
     expect(component.items().length).toBe(3);
-    expect(component.hasMore()).toBeFalse();
+    expect(component.hasMore()).toBe(false);
   });
 
   it('searches without attention level when the dialog has none', async () => {
@@ -126,7 +125,7 @@ describe('CupsSearchDialogComponent', () => {
   });
 
   it('shows an error message when the request fails', async () => {
-    apiService.searchCups.and.returnValue(throwError(() => new Error('network')));
+    apiService.searchCups.mockReturnValue(throwError(() => new Error('network')));
     await typeTerm('fallo');
 
     expect(component.error()).not.toBeNull();

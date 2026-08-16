@@ -58,11 +58,11 @@ class MockAdmissionStore {
   readonly updateResult = signal<unknown>(null);
   readonly updateError = signal<unknown>(null);
 
-  lookupPatient = jasmine.createSpy('lookupPatient');
-  createAdmission = jasmine.createSpy('createAdmission');
-  clearCreateResult = jasmine.createSpy('clearCreateResult');
-  updateAdmission = jasmine.createSpy('updateAdmission');
-  clearUpdateResult = jasmine.createSpy('clearUpdateResult');
+  lookupPatient = jest.fn();
+  createAdmission = jest.fn();
+  clearCreateResult = jest.fn();
+  updateAdmission = jest.fn();
+  clearUpdateResult = jest.fn();
 }
 
 describe('AdmissionFormComponent', () => {
@@ -70,8 +70,8 @@ describe('AdmissionFormComponent', () => {
   let fixture: ComponentFixture<AdmissionFormComponent>;
   let store: MockAdmissionStore;
   let catalogStore: {
-    getCatalog: jasmine.Spy;
-    invalidateCatalog: jasmine.Spy;
+    getCatalog: jest.Mock;
+    invalidateCatalog: jest.Mock;
   };
 
   const patient: PatientLookupResponse = {
@@ -122,15 +122,15 @@ describe('AdmissionFormComponent', () => {
 
   beforeEach(async () => {
     store = new MockAdmissionStore();
-    store.clearCreateResult = jasmine.createSpy('clearCreateResult').and.callFake(() => {
+    store.clearCreateResult = jest.fn().mockImplementation(() => {
       store.createResult.set(null);
     });
-    store.clearUpdateResult = jasmine.createSpy('clearUpdateResult').and.callFake(() => {
+    store.clearUpdateResult = jest.fn().mockImplementation(() => {
       store.updateResult.set(null);
     });
     catalogStore = {
-      getCatalog: jasmine.createSpy('getCatalog').and.returnValue([]),
-      invalidateCatalog: jasmine.createSpy('invalidateCatalog'),
+      getCatalog: jest.fn().mockReturnValue([]),
+      invalidateCatalog: jest.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -203,7 +203,7 @@ describe('AdmissionFormComponent', () => {
       await flushEffects();
 
       expect(component.mode()).toBe('NOT_FOUND');
-      expect(component.patientForm.controls.firstName.enabled).toBeTrue();
+      expect(component.patientForm.controls.firstName.enabled).toBe(true);
     });
 
     it('shows an inline error on unexpected lookup errors', async () => {
@@ -237,11 +237,11 @@ describe('AdmissionFormComponent', () => {
 
       expect(component.facade.patientFormSignals.status()).toBe('VALID');
       expect(component.facade.admissionFormSignals.status()).toBe('VALID');
-      expect(component.canSubmit()).toBeTrue();
+      expect(component.canSubmit()).toBe(true);
 
       component.onSubmit();
       expect(store.createAdmission).toHaveBeenCalledWith(
-        jasmine.objectContaining({
+        expect.objectContaining({
           isNewPatient: false,
           documentTypeId: 1,
           document: '1020304050',
@@ -261,7 +261,7 @@ describe('AdmissionFormComponent', () => {
       await flushEffects();
 
       expect(component.activeAdmission()).not.toBeNull();
-      expect(component.canSubmit()).toBeFalse();
+      expect(component.canSubmit()).toBe(false);
 
       component.onSubmit();
       expect(store.createAdmission).not.toHaveBeenCalled();
@@ -282,14 +282,14 @@ describe('AdmissionFormComponent', () => {
     it('enables only the bed, prefilled from the active admission; observations stays disabled', async () => {
       await openUpdateMode();
 
-      expect(component.isUpdatingMode()).toBeTrue();
-      expect(component.patientForm.controls.firstName.enabled).toBeFalse();
-      expect(component.patientForm.controls.document.enabled).toBeFalse();
-      expect(component.companionForm.controls.firstName.enabled).toBeFalse();
-      expect(component.admissionForm.controls.epsId.enabled).toBeFalse();
-      expect(component.admissionForm.controls.observations.enabled).toBeFalse();
+      expect(component.isUpdatingMode()).toBe(true);
+      expect(component.patientForm.controls.firstName.enabled).toBe(false);
+      expect(component.patientForm.controls.document.enabled).toBe(false);
+      expect(component.companionForm.controls.firstName.enabled).toBe(false);
+      expect(component.admissionForm.controls.epsId.enabled).toBe(false);
+      expect(component.admissionForm.controls.observations.enabled).toBe(false);
       expect(component.admissionForm.controls.observations.value).toBe('Requiere control diario');
-      expect(component.admissionForm.controls.roomId.enabled).toBeTrue();
+      expect(component.admissionForm.controls.roomId.enabled).toBe(true);
       expect(component.admissionForm.controls.roomId.value).toBeNull();
     });
 
@@ -299,14 +299,13 @@ describe('AdmissionFormComponent', () => {
       const bedSelect = fixture.debugElement.queryAll(By.css('app-catalog-select'))[6]
         .componentInstance as MockCatalogSelectComponent;
 
-      expect(bedSelect.includeOccupiedBeds()).toBeFalse();
-      expect(bedSelect.clearable()).toBeFalse();
+      expect(bedSelect.includeOccupiedBeds()).toBe(false);
+      expect(bedSelect.clearable()).toBe(false);
     });
 
     it('shows the occupied bed as an informative label above the bed field', async () => {
-      catalogStore.getCatalog = jasmine
-        .createSpy('getCatalog')
-        .and.returnValue([{ roomId: 5, bedCode: 'HAB105', bedStatus: 1, tipoCama: 'hospitalizado' }]);
+      catalogStore.getCatalog = jest.fn()
+        .mockReturnValue([{ roomId: 5, bedCode: 'HAB105', bedStatus: 1, tipoCama: 'hospitalizado' }]);
       await openUpdateMode();
       fixture.detectChanges();
 
@@ -316,9 +315,8 @@ describe('AdmissionFormComponent', () => {
     });
 
     it('clears the bed selector after updating the bed (INV-ADM-07)', async () => {
-      catalogStore.getCatalog = jasmine
-        .createSpy('getCatalog')
-        .and.returnValue([{ roomId: 6, bedCode: 'HAB106', bedStatus: 1, tipoCama: 'hospitalizado' }]);
+      catalogStore.getCatalog = jest.fn()
+        .mockReturnValue([{ roomId: 6, bedCode: 'HAB106', bedStatus: 1, tipoCama: 'hospitalizado' }]);
       await openUpdateMode();
       component.admissionForm.controls.roomId.setValue(6);
       await flushEffects();
@@ -359,20 +357,20 @@ describe('AdmissionFormComponent', () => {
 
     it('enables submit only when the bed, observations or authorizations change', async () => {
       await openUpdateMode();
-      expect(component.canSubmit()).toBeFalse();
+      expect(component.canSubmit()).toBe(false);
 
       component.admissionForm.controls.roomId.setValue(5);
       await flushEffects();
-      expect(component.canSubmit()).toBeFalse();
+      expect(component.canSubmit()).toBe(false);
 
       component.admissionForm.controls.roomId.setValue(6);
       await flushEffects();
-      expect(component.canSubmit()).toBeTrue();
+      expect(component.canSubmit()).toBe(true);
 
       component.admissionForm.controls.roomId.setValue(5);
       component.admissionForm.controls.observations.setValue('Otra observación');
       await flushEffects();
-      expect(component.canSubmit()).toBeTrue();
+      expect(component.canSubmit()).toBe(true);
     });
 
     it('updates the admission with the new bed only', async () => {
@@ -541,12 +539,12 @@ describe('AdmissionFormComponent', () => {
 
     it('creates the admission with the new patient payload', async () => {
       await fillValidForm();
-      expect(component.canSubmit()).toBeTrue();
+      expect(component.canSubmit()).toBe(true);
 
       component.onSubmit();
 
       expect(store.createAdmission).toHaveBeenCalledWith(
-        jasmine.objectContaining({
+        expect.objectContaining({
           isNewPatient: true,
           documentTypeId: 1,
           document: '1020304050',
@@ -576,7 +574,7 @@ describe('AdmissionFormComponent', () => {
 
       component.onSubmit();
 
-      const payload = store.createAdmission.calls.mostRecent().args[0];
+      const payload = store.createAdmission.mock.calls.at(-1)![0];
       expect(payload.companion).toEqual({
         firstName: 'Luis',
         lastName: 'Gomez',
@@ -605,7 +603,7 @@ describe('AdmissionFormComponent', () => {
 
       component.onSubmit();
 
-      const payload = store.createAdmission.calls.mostRecent().args[0];
+      const payload = store.createAdmission.mock.calls.at(-1)![0];
       expect(payload.authorizations).toEqual([
         { authTypeId: 5, authNumber: 'AUTH-001', mapiissCode: 'MAPIISS-1', feeScheduleId: 2, quantity: 2 },
       ]);
@@ -658,7 +656,7 @@ describe('AdmissionFormComponent', () => {
       });
       await flushEffects();
 
-      store.clearCreateResult.calls.reset();
+      store.clearCreateResult.mockClear();
       component.patientForm.patchValue({ documentTypeId: 1, document: '555666777' });
       component.onSearchPatient();
       await flushEffects();
@@ -715,53 +713,53 @@ describe('AdmissionFormComponent', () => {
 
     it('marks Género and Tipo Usuario as required only when the patient is not found', async () => {
       expect(component.mode()).toBe('IDLE');
-      expect(selectAt(1).required()).toBeFalse();
-      expect(selectAt(2).required()).toBeFalse();
+      expect(selectAt(1).required()).toBe(false);
+      expect(selectAt(2).required()).toBe(false);
 
       await goToNotFound();
 
       expect(component.mode()).toBe('NOT_FOUND');
-      expect(selectAt(1).required()).toBeTrue();
-      expect(selectAt(2).required()).toBeTrue();
+      expect(selectAt(1).required()).toBe(true);
+      expect(selectAt(2).required()).toBe(true);
     });
 
     it('marks companion Tipo Documento and Parentesco required only while the name has data', async () => {
-      expect(selectAt(3).required()).toBeFalse();
-      expect(selectAt(4).required()).toBeFalse();
+      expect(selectAt(3).required()).toBe(false);
+      expect(selectAt(4).required()).toBe(false);
 
       component.companionForm.patchValue({ firstName: 'Luis' });
       await flushEffects();
 
-      expect(selectAt(3).required()).toBeTrue();
-      expect(selectAt(4).required()).toBeTrue();
+      expect(selectAt(3).required()).toBe(true);
+      expect(selectAt(4).required()).toBe(true);
 
       component.companionForm.patchValue({ firstName: '' });
       await flushEffects();
 
-      expect(selectAt(3).required()).toBeFalse();
-      expect(selectAt(4).required()).toBeFalse();
+      expect(selectAt(3).required()).toBe(false);
+      expect(selectAt(4).required()).toBe(false);
     });
   });
 
   describe('authorizations button', () => {
     it('stays disabled until the patient search completes and disables again on cancel', async () => {
       expect(component.mode()).toBe('IDLE');
-      expect(component.dataEnabled()).toBeFalse();
+      expect(component.dataEnabled()).toBe(false);
 
       component.patientForm.patchValue({ documentTypeId: 1, document: '1020304050' });
       component.onSearchPatient();
-      expect(component.dataEnabled()).toBeFalse();
+      expect(component.dataEnabled()).toBe(false);
 
       store.isLookingUp.set(true);
       store.isLookingUp.set(false);
       store.patientFound.set(patient);
       await flushEffects();
       expect(component.mode()).toBe('FOUND');
-      expect(component.dataEnabled()).toBeTrue();
+      expect(component.dataEnabled()).toBe(true);
 
       component.onCancel();
       expect(component.mode()).toBe('IDLE');
-      expect(component.dataEnabled()).toBeFalse();
+      expect(component.dataEnabled()).toBe(false);
     });
 
     it('cancel also clears the forms and the registered authorizations', () => {
@@ -791,7 +789,7 @@ describe('AdmissionFormComponent', () => {
       expect(component.patientForm.controls.firstName.value).toBe('');
       expect(component.companionForm.controls.firstName.value).toBe('');
       expect(component.authEntries()).toEqual([]);
-      expect(component.dataEnabled()).toBeFalse();
+      expect(component.dataEnabled()).toBe(false);
     });
   });
 });

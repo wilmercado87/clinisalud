@@ -22,9 +22,9 @@ describe('CensusComponent', () => {
         {
           provide: ToastService,
           useValue: {
-            success: jasmine.createSpy('success'),
-            error: jasmine.createSpy('error'),
-            info: jasmine.createSpy('info'),
+            success: jest.fn(),
+            error: jest.fn(),
+            info: jest.fn(),
           },
         },
       ],
@@ -49,6 +49,6 @@ describe('CensusComponent', () => {
   });
 
   it('reloads the census on init', () => {
-    expect(component.isLoadingCensus()).toBeFalse();
+    expect(component.isLoadingCensus()).toBe(false);
   });
 });

@@ -25,11 +25,11 @@ describe('menu-selection-utils', () => {
 
   describe('isUserManagerGroup', () => {
     it('identifica el grupo GESTOR USUARIOS ignorando mayúsculas', () => {
-      expect(isUserManagerGroup(userManagerGroup)).toBeTrue();
+      expect(isUserManagerGroup(userManagerGroup)).toBe(true);
     });
 
     it('rechaza grupos que no son GESTOR USUARIOS', () => {
-      expect(isUserManagerGroup(plainGroup)).toBeFalse();
+      expect(isUserManagerGroup(plainGroup)).toBe(false);
     });
 
     it('GESTOR_USUARIOS_LABEL coincide con el valor en mayúsculas', () => {

@@ -43,16 +43,16 @@ class MockCatalogSelectComponent implements ControlValueAccessor {
 describe('AuthEntryDialogComponent', () => {
   let fixture: ComponentFixture<AuthEntryDialogComponent>;
   let component: AuthEntryDialogComponent;
-  let dialogRef: { close: jasmine.Spy };
-  let dialog: { open: jasmine.Spy };
+  let dialogRef: { close: jest.Mock };
+  let dialog: { open: jest.Mock };
   let authTypes: Array<{ id: number; name: string; description: string; attentionLevelId?: number }>;
   let catalogData: Record<string, unknown[]>;
   let reloadResult: unknown[];
-  let reloadCatalogSpy: jasmine.Spy;
+  let reloadCatalogSpy: jest.Mock;
 
   beforeEach(async () => {
-    dialogRef = { close: jasmine.createSpy('close') };
-    dialog = { open: jasmine.createSpy('open').and.returnValue({ afterClosed: () => of(undefined) }) };
+    dialogRef = { close: jest.fn() };
+    dialog = { open: jest.fn().mockReturnValue({ afterClosed: () => of(undefined) }) };
 
     authTypes = [
       {
@@ -73,7 +73,7 @@ describe('AuthEntryDialogComponent', () => {
       'fee-schedules': [{ id: 2, name: 'ISS 2001', description: 'ISS 2001' }],
     };
     reloadResult = authTypes;
-    reloadCatalogSpy = jasmine.createSpy('reloadCatalog').and.callFake((type: string) => {
+    reloadCatalogSpy = jest.fn().mockImplementation((type: string) => {
       catalogData[type] = reloadResult;
       return of(reloadResult);
     });
@@ -117,7 +117,7 @@ describe('AuthEntryDialogComponent', () => {
 
   it('starts with a single empty entry and Aplicar disabled', () => {
     expect(component.entries().length).toBe(1);
-    expect(component.canApply()).toBeFalse();
+    expect(component.canApply()).toBe(false);
   });
 
   it('adds more entries and removes them', () => {
@@ -132,15 +132,15 @@ describe('AuthEntryDialogComponent', () => {
     fillEntry(entry);
     entry.controls.authNumber.setValue('');
     fixture.detectChanges();
-    expect(component.canApply()).toBeFalse();
+    expect(component.canApply()).toBe(false);
   });
 
   it('enables Aplicar with a complete entry and returns the values on apply', () => {
     fillEntry(component.entries()[0]);
-    expect(component.canApply()).toBeTrue();
+    expect(component.canApply()).toBe(true);
 
     component.apply();
-    const values = dialogRef.close.calls.mostRecent().args[0];
+    const values = dialogRef.close.mock.calls.at(-1)![0];
     expect(values).toEqual([
       {
         authTypeId: 5,
@@ -164,30 +164,30 @@ describe('AuthEntryDialogComponent', () => {
     fillEntry(component.entries()[0]);
     component.addEntry();
     fixture.detectChanges();
-    expect(component.canApply()).toBeFalse();
+    expect(component.canApply()).toBe(false);
   });
 
   it('enables Aplicar when every field is completed one by one', () => {
     const entry = component.entries()[0];
     entry.controls.authTypeId.setValue(5);
-    expect(component.canApply()).toBeFalse();
+    expect(component.canApply()).toBe(false);
     entry.controls.authNumber.setValue('AUTH-001');
-    expect(component.canApply()).toBeFalse();
+    expect(component.canApply()).toBe(false);
     entry.controls.feeScheduleId.setValue(2);
-    expect(component.canApply()).toBeFalse();
+    expect(component.canApply()).toBe(false);
     entry.controls.mapiissCode.setValue('MAPIISS-1');
-    expect(component.canApply()).toBeTrue();
+    expect(component.canApply()).toBe(true);
     entry.controls.quantity.setValue(2);
-    expect(component.canApply()).toBeTrue();
+    expect(component.canApply()).toBe(true);
   });
 
   it('disables Aplicar again when a completed entry becomes invalid', () => {
     const entry = component.entries()[0];
     fillEntry(entry);
-    expect(component.canApply()).toBeTrue();
+    expect(component.canApply()).toBe(true);
     entry.controls.authNumber.setValue('');
     fixture.detectChanges();
-    expect(component.canApply()).toBeFalse();
+    expect(component.canApply()).toBe(false);
   });
 
   it('clears the CUPS selection when the fee schedule changes', () => {
@@ -213,7 +213,7 @@ describe('AuthEntryDialogComponent', () => {
     fillEntry(entry);
     component.openCupsSearch(0);
 
-    const [, dialogConfig] = dialog.open.calls.mostRecent().args;
+    const [, dialogConfig] = dialog.open.mock.calls.at(-1)!
     expect(dialogConfig.data).toEqual({
       feeScheduleId: 2,
       feeScheduleName: 'ISS 2001',
@@ -238,7 +238,7 @@ describe('AuthEntryDialogComponent', () => {
 
     expect(reloadCatalogSpy).toHaveBeenCalledWith('authorization-types');
     expect(dialog.open).toHaveBeenCalled();
-    const [, dialogConfig] = dialog.open.calls.mostRecent().args;
+    const [, dialogConfig] = dialog.open.mock.calls.at(-1)!
     expect(dialogConfig.data.attentionLevelId).toBe(2);
   });
 
@@ -250,7 +250,7 @@ describe('AuthEntryDialogComponent', () => {
       maxQuantity: 5,
       netValue: 100,
     };
-    dialog.open.and.returnValue({ afterClosed: () => of(cups) });
+    dialog.open.mockReturnValue({ afterClosed: () => of(cups) });
 
     const entry = component.entries()[0];
     fillEntry(entry);

@@ -17,9 +17,10 @@
 - **Testing**: Jest
 
 ### Frontend
-- **Framework**: Angular 17+ (Standalone Components)
+- **Framework**: Angular 19 (Standalone Components)
 - **State Management**: Signals
 - **UI**: Angular Material
+- **Testing**: Jest (jest-preset-angular + jsdom)
 
 ## Despliegue (producción)
 
@@ -118,7 +119,9 @@ npm test                # Unit tests (jest)
 
 # Frontend
 cd frontend
-ng test                # Karma tests
+npm test                # Unit tests (jest, sin navegador — jsdom)
+npm run test:watch      # Watch mode
+npm run test:coverage   # Con cobertura
 ```
 
 ## Variables de Entorno

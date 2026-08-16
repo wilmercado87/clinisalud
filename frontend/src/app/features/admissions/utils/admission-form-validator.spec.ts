@@ -30,7 +30,7 @@ describe('admission-form-validator', () => {
     it('accepts a birth date today or before', () => {
       const validators = createPatientFormatValidators(today);
       const control = new FormControl<Date | null>(new Date(2026, 0, 15), validators['birthDate']);
-      expect(control.valid).toBeTrue();
+      expect(control.valid).toBe(true);
     });
 
     it('rejects an invalid age', () => {
@@ -53,11 +53,11 @@ describe('admission-form-validator', () => {
         document: new FormControl<string>(''),
       });
       applyRequiredValidators(group, ['firstName', 'document'], COMPANION_FORMAT_VALIDATORS, true);
-      expect(group.controls.firstName.hasError('required')).toBeTrue();
+      expect(group.controls.firstName.hasError('required')).toBe(true);
       group.controls.firstName.setValue('Ana');
-      expect(group.controls.firstName.valid).toBeTrue();
+      expect(group.controls.firstName.valid).toBe(true);
       group.controls.document.setValue('abc');
-      expect(group.controls.document.hasError('invalidNumeric')).toBeTrue();
+      expect(group.controls.document.hasError('invalidNumeric')).toBe(true);
     });
 
     it('keeps only format validators when required is false', () => {
@@ -65,9 +65,9 @@ describe('admission-form-validator', () => {
         document: new FormControl<string>(''),
       });
       applyRequiredValidators(group, ['document'], COMPANION_FORMAT_VALIDATORS, false);
-      expect(group.controls.document.hasError('required')).toBeFalse();
+      expect(group.controls.document.hasError('required')).toBe(false);
       group.controls.document.setValue('abc');
-      expect(group.controls.document.hasError('invalidNumeric')).toBeTrue();
+      expect(group.controls.document.hasError('invalidNumeric')).toBe(true);
     });
   });
 
@@ -110,7 +110,7 @@ describe('admission-form-validator', () => {
         email: new FormControl<string>('ana@correo.com'),
       });
       const errors = extractFieldErrors(group, PATIENT_ERROR_RULES);
-      expect(Object.values(errors).every((message) => message === null)).toBeTrue();
+      expect(Object.values(errors).every((message) => message === null)).toBe(true);
     });
 
     it('maps companion errors', () => {
@@ -173,10 +173,10 @@ describe('admission-form-validator', () => {
       expect(group.controls.maxQuantity.value).toBe(5);
 
       group.controls.quantity.setValue(6);
-      expect(group.controls.quantity.hasError('max')).toBeTrue();
+      expect(group.controls.quantity.hasError('max')).toBe(true);
 
       group.controls.quantity.setValue(5);
-      expect(group.controls.quantity.valid).toBeTrue();
+      expect(group.controls.quantity.valid).toBe(true);
     });
 
     it('clears the selection and removes the max validator', () => {
@@ -188,22 +188,22 @@ describe('admission-form-validator', () => {
       expect(group.controls.maxQuantity.value).toBeNull();
 
       group.controls.quantity.setValue(50);
-      expect(group.controls.quantity.valid).toBeTrue();
+      expect(group.controls.quantity.valid).toBe(true);
     });
 
     it('does not limit the quantity when the CUPS has no max', () => {
       applyAuthCupsSelection(group, { code: '9', description: 'Sin límite', maxQuantity: 0 });
 
       group.controls.quantity.setValue(4);
-      expect(group.controls.quantity.valid).toBeTrue();
+      expect(group.controls.quantity.valid).toBe(true);
     });
 
     it('applies a custom max quantity through applyAuthQuantityMax', () => {
       applyAuthQuantityMax(group, 3);
       group.controls.quantity.setValue(4);
-      expect(group.controls.quantity.hasError('max')).toBeTrue();
+      expect(group.controls.quantity.hasError('max')).toBe(true);
       group.controls.quantity.setValue(3);
-      expect(group.controls.quantity.valid).toBeTrue();
+      expect(group.controls.quantity.valid).toBe(true);
     });
   });
 

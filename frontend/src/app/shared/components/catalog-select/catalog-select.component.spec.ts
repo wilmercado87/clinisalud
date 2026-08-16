@@ -100,7 +100,7 @@ describe('CatalogSelectComponent', () => {
 
   it('no muestra error hasta que el usuario entra y sale del campo', () => {
     const cmp = component();
-    expect(cmp.errorMatcher.isErrorState(null, null)).toBeFalse();
+    expect(cmp.errorMatcher.isErrorState(null, null)).toBe(false);
     expect(cmp.resolvedErrorMessage()).toBeNull();
   });
 
@@ -108,7 +108,7 @@ describe('CatalogSelectComponent', () => {
     const cmp = component();
     cmp.onBlur();
 
-    expect(cmp.errorMatcher.isErrorState(null, null)).toBeTrue();
+    expect(cmp.errorMatcher.isErrorState(null, null)).toBe(true);
     expect(cmp.resolvedErrorMessage()).toBe('Seleccione Tarifario');
   });
 
@@ -117,7 +117,7 @@ describe('CatalogSelectComponent', () => {
     cmp.onInput({ target: { value: "Inexistente" } } as unknown as Event);
     cmp.onBlur();
 
-    expect(cmp.optionInvalid()).toBeTrue();
+    expect(cmp.optionInvalid()).toBe(true);
     expect(cmp.resolvedErrorMessage()).toBe('Ingreso no válido');
   });
 
@@ -131,22 +131,22 @@ describe('CatalogSelectComponent', () => {
     expect(cmp.value()).toBe(1);
     expect(host.control.value).toBe(1);
     expect(cmp.resolvedErrorMessage()).toBeNull();
-    expect(cmp.errorMatcher.isErrorState(null, null)).toBeFalse();
+    expect(cmp.errorMatcher.isErrorState(null, null)).toBe(false);
   });
 
   it('refleja el asterisco de requerido cuando el control pasa a requerido', () => {
     const cmp = component();
-    expect(cmp.isRequired()).toBeTrue();
+    expect(cmp.isRequired()).toBe(true);
 
     host.control.clearValidators();
     host.control.updateValueAndValidity();
     fixture.detectChanges();
-    expect(cmp.isRequired()).toBeFalse();
+    expect(cmp.isRequired()).toBe(false);
 
     host.control.setValidators(Validators.required);
     host.control.updateValueAndValidity();
     fixture.detectChanges();
-    expect(cmp.isRequired()).toBeTrue();
+    expect(cmp.isRequired()).toBe(true);
   });
 
   it('forceReset limpia el rojo dejado tras entrar y salir del campo', () => {
@@ -156,7 +156,7 @@ describe('CatalogSelectComponent', () => {
 
     cmp.forceReset();
 
-    expect(cmp.errorMatcher.isErrorState(null, null)).toBeFalse();
+    expect(cmp.errorMatcher.isErrorState(null, null)).toBe(false);
     expect(cmp.resolvedErrorMessage()).toBeNull();
   });
 
@@ -168,11 +168,11 @@ describe('CatalogSelectComponent', () => {
       (el) => el.componentInstance instanceof CatalogSelectComponent,
     ).componentInstance as CatalogSelectComponent;
 
-    expect(cmp.isRequired()).toBeTrue();
+    expect(cmp.isRequired()).toBe(true);
 
     hostFixture.componentInstance.required = false;
     hostFixture.detectChanges();
-    expect(cmp.isRequired()).toBeFalse();
+    expect(cmp.isRequired()).toBe(false);
   });
 
   it('filtra camas ocupadas por defecto y las incluye deshabilitadas con includeOccupiedBeds', async () => {
@@ -185,7 +185,7 @@ describe('CatalogSelectComponent', () => {
     ).componentInstance as CatalogSelectComponent;
 
     expect(cmp.items().map((item) => item.id)).toEqual([2]);
-    expect(cmp.isOptionDisabled(cmp.items()[0])).toBeFalse();
+    expect(cmp.isOptionDisabled(cmp.items()[0])).toBe(false);
 
     hostFixture.componentInstance.includeOccupiedBeds = true;
     hostFixture.detectChanges();
@@ -193,11 +193,11 @@ describe('CatalogSelectComponent', () => {
 
     expect(cmp.items().map((item) => item.id)).toEqual([1, 2]);
     const occupied = cmp.items().find((item) => item.id === 1)!;
-    expect(cmp.isOptionDisabled(occupied)).toBeTrue();
+    expect(cmp.isOptionDisabled(occupied)).toBe(true);
 
     cmp.writeValue(1);
     hostFixture.detectChanges();
-    expect(cmp.isOptionDisabled(occupied)).toBeFalse();
+    expect(cmp.isOptionDisabled(occupied)).toBe(false);
     expect(cmp.selectedDescription()).toContain('HAB101');
   });
 
@@ -220,7 +220,7 @@ describe('CatalogSelectComponent', () => {
 
     expect(cmp.value()).toBe(1);
     expect(cmp.searchTerm()).toContain('HAB101');
-    expect(cmp.optionInvalid()).toBeFalse();
+    expect(cmp.optionInvalid()).toBe(false);
   });
 
   it('does not select a disabled occupied bed typed on blur', async () => {
