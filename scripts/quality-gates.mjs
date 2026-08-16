@@ -20,23 +20,28 @@ function shell(cmd, opts = {}) {
   }
 }
 
-// 1) any explícito nuevo en el diff
+// 1) any explícito nuevo en el diff (solo líneas añadidas en este PR)
 const diffCmd = baseSha
   ? `git diff ${baseSha}...HEAD --name-only`
   : "git diff --name-only";
 const allFiles = shell(diffCmd).split("\n").filter(Boolean);
 const files = allFiles.filter(
-  (f) => /^(backend|frontend)\/src\/.*\.ts$/.test(f) && !f.endsWith(".spec.ts")
+  (f) =>
+    /^(backend|frontend)\/src\/.*\.ts$/.test(f) &&
+    !f.endsWith(".spec.ts") &&
+    !f.endsWith(".test.ts")
 );
 
 for (const file of files) {
   if (!fs.existsSync(file)) continue;
-  const lines = fs.readFileSync(file, "utf-8").split("\n");
-  lines.forEach((line, i) => {
+  const addedLines = shell(`git diff ${baseSha}...HEAD -- "${file}"`)
+    .split("\n")
+    .filter((l) => l.startsWith("+") && !l.startsWith("+++"));
+  addedLines.forEach((line) => {
     // any: como tipo o casting (no text/identificadores tipo "many", "anything")
     if (/: any\b|as any\b|<any>/.test(line)) {
       errors = true;
-      console.error(`[ERROR] any explícito ${file}:${i + 1} -> ${line.trim()}`);
+      console.error(`[ERROR] any explícito añadido ${file} -> ${line.slice(1).trim()}`);
     }
   });
 }
