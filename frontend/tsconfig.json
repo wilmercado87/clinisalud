@@ -31,6 +31,10 @@
       "dom"
     ]
   },
+  "exclude": [
+    "src/**/*.spec.ts",
+    "test-setup.ts"
+  ],
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
