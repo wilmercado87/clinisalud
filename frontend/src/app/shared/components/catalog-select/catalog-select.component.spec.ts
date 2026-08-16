@@ -101,7 +101,7 @@ describe('CatalogSelectComponent', () => {
   it('no muestra error hasta que el usuario entra y sale del campo', () => {
     const cmp = component();
     expect(cmp.errorMatcher.isErrorState(null, null)).toBeFalse();
-    expect(cmp.errorMessage()).toBeNull();
+    expect(cmp.resolvedErrorMessage()).toBeNull();
   });
 
   it('muestra el mensaje por campo tras salir del campo requerido vacío', () => {
@@ -109,7 +109,7 @@ describe('CatalogSelectComponent', () => {
     cmp.onBlur();
 
     expect(cmp.errorMatcher.isErrorState(null, null)).toBeTrue();
-    expect(cmp.errorMessage()).toBe('Seleccione Tarifario');
+    expect(cmp.resolvedErrorMessage()).toBe('Seleccione Tarifario');
   });
 
   it('muestra Ingreso no válido cuando se escribe un valor que no está en el listado', () => {
@@ -118,19 +118,19 @@ describe('CatalogSelectComponent', () => {
     cmp.onBlur();
 
     expect(cmp.optionInvalid()).toBeTrue();
-    expect(cmp.errorMessage()).toBe('Ingreso no válido');
+    expect(cmp.resolvedErrorMessage()).toBe('Ingreso no válido');
   });
 
   it('limpia el error al seleccionar una opción válida', () => {
     const cmp = component();
     cmp.onBlur();
-    expect(cmp.errorMessage()).toBe('Seleccione Tarifario');
+    expect(cmp.resolvedErrorMessage()).toBe('Seleccione Tarifario');
 
     cmp.onOptionSelected({ value: 1 } as MatOption<number>);
 
     expect(cmp.value()).toBe(1);
     expect(host.control.value).toBe(1);
-    expect(cmp.errorMessage()).toBeNull();
+    expect(cmp.resolvedErrorMessage()).toBeNull();
     expect(cmp.errorMatcher.isErrorState(null, null)).toBeFalse();
   });
 
@@ -152,12 +152,12 @@ describe('CatalogSelectComponent', () => {
   it('forceReset limpia el rojo dejado tras entrar y salir del campo', () => {
     const cmp = component();
     cmp.onBlur();
-    expect(cmp.errorMessage()).toBe('Seleccione Tarifario');
+    expect(cmp.resolvedErrorMessage()).toBe('Seleccione Tarifario');
 
     cmp.forceReset();
 
     expect(cmp.errorMatcher.isErrorState(null, null)).toBeFalse();
-    expect(cmp.errorMessage()).toBeNull();
+    expect(cmp.resolvedErrorMessage()).toBeNull();
   });
 
   it('el input required fuerza el asterisco aunque el control no tenga validator', () => {

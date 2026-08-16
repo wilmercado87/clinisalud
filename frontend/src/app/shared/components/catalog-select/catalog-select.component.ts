@@ -86,6 +86,7 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   readonly searchTerm = signal('');
   readonly optionInvalid = signal(false);
   private readonly touched = signal(false);
+  private readonly controlStatus = signal<string | null>(null);
 
   readonly inputControl = new FormControl('');
 
@@ -108,10 +109,9 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
     if (externalError) return externalError;
 
     if (this.optionInvalid()) return CATALOG_MESSAGES.INVALID_OPTION;
-    const control = this.ngControl?.control;
-    if (!control || !this.requiredState() || !this.touched() || !control.invalid) {
-      return null;
-    }
+    if (!this.requiredState() || !this.touched()) return null;
+    if (this.controlStatus() !== 'INVALID') return null;
+
     const label = this.label();
     return label
       ? formatMessage(CATALOG_MESSAGES.REQUIRED_FIELD, { field: label })
@@ -215,10 +215,12 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   private watchRequiredState(): void {
     const control = this.ngControl?.control;
     if (!control) return;
-    const syncRequired = () =>
+    const sync = () => {
       this.validatorRequired.set(control.hasValidator(Validators.required));
-    syncRequired();
-    control.statusChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(syncRequired);
+      this.controlStatus.set(control.status);
+    };
+    sync();
+    control.statusChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(sync);
   }
 
   onInput(event: Event): void {
