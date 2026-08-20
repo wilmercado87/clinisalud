@@ -1,5 +1,4 @@
 <mat-nav-list class="sidebar-menu">
-  
   <div class="sidebar-menu__group">
     <a
       mat-list-item
@@ -19,18 +18,13 @@
 
   @for (group of menuItems(); track group.id) {
     <div class="sidebar-menu__group">
-
       @if (group.children && group.children.length > 0) {
-        <button
-          mat-list-item
-          (click)="toggleGroup(group.id)"
-          class="sidebar-menu__item sidebar-menu__item--parent"
-        >
+        <button mat-list-item (click)="toggleGroup(group.id)" class="sidebar-menu__item sidebar-menu__item--parent">
           <div class="sidebar-menu__layout">
             <mat-icon class="sidebar-menu__icon">{{ group.icon }}</mat-icon>
             <span class="sidebar-menu__title">{{ group.label | uppercase }}</span>
             <mat-icon class="sidebar-menu__arrow">
-              {{ isExpanded(group.id) ? "expand_less" : "expand_more" }}
+              {{ isExpanded(group.id) ? 'expand_less' : 'expand_more' }}
             </mat-icon>
           </div>
         </button>
@@ -50,7 +44,6 @@
             </a>
           }
         </div>
-
       } @else {
         <a
           mat-list-item

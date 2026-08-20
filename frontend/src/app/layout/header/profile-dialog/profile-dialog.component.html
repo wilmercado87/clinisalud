@@ -16,7 +16,12 @@
         <p class="profile-dialog__info-text">
           Has cambiado tu contraseña, deberás volver a autenticarte con tu nueva contraseña.
         </p>
-        <button mat-raised-button color="primary" class="profile-dialog__btn-accept" (click)="logoutAfterPasswordChange()">
+        <button
+          mat-raised-button
+          color="primary"
+          class="profile-dialog__btn-accept"
+          (click)="logoutAfterPasswordChange()"
+        >
           ACEPTAR
         </button>
       </div>
@@ -152,9 +157,7 @@
     </mat-dialog-content>
 
     <mat-dialog-actions class="profile-dialog__actions" align="end">
-      <button mat-button (click)="onCancel()" [disabled]="isUpdatingProfile() || isChangingPassword()">
-        CANCELAR
-      </button>
+      <button mat-button (click)="onCancel()" [disabled]="isUpdatingProfile() || isChangingPassword()">CANCELAR</button>
       <button
         mat-raised-button
         color="primary"

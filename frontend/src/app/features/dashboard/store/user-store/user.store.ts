@@ -1,8 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { CreateUserRequest, PermissionOverride } from '@core/models/user.model';
 import { UserService } from '@features/dashboard/services/user.service';
-import { UserResponse, ToggleStatusResponse, PermissionOverride, CreateUserRequest } from '@core/models/user.model';
+import { of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class UserStore {
@@ -65,7 +65,7 @@ export class UserStore {
   readonly updatePermissionsError = this.updatePermissionsResource.error;
 
   loadUsers(): void {
-    this.loadTrigger.update(n => n + 1);
+    this.loadTrigger.update((n) => n + 1);
   }
 
   clearCache(): void {

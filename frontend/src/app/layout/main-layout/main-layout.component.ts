@@ -1,27 +1,38 @@
-import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule, NavigationEnd } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { filter, map } from 'rxjs';
+import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatListModule } from '@angular/material/list';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
+import { filter, map } from 'rxjs';
 
-import { ConfigStore } from '@core/stores/config-store/config.store';
-import { SidebarMenuComponent } from '@layout/sidebar/sidebar-menu.component';
-import { ProfileDialogComponent } from '@layout/header/profile-dialog/profile-dialog.component';
-import { NotificationBellComponent } from '@layout/header/notification-bell/notification-bell.component';
-import { ROLE_CODES } from '@shared/utils/role-constants';
 import { AuthStore } from '@core/stores/auth-store/auth.store';
+import { ConfigStore } from '@core/stores/config-store/config.store';
 import { UiStore } from '@core/stores/ui-store/ui.store';
+import { NotificationBellComponent } from '@layout/header/notification-bell/notification-bell.component';
+import { ProfileDialogComponent } from '@layout/header/profile-dialog/profile-dialog.component';
+import { SidebarMenuComponent } from '@layout/sidebar/sidebar-menu.component';
+import { ROLE_CODES } from '@shared/utils/role-constants';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [CommonModule, RouterModule, MatSidenavModule, MatToolbarModule, MatIconModule, MatButtonModule, MatTooltipModule, MatListModule, SidebarMenuComponent, NotificationBellComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatSidenavModule,
+    MatToolbarModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule,
+    MatListModule,
+    SidebarMenuComponent,
+    NotificationBellComponent,
+  ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,10 +54,10 @@ export class MainLayoutComponent {
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd),
-      map(() => this.router.url)
+      filter((event) => event instanceof NavigationEnd),
+      map(() => this.router.url),
     ),
-    { initialValue: this.router.url }
+    { initialValue: this.router.url },
   );
 
   public isWelcomePage = computed(() => this.currentUrl() === '/dashboard/home');

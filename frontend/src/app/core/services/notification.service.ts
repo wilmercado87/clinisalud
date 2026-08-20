@@ -1,8 +1,8 @@
-import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { environment } from '@env/environment';
+import { inject, Injectable } from '@angular/core';
 import { NotificationResponse, UnreadCountResponse } from '@core/models/notification.model';
+import { environment } from '@env/environment';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',

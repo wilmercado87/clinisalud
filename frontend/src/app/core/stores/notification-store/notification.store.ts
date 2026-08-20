@@ -1,8 +1,8 @@
-import { Injectable, inject, signal, effect, computed } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { of, tap } from 'rxjs';
 import { NotificationService } from '@core/services/notification.service';
 import { SocketService } from '@core/services/socket.service';
+import { of, tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationStore {
@@ -49,7 +49,7 @@ export class NotificationStore {
 
   private readonly markReadTrigger = signal<{ id: number } | null>(null);
 
-private readonly markReadResource = rxResource({
+  private readonly markReadResource = rxResource({
     request: () => this.markReadTrigger(),
     loader: ({ request }) => {
       if (!request) return of(undefined);
@@ -115,7 +115,7 @@ private readonly markReadResource = rxResource({
   }
 
   markAllAsRead(): void {
-    this.markAllTrigger.update(n => n + 1);
+    this.markAllTrigger.update((n) => n + 1);
   }
 
   reset(): void {

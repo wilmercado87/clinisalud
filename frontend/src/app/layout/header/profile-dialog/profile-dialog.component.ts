@@ -1,12 +1,12 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
@@ -27,7 +27,17 @@ type ProfileFormValue = {
 
 @Component({
   selector: 'app-profile-dialog',
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatSlideToggleModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    MatSlideToggleModule,
+  ],
   templateUrl: './profile-dialog.component.html',
   styleUrl: './profile-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,15 +75,13 @@ export class ProfileDialogComponent {
 
   private readonly initialFormValue: Record<string, string | undefined>;
 
-  private readonly formStatusSignal = toSignal(
-    this.profileForm.statusChanges,
-    { initialValue: this.profileForm.status }
-  );
+  private readonly formStatusSignal = toSignal(this.profileForm.statusChanges, {
+    initialValue: this.profileForm.status,
+  });
 
-  private readonly formValueSignal = toSignal(
-    this.profileForm.valueChanges,
-    { initialValue: this.profileForm.getRawValue() },
-  );
+  private readonly formValueSignal = toSignal(this.profileForm.valueChanges, {
+    initialValue: this.profileForm.getRawValue(),
+  });
 
   public isValid = computed(() => this.formStatusSignal() === 'VALID');
 
@@ -82,26 +90,19 @@ export class ProfileDialogComponent {
     const cur = this.formValueSignal();
     if (!cur) return false;
     const keys = Object.keys(this.initialFormValue);
-    return keys.some(k => (cur as Record<string, string | null | undefined>)[k] !== this.initialFormValue[k]);
+    return keys.some((k) => (cur as Record<string, string | null | undefined>)[k] !== this.initialFormValue[k]);
   });
 
-  public canSubmit = computed(() =>
-    this.isValid() &&
-    this.hasChanges() &&
-    !this.isUpdatingProfile() &&
-    !this.isChangingPassword()
+  public canSubmit = computed(
+    () => this.isValid() && this.hasChanges() && !this.isUpdatingProfile() && !this.isChangingPassword(),
   );
 
-  public readonly showUpdateSuccess = computed(() =>
-    this.profileUpdateRequested() &&
-    this.submitted() &&
-    !!this.authStore.updateResult()
+  public readonly showUpdateSuccess = computed(
+    () => this.profileUpdateRequested() && this.submitted() && !!this.authStore.updateResult(),
   );
 
-  public readonly showUpdateError = computed(() =>
-    this.profileUpdateRequested() &&
-    this.submitted() &&
-    !!this.authStore.updateError()
+  public readonly showUpdateError = computed(
+    () => this.profileUpdateRequested() && this.submitted() && !!this.authStore.updateError(),
   );
 
   public readonly userErrors = computed(() => {

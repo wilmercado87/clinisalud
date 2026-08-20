@@ -14,12 +14,7 @@
   <section class="user-manager__filters">
     <mat-form-field appearance="outline" class="user-manager__search">
       <mat-label>Buscador global</mat-label>
-      <input
-        matInput
-        (keyup)="usersTable.applyFilter($event)"
-        placeholder="Nombre, correo o DNI..."
-        #input
-      />
+      <input matInput (keyup)="usersTable.applyFilter($event)" placeholder="Nombre, correo o DNI..." #input />
       <mat-icon matSuffix>search</mat-icon>
     </mat-form-field>
   </section>
@@ -32,7 +27,6 @@
     }
 
     <table mat-table [dataSource]="usersTable.dataSource" matSort class="user-manager__table">
-
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Empleado</th>
         <td mat-cell *matCellDef="let user">
@@ -62,9 +56,11 @@
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
         <td mat-cell *matCellDef="let user">
-          <div class="user-manager__status"
-               [class.user-manager__status--active]="user.isActive"
-               [class.user-manager__status--inactive]="!user.isActive">
+          <div
+            class="user-manager__status"
+            [class.user-manager__status--active]="user.isActive"
+            [class.user-manager__status--inactive]="!user.isActive"
+          >
             {{ user.isActiveLabel }}
           </div>
         </td>
@@ -73,9 +69,7 @@
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef>Acciones</th>
         <td mat-cell *matCellDef="let user">
-          <button mat-icon-button [matMenuTriggerFor]="userMenu"
-          (click)="$event.stopPropagation()">
-
+          <button mat-icon-button [matMenuTriggerFor]="userMenu" (click)="$event.stopPropagation()">
             @if (isToggling() && togglingUserId() === user.id) {
               <mat-spinner diameter="20"></mat-spinner>
             } @else {
@@ -84,17 +78,19 @@
           </button>
 
           <mat-menu #userMenu="matMenu" class="user-manager__menu">
-            <button mat-menu-item (click)="openPermissionsDialog(user)"
-              [disabled]="!user.isActive || isSuperAdmin(user)">
+            <button
+              mat-menu-item
+              (click)="openPermissionsDialog(user)"
+              [disabled]="!user.isActive || isSuperAdmin(user)"
+            >
               <mat-icon color="primary">admin_panel_settings</mat-icon>
               <span>Gestionar Accesos</span>
             </button>
-            <button mat-menu-item (click)="toggleUserStatus(user)"
-                    [disabled]="isToggling() || isSuperAdmin(user)">
+            <button mat-menu-item (click)="toggleUserStatus(user)" [disabled]="isToggling() || isSuperAdmin(user)">
               <mat-icon [color]="user.isActive ? 'warn' : 'accent'">
-                {{ user.isActive ? "person_off" : "person_check" }}
+                {{ user.isActive ? 'person_off' : 'person_check' }}
               </mat-icon>
-              <span>{{ user.isActive ? "Desactivar" : "Activar" }}</span>
+              <span>{{ user.isActive ? 'Desactivar' : 'Activar' }}</span>
             </button>
           </mat-menu>
         </td>
@@ -106,21 +102,21 @@
       <tr class="mat-row" *matNoDataRow>
         <td class="mat-cell" colspan="6">
           <div class="user-manager__empty-state">
-
             @if (usersTable.filterValue().length > 0) {
               <app-empty-state
                 [title]="'Búsqueda sin coincidencias'"
                 [message]="'No encontramos resultados para \'' + usersTable.filterValue() + '\''"
-                [icon]="'person_search'">
+                [icon]="'person_search'"
+              >
               </app-empty-state>
             } @else if (!isLoadingUsers()) {
               <app-empty-state
                 [title]="'No hay personal registrado'"
                 [message]="'Comienza registrando un nuevo empleado en el sistema.'"
-                [icon]="'group_add'">
+                [icon]="'group_add'"
+              >
               </app-empty-state>
             }
-
           </div>
         </td>
       </tr>
@@ -129,7 +125,8 @@
     <mat-paginator
       class="user-manager__paginator"
       [pageSizeOptions]="PAGE_SIZE_OPTIONS"
-      aria-label="Seleccionar página">
+      aria-label="Seleccionar página"
+    >
     </mat-paginator>
   </div>
 </div>

@@ -1,10 +1,10 @@
-import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
 import { AuthResponse, LoginRequest } from '@core/models/auth.model';
-import { environment } from '@env/environment';
 import { UserResponse } from '@core/models/user.model';
+import { environment } from '@env/environment';
 import { getBusinessErrorMessage } from '@shared/utils/http-error';
+import { Observable, catchError, throwError } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -23,16 +23,18 @@ export class AuthService {
       .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
   }
 
-  public updateProfile(data: Partial<{ email: string; firstName: string; lastName: string; phone: string; address: string }>): Observable<UserResponse> {
-    return this.http.patch<UserResponse>(`${this.apiUrl}/profile`, data).pipe(
-      catchError((error: HttpErrorResponse) => this.handleError(error)),
-    );
+  public updateProfile(
+    data: Partial<{ email: string; firstName: string; lastName: string; phone: string; address: string }>,
+  ): Observable<UserResponse> {
+    return this.http
+      .patch<UserResponse>(`${this.apiUrl}/profile`, data)
+      .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
   }
 
   public changePassword(data: { currentPassword: string; newPassword: string }): Observable<{ message: string }> {
-    return this.http.patch<{ message: string }>(`${this.apiUrl}/change-password`, data).pipe(
-      catchError((error: HttpErrorResponse) => this.handleError(error)),
-    );
+    return this.http
+      .patch<{ message: string }>(`${this.apiUrl}/change-password`, data)
+      .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {

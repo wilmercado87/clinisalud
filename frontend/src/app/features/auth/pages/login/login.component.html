@@ -7,7 +7,7 @@
             [src]="configStore.config().clientLogo"
             class="login__logo-img"
             [alt]="configStore.config().clientName"
-          >
+          />
         } @else {
           <svg viewBox="0 0 24 24" class="login__logo-default">
             <path
@@ -19,7 +19,8 @@
 
       <h1 class="login__title">{{ configStore.config().clientName }}</h1>
       <p class="login__subtitle">
-        Acceso al Sistema {{ configStore.config().clientName === 'Clinisalud' ? 'Médico' : configStore.config().clientName }}
+        Acceso al Sistema
+        {{ configStore.config().clientName === 'Clinisalud' ? 'Médico' : configStore.config().clientName }}
       </p>
     </div>
 
@@ -43,12 +44,7 @@
           </div>
         }
 
-        <button
-          mat-raised-button
-          class="login__btn"
-          type="submit"
-          [disabled]="!canSubmit()"
-        >
+        <button mat-raised-button class="login__btn" type="submit" [disabled]="!canSubmit()">
           @if (isLoggingIn()) {
             <mat-spinner diameter="20"></mat-spinner>
           } @else {
@@ -56,9 +52,7 @@
           }
         </button>
 
-        <button type="button" class="login__forgot" (click)="openForgotPassword()">
-          ¿Olvidaste tu contraseña?
-        </button>
+        <button type="button" class="login__forgot" (click)="openForgotPassword()">¿Olvidaste tu contraseña?</button>
       </form>
     </mat-card-content>
   </mat-card>

@@ -1,32 +1,27 @@
-import { Component, inject, ViewChild, effect, signal, AfterViewInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-import { MatDialog } from '@angular/material/dialog';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatSortModule } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
-import { AdmissionStore } from '@features/admissions/store/admission.store';
 import {
-  ADMISSION_STATE_REVERSE_TRANSITIONS,
-  ADMISSION_STATE_TRANSITIONS,
-  CensusRowResponse,
-} from '@features/admissions/models/admissions.model';
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ViewChild,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
+
 import { ToastService } from '@core/services/toast.service';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
-import { PAGINATION } from '@shared/utils/pagination-constants';
-import { createTableUtils } from '@shared/utils/table-utils';
-import { getHttpErrorMessage } from '@shared/utils/http-error';
-import { ADMISSION_MESSAGES, formatMessage } from '@shared/utils/messages';
-import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
-import { AdmissionStatePipe, admissionStateLabel } from '@features/admissions/pipes/admission-state.pipe';
 import {
   CensusDischargeDialogComponent,
   DischargeDialogResult,
@@ -35,6 +30,18 @@ import {
   CensusRevertStateDialogComponent,
   RevertStateDialogResult,
 } from '@features/admissions/components/census-revert-state-dialog/census-revert-state-dialog.component';
+import {
+  ADMISSION_STATE_REVERSE_TRANSITIONS,
+  ADMISSION_STATE_TRANSITIONS,
+  CensusRowResponse,
+} from '@features/admissions/models/admissions.model';
+import { AdmissionStatePipe, admissionStateLabel } from '@features/admissions/pipes/admission-state.pipe';
+import { AdmissionStore } from '@features/admissions/store/admission.store';
+import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+import { getHttpErrorMessage } from '@shared/utils/http-error';
+import { ADMISSION_MESSAGES, formatMessage } from '@shared/utils/messages';
+import { PAGINATION } from '@shared/utils/pagination-constants';
+import { createTableUtils } from '@shared/utils/table-utils';
 
 @Component({
   selector: 'app-census',

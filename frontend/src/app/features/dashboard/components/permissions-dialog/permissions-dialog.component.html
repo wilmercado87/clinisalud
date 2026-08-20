@@ -1,8 +1,6 @@
 <div class="permissions-dialog">
   <header class="permissions-dialog__header">
-    <h2 class="permissions-dialog__title" mat-dialog-title>
-      Gestionar Accesos
-    </h2>
+    <h2 class="permissions-dialog__title" mat-dialog-title>Gestionar Accesos</h2>
 
     @if (!isUpdatingPermissions()) {
       <button class="permissions-dialog__close-btn" mat-icon-button (click)="onCancel()">
@@ -46,9 +44,10 @@
     } @else {
       <div class="permissions-dialog__permissions">
         @for (group of permissionMenuGroups(); track group.id) {
-          <div class="permissions-dialog__permission-item"
-               [class.is-denied]="isNonAdminExceedingPrivileges() || isEditRestricted()">
-            
+          <div
+            class="permissions-dialog__permission-item"
+            [class.is-denied]="isNonAdminExceedingPrivileges() || isEditRestricted()"
+          >
             <div class="permissions-dialog__permission-parent">
               <mat-checkbox
                 [checked]="assignedMenuOptionIds().has(+group.id)"
@@ -77,7 +76,6 @@
                 </mat-checkbox>
               }
             </div>
-
           </div>
         }
       </div>
@@ -85,9 +83,7 @@
   </mat-dialog-content>
 
   <mat-dialog-actions class="permissions-dialog__actions" align="end">
-    <button mat-button (click)="onCancel()" [disabled]="isUpdatingPermissions()">
-      CANCELAR
-    </button>
+    <button mat-button (click)="onCancel()" [disabled]="isUpdatingPermissions()">CANCELAR</button>
 
     <button
       mat-raised-button

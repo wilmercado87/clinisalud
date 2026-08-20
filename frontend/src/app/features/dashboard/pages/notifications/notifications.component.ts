@@ -1,21 +1,17 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Router } from '@angular/router';
 
-import { NotificationStore } from '@core/stores/notification-store/notification.store';
+import { NotificationsListData, NotificationsListEvent, NotificationUI } from '@core/models/notification.model';
 import { ToastService } from '@core/services/toast.service';
+import { NotificationStore } from '@core/stores/notification-store/notification.store';
 import { toNotificationUI } from '@core/utils/notification.mapper';
-import { PAGINATION } from '@shared/utils/pagination-constants';
-import { NOTIFICATION_MESSAGES } from '@shared/utils/messages';
 import { NotificationFilteredListComponent } from '@features/dashboard/components/notification-filtered-list/notification-filtered-list.component';
-import {
-  NotificationsListData,
-  NotificationsListEvent,
-  NotificationUI,
-} from '@core/models/notification.model';
+import { NOTIFICATION_MESSAGES } from '@shared/utils/messages';
+import { PAGINATION } from '@shared/utils/pagination-constants';
 
 @Component({
   selector: 'app-notifications',
@@ -35,7 +31,7 @@ export class NotificationsComponent {
   public unreadCount = this.notificationStore.unreadCount;
 
   public notifications = computed<NotificationUI[]>(() =>
-    (this.notificationStore.notifications() ?? []).map(toNotificationUI)
+    (this.notificationStore.notifications() ?? []).map(toNotificationUI),
   );
 
   public isLoadingNotifications = this.notificationStore.isLoadingNotifications;
@@ -102,11 +98,11 @@ export class NotificationsComponent {
         this.loadPage(this.currentPage());
         break;
       case 'prevPage':
-        this.currentPage.update(p => Math.max(0, p - 1));
+        this.currentPage.update((p) => Math.max(0, p - 1));
         this.loadPage(this.currentPage());
         break;
       case 'nextPage':
-        this.currentPage.update(p => p + 1);
+        this.currentPage.update((p) => p + 1);
         this.loadPage(this.currentPage());
         break;
     }

@@ -153,6 +153,8 @@ export const ERROR_MESSAGES_ADMISION = {
   AUTH_FEE_SCHEDULE_REQUIRED: 'Tarifario es requerido para la autorización',
   AUTH_FEE_SCHEDULE_MISMATCH: 'El tarifario no coincide con el CUPS seleccionado',
   AUTH_QUANTITY_EXCEEDS_MAX: 'La cantidad excede el máximo permitido ({maxQuantity}) para el servicio',
+  AUTH_QUANTITY_EXCEEDS_MAPIISS_MAX:
+    'La cantidad autorizada de este MAPIISS supera la cantidad de procedimientos por paciente',
   AUTH_ALREADY_EXISTS: 'La autorización ya existe para esta admisión',
   ADMISSION_STATE_REQUIRED: 'El estado de la admisión es requerido',
   ADMISSION_STATE_INVALID: 'El estado no es válido',

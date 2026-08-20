@@ -1,10 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
-import { RoleService } from '@core/services/roles.service';
 import { MenuService } from '@core/services/menu.service';
-import { MenuOption } from '@core/models/user.model';
-import { RoleResponse } from '@core/models/user.model';
+import { RoleService } from '@core/services/roles.service';
+import { of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class RoleStore {

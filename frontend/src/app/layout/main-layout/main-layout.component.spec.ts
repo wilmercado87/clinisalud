@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { MainLayoutComponent } from './main-layout.component';
@@ -11,10 +11,9 @@ describe('MainLayoutComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MainLayoutComponent],
-      providers: [provideHttpClient(), provideRouter([])]
-    })
-    .compileComponents();
-    
+      providers: [provideHttpClient(), provideRouter([])],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(MainLayoutComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

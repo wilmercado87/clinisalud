@@ -1,15 +1,11 @@
 <div class="user-form">
   <header class="user-form__header">
     <h2 class="user-form__title" mat-dialog-title>
-      {{ created() ? "Usuario Registrado" : "Registrar Nuevo Empleado" }}
+      {{ created() ? 'Usuario Registrado' : 'Registrar Nuevo Empleado' }}
     </h2>
 
     @if (!created() && !isCreating()) {
-      <button
-        class="user-form__close-btn"
-        mat-icon-button
-        (click)="close()"
-      >
+      <button class="user-form__close-btn" mat-icon-button (click)="close()">
         <mat-icon>close</mat-icon>
       </button>
     }
@@ -79,7 +75,7 @@
           <mat-form-field appearance="outline" class="user-form__field">
             <mat-label>Asignar Rol</mat-label>
             <mat-select formControlName="roleId" required>
-              @for (role of (availableRoles()); track role.id) {
+              @for (role of availableRoles(); track role.id) {
                 <mat-option [value]="role.id">{{ role.name }}</mat-option>
               }
             </mat-select>
@@ -114,7 +110,9 @@
                   <mat-checkbox
                     [checked]="effectiveSelectedIds().has(child.id)"
                     (change)="toggleChild(child.id, group)"
-                    [disabled]="isPermissionsLocked() || (isGestorUsuariosForced() && group.label === 'Gestor Usuarios')"
+                    [disabled]="
+                      isPermissionsLocked() || (isGestorUsuariosForced() && group.label === 'Gestor Usuarios')
+                    "
                     class="user-form__child-checkbox"
                   >
                     {{ child.label }}
@@ -135,23 +133,20 @@
           </p>
         } @else {
           <p class="user-form__success-text">
-            No se pudo enviar el correo con la clave temporal. El correo tal vez no existe; contacte con el administrador para restablecer la contraseña.
+            No se pudo enviar el correo con la clave temporal. El correo tal vez no existe; contacte con el
+            administrador para restablecer la contraseña.
           </p>
         }
       </div>
       <mat-dialog-actions class="user-form__actions" align="center">
-        <button mat-raised-button color="primary" (click)="close(true)">
-          ACEPTAR
-        </button>
+        <button mat-raised-button color="primary" (click)="close(true)">ACEPTAR</button>
       </mat-dialog-actions>
     }
   </mat-dialog-content>
 
   @if (!created()) {
     <mat-dialog-actions class="user-form__actions" align="end">
-      <button mat-button (click)="close()" [disabled]="isCreating()">
-        CANCELAR
-      </button>
+      <button mat-button (click)="close()" [disabled]="isCreating()">CANCELAR</button>
 
       <button
         mat-raised-button

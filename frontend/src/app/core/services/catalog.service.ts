@@ -1,16 +1,15 @@
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { environment } from '@env/environment';
 import {
-  CatalogItemResponse,
-  MunicipioResponse,
-  ContratoResponse,
-  CamaResponse,
   BedsPageResponse,
-  DiagnosticoResponse,
+  CatalogItemResponse,
+  ContratoResponse,
   CupsPageResponse,
+  DiagnosticoResponse,
+  MunicipioResponse,
 } from '@core/models/catalog.model';
+import { environment } from '@env/environment';
+import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogService {

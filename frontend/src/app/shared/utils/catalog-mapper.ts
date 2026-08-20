@@ -1,4 +1,4 @@
-import { CatalogSourceItem, CamaResponse } from '@core/models/catalog.model';
+import { CamaResponse, CatalogSourceItem } from '@core/models/catalog.model';
 
 export interface CatalogOptionUI {
   id: number;
@@ -16,9 +16,7 @@ export interface AuthRowViewModel {
 
 export function formatBedLabel(catalog: CatalogSourceItem[], roomId: number | null): string | null {
   if (!roomId) return null;
-  const bed = catalog.find(
-    (item): item is CamaResponse => 'bedCode' in item && item.roomId === roomId,
-  );
+  const bed = catalog.find((item): item is CamaResponse => 'bedCode' in item && item.roomId === roomId);
   return bed ? `${bed.bedCode} - ${bed.tipoCama}` : `#${roomId}`;
 }
 
@@ -33,32 +31,21 @@ export function toAuthRowViewModel(
   },
 ): AuthRowViewModel {
   return {
-    authTypeName:
-      row.authTypeName ??
-      findCatalogItemName(catalog, row.authTypeId) ??
-      `#${row.authTypeId}`,
+    authTypeName: row.authTypeName ?? findCatalogItemName(catalog, row.authTypeId) ?? `#${row.authTypeId}`,
     authNumber: row.authNumber,
     mapiissCode: row.mapiissCode,
     quantity: row.quantity,
   };
 }
 
-export function findCatalogItemName(
-  items: CatalogSourceItem[],
-  id: number | null,
-): string {
+export function findCatalogItemName(items: CatalogSourceItem[], id: number | null): string {
   if (id === null) return '';
-  const item = items.find(
-    (catalogItem) => 'id' in catalogItem && catalogItem.id === id,
-  );
+  const item = items.find((catalogItem) => 'id' in catalogItem && catalogItem.id === id);
   if (!item || !('id' in item)) return '';
   return String(item.name || item.description || '');
 }
 
-export function mapCatalogItemToOption(
-  catalogType: string,
-  item: CatalogSourceItem,
-): CatalogOptionUI {
+export function mapCatalogItemToOption(catalogType: string, item: CatalogSourceItem): CatalogOptionUI {
   switch (catalogType) {
     case 'beds': {
       if ('bedCode' in item) {

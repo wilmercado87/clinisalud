@@ -6,10 +6,7 @@ export type FieldErrors<R extends ErrorRules> = {
   [K in keyof R]: string | null;
 };
 
-export function extractFieldErrors<R extends ErrorRules>(
-  group: FormGroup,
-  rules: R,
-): FieldErrors<R> {
+export function extractFieldErrors<R extends ErrorRules>(group: FormGroup, rules: R): FieldErrors<R> {
   const result: Record<string, string | null> = {};
   for (const key of Object.keys(rules)) {
     const control = group.get(key);

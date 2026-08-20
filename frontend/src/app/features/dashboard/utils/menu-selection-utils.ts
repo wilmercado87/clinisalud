@@ -14,11 +14,7 @@ export function allMenuOptionIds(groups: MenuOption[]): number[] {
   return groups.flatMap((group) => collectGroupIds(group));
 }
 
-export function toggleParentSelection(
-  current: Set<number>,
-  group: MenuOption,
-  checked: boolean,
-): Set<number> {
+export function toggleParentSelection(current: Set<number>, group: MenuOption, checked: boolean): Set<number> {
   const next = new Set(current);
   const ids = collectGroupIds(group);
 
@@ -31,11 +27,7 @@ export function toggleParentSelection(
   return next;
 }
 
-export function toggleChildSelection(
-  current: Set<number>,
-  parent: MenuOption,
-  childId: number,
-): Set<number> {
+export function toggleChildSelection(current: Set<number>, parent: MenuOption, childId: number): Set<number> {
   const next = new Set(current);
   const childIds = parent.children?.map((child) => child.id) ?? [];
 
@@ -51,10 +43,7 @@ export function toggleChildSelection(
   return next;
 }
 
-export function buildPermissionOverrides(
-  groups: MenuOption[],
-  selected: Set<number>,
-): PermissionOverride[] {
+export function buildPermissionOverrides(groups: MenuOption[], selected: Set<number>): PermissionOverride[] {
   return groups.flatMap((group) => [
     { menuOptionId: group.id, hasAccess: selected.has(group.id) },
     ...(group.children?.map((child) => ({

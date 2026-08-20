@@ -1,20 +1,16 @@
-import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
+import { MenuOption, UserResponse } from '@core/models/user.model';
+import { ToastService } from '@core/services/toast.service';
+import { AuthStore } from '@core/stores/auth-store/auth.store';
 import { RoleStore } from '@core/stores/role-store/role.store';
 import { UserStore } from '@features/dashboard/store/user-store/user.store';
-import { AuthStore } from '@core/stores/auth-store/auth.store';
-import { ToastService } from '@core/services/toast.service';
-import { MenuOption, UserResponse } from '@core/models/user.model';
-import { ROLE_CODES } from '@shared/utils/role-constants';
-import { getHttpErrorMessage } from '@shared/utils/http-error';
-import { APP_MESSAGES, USER_MESSAGES } from '@shared/utils/messages';
 import {
   allMenuOptionIds,
   buildPermissionOverrides,
@@ -22,6 +18,9 @@ import {
   toggleChildSelection,
   toggleParentSelection,
 } from '@features/dashboard/utils/menu-selection-utils';
+import { getHttpErrorMessage } from '@shared/utils/http-error';
+import { APP_MESSAGES, USER_MESSAGES } from '@shared/utils/messages';
+import { ROLE_CODES } from '@shared/utils/role-constants';
 
 export interface PermissionsDialogData {
   user: UserResponse;
@@ -63,9 +62,7 @@ export class PermissionsDialogComponent {
     }));
   });
 
-  public totalMenuOptionsCount = computed(() =>
-    allMenuOptionIds(this.permissionMenuGroups()).length,
-  );
+  public totalMenuOptionsCount = computed(() => allMenuOptionIds(this.permissionMenuGroups()).length);
 
   public currentUserRole = computed(() => this.authStore.currentUser()?.role ?? '');
 
@@ -79,15 +76,10 @@ export class PermissionsDialogComponent {
     if (this.isEditRestricted()) return false;
     if (this.isTargetUserAdmin()) return false;
 
-    const selectableGroups = this.permissionMenuGroups().filter(
-      (group) => !group.isUserManager,
-    );
+    const selectableGroups = this.permissionMenuGroups().filter((group) => !group.isUserManager);
     const maxSelectableCountForNonAdmin = allMenuOptionIds(selectableGroups).length;
 
-    return (
-      this.assignedMenuOptionIds().size > maxSelectableCountForNonAdmin &&
-      maxSelectableCountForNonAdmin > 0
-    );
+    return this.assignedMenuOptionIds().size > maxSelectableCountForNonAdmin && maxSelectableCountForNonAdmin > 0;
   });
 
   public canSubmitPermissions = computed(
@@ -187,26 +179,19 @@ export class PermissionsDialogComponent {
   public toggleMenuGroupSelection(menuGroup: PermissionMenuNode, isChecked: boolean): void {
     if (menuGroup.isUserManager || this.isEditRestricted() || this.isUpdatingPermissions()) return;
 
-    this.assignedMenuOptionIds.set(
-      toggleParentSelection(this.assignedMenuOptionIds(), menuGroup, isChecked),
-    );
+    this.assignedMenuOptionIds.set(toggleParentSelection(this.assignedMenuOptionIds(), menuGroup, isChecked));
   }
 
   public toggleSubMenuSelection(subMenuId: number, parentMenuGroup: PermissionMenuNode): void {
     if (parentMenuGroup.isUserManager || this.isEditRestricted() || this.isUpdatingPermissions()) return;
 
-    this.assignedMenuOptionIds.set(
-      toggleChildSelection(this.assignedMenuOptionIds(), parentMenuGroup, subMenuId),
-    );
+    this.assignedMenuOptionIds.set(toggleChildSelection(this.assignedMenuOptionIds(), parentMenuGroup, subMenuId));
   }
 
   public submitPermissionOverrides(): void {
     if (!this.canSubmitPermissions()) return;
 
-    const generatedOverrides = buildPermissionOverrides(
-      this.permissionMenuGroups(),
-      this.assignedMenuOptionIds(),
-    );
+    const generatedOverrides = buildPermissionOverrides(this.permissionMenuGroups(), this.assignedMenuOptionIds());
 
     this.userStore.updatePermissions(this.targetUserData.user.id, generatedOverrides);
   }

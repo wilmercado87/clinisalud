@@ -1,14 +1,14 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { Router } from '@angular/router';
 
-import { NotificationStore } from '@core/stores/notification-store/notification.store';
 import { NotificationUI } from '@core/models/notification.model';
+import { NotificationStore } from '@core/stores/notification-store/notification.store';
 import { toNotificationUI } from '@core/utils/notification.mapper';
 
 @Component({
@@ -25,7 +25,7 @@ export class NotificationBellComponent {
   public isDropdownOpen = signal(false);
 
   public notifications = computed<NotificationUI[]>(() =>
-    (this.notificationStore.notifications() ?? []).map(toNotificationUI)
+    (this.notificationStore.notifications() ?? []).map(toNotificationUI),
   );
 
   public readonly unreadCount = this.notificationStore.unreadCount;
@@ -35,7 +35,7 @@ export class NotificationBellComponent {
   public isLoadingNotifications = this.notificationStore.isLoadingNotifications;
 
   public toggleDropdown(): void {
-    this.isDropdownOpen.update(v => !v);
+    this.isDropdownOpen.update((v) => !v);
     if (this.isDropdownOpen()) {
       this.notificationStore.loadNotifications(5, 0);
       this.notificationStore.loadUnreadCount();

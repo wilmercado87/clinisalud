@@ -1,5 +1,5 @@
-import { Injectable, inject, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, effect, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 
 export interface ClientConfig {
@@ -22,9 +22,7 @@ export class ConfigStore {
     loader: () => this.http.get<ClientConfig>('assets/config/client-config.json'),
   });
 
-  public readonly config = computed<ClientConfig>(() => 
-    this.filterInvalidConfig(this.configResource.value())
-  );
+  public readonly config = computed<ClientConfig>(() => this.filterInvalidConfig(this.configResource.value()));
 
   constructor() {
     effect(() => {

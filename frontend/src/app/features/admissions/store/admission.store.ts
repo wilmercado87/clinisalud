@@ -1,11 +1,8 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { CreateAdmissionRequest, UpdateAdmissionRequest } from '@features/admissions/models/admissions.model';
 import { AdmissionsService } from '@features/admissions/services/admissions.service';
-import {
-  CreateAdmissionRequest,
-  UpdateAdmissionRequest,
-} from '@features/admissions/models/admissions.model';
+import { of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AdmissionStore {

@@ -27,7 +27,6 @@
     }
 
     <table mat-table [dataSource]="censusTable.dataSource" matSort class="census__table">
-
       <ng-container matColumnDef="admissionNumber">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>N° Admisión</th>
         <td mat-cell *matCellDef="let row">
@@ -40,9 +39,7 @@
         <td mat-cell *matCellDef="let row">
           @if (row.patient) {
             <div class="census__patient-cell">
-              <span class="census__patient-name">
-                {{ row.patient.firstName }} {{ row.patient.lastName }}
-              </span>
+              <span class="census__patient-name"> {{ row.patient.firstName }} {{ row.patient.lastName }} </span>
               <span class="census__patient-doc">
                 {{ row.patient.documentType?.description }} · {{ row.patient.document }}
               </span>
@@ -147,13 +144,15 @@
               <app-empty-state
                 [title]="'Búsqueda sin coincidencias'"
                 [message]="'No encontramos resultados para \'' + censusTable.filterValue() + '\''"
-                [icon]="'person_search'">
+                [icon]="'person_search'"
+              >
               </app-empty-state>
             } @else if (!isLoadingCensus()) {
               <app-empty-state
                 [title]="'No hay admisiones activas'"
                 [message]="'Registra una admisión para visualizarla en el censo hospitalario.'"
-                [icon]="'meeting_room'">
+                [icon]="'meeting_room'"
+              >
               </app-empty-state>
             }
           </div>
@@ -161,10 +160,7 @@
       </tr>
     </table>
 
-    <mat-paginator
-      class="census__paginator"
-      [pageSizeOptions]="PAGE_SIZE_OPTIONS"
-      aria-label="Seleccionar página">
+    <mat-paginator class="census__paginator" [pageSizeOptions]="PAGE_SIZE_OPTIONS" aria-label="Seleccionar página">
     </mat-paginator>
   </div>
 </div>

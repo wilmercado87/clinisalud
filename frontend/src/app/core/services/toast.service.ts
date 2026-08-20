@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ToastService {
   private readonly snackBar = inject(MatSnackBar);
@@ -16,14 +16,14 @@ export class ToastService {
   success(message: string) {
     this.snackBar.open(message, 'Cerrar', {
       ...this.defaultConfig,
-      panelClass: ['toast-custom', 'toast-custom--success']
+      panelClass: ['toast-custom', 'toast-custom--success'],
     });
   }
 
   error(message: string) {
     this.snackBar.open(message, 'Entendido', {
       ...this.defaultConfig,
-      panelClass: ['toast-custom', 'toast-custom--error']
+      panelClass: ['toast-custom', 'toast-custom--error'],
     });
   }
 
@@ -31,7 +31,7 @@ export class ToastService {
     this.snackBar.open(message, 'OK', {
       ...this.defaultConfig,
       duration: 3000,
-      panelClass: ['toast-custom', 'toast-custom--info']
+      panelClass: ['toast-custom', 'toast-custom--info'],
     });
   }
 }

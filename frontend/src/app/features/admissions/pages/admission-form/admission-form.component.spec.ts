@@ -1,15 +1,15 @@
 // @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (request de autorizaciones)
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, forwardRef, input, signal } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { Component, forwardRef, input, signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { AdmissionFormComponent } from './admission-form.component';
-import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
-import { AdmissionStore } from '@features/admissions/store/admission.store';
+import { provideRouter } from '@angular/router';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { PatientLookupResponse } from '@features/admissions/models/admissions.model';
+import { AdmissionStore } from '@features/admissions/store/admission.store';
+import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
+import { AdmissionFormComponent } from './admission-form.component';
 
 @Component({
   selector: 'app-catalog-select',
@@ -304,7 +304,8 @@ describe('AdmissionFormComponent', () => {
     });
 
     it('shows the occupied bed as an informative label above the bed field', async () => {
-      catalogStore.getCatalog = jest.fn()
+      catalogStore.getCatalog = jest
+        .fn()
         .mockReturnValue([{ roomId: 5, bedCode: 'HAB105', bedStatus: 1, tipoCama: 'hospitalizado' }]);
       await openUpdateMode();
       fixture.detectChanges();
@@ -315,7 +316,8 @@ describe('AdmissionFormComponent', () => {
     });
 
     it('clears the bed selector after updating the bed (INV-ADM-07)', async () => {
-      catalogStore.getCatalog = jest.fn()
+      catalogStore.getCatalog = jest
+        .fn()
         .mockReturnValue([{ roomId: 6, bedCode: 'HAB106', bedStatus: 1, tipoCama: 'hospitalizado' }]);
       await openUpdateMode();
       component.admissionForm.controls.roomId.setValue(6);
@@ -381,10 +383,7 @@ describe('AdmissionFormComponent', () => {
       component.onSubmit();
 
       expect(store.createAdmission).not.toHaveBeenCalled();
-      expect(store.updateAdmission).toHaveBeenCalledWith(
-        'ADM-20260804-0001',
-        { roomId: 6 },
-      );
+      expect(store.updateAdmission).toHaveBeenCalledWith('ADM-20260804-0001', { roomId: 6 });
     });
 
     it('updates the admission with the new observations only', async () => {

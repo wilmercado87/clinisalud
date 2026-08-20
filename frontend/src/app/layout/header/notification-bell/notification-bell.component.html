@@ -1,7 +1,11 @@
 <div class="notification-bell">
-  <button mat-icon-button class="notification-bell__button" (click)="toggleDropdown()"
+  <button
+    mat-icon-button
+    class="notification-bell__button"
+    (click)="toggleDropdown()"
     [matTooltip]="hasUnread() ? 'Notificaciones sin leer' : 'Notificaciones'"
-    matTooltipPosition="below">
+    matTooltipPosition="below"
+  >
     <mat-icon class="notification-bell__icon">notifications</mat-icon>
     @if (hasUnread()) {
       <span class="notification-bell__badge">{{ unreadCount() }}</span>
@@ -13,7 +17,11 @@
       <div class="notification-bell__header">
         <span class="notification-bell__title">Notificaciones</span>
         @if (hasUnread()) {
-          <button mat-button class="notification-bell__mark-all-btn" (click)="markAllAsRead(); $event.stopPropagation()">
+          <button
+            mat-button
+            class="notification-bell__mark-all-btn"
+            (click)="markAllAsRead(); $event.stopPropagation()"
+          >
             Marcar todas leídas
           </button>
         }
@@ -28,9 +36,11 @@
           <div class="notification-bell__empty">Sin notificaciones</div>
         } @else {
           @for (notif of notifications(); track notif.id) {
-            <div class="notification-bell__item"
+            <div
+              class="notification-bell__item"
               [class.notification-bell__item--unread]="notif.isUnread"
-              (click)="markAsRead(notif.recipientId, notif.actionUrl ?? undefined)">
+              (click)="markAsRead(notif.recipientId, notif.actionUrl ?? undefined)"
+            >
               <div class="notification-bell__content">
                 <div class="notification-bell__item-title">{{ notif.title }}</div>
                 <div class="notification-bell__item-message">{{ notif.message }}</div>
@@ -48,9 +58,7 @@
       </div>
 
       <div class="notification-bell__footer">
-        <button mat-button class="notification-bell__view-all-btn" (click)="viewAll()">
-          Ver todas
-        </button>
+        <button mat-button class="notification-bell__view-all-btn" (click)="viewAll()">Ver todas</button>
       </div>
     </div>
   }

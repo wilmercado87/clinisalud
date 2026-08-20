@@ -20,9 +20,7 @@
     </mat-form-field>
 
     @if (termLength() > 0 && !searchable()) {
-      <p class="cups-dialog__hint">
-        Digite al menos {{ minCharsHint }} caracteres para iniciar la búsqueda
-      </p>
+      <p class="cups-dialog__hint">Digite al menos {{ minCharsHint }} caracteres para iniciar la búsqueda</p>
     }
 
     @if (summary()) {
@@ -52,13 +50,7 @@
 
     @if (hasMore()) {
       <div class="cups-dialog__more">
-        <button
-          mat-stroked-button
-          color="primary"
-          type="button"
-          (click)="loadMore()"
-          [disabled]="isLoading()"
-        >
+        <button mat-stroked-button color="primary" type="button" (click)="loadMore()" [disabled]="isLoading()">
           @if (isLoading()) {
             <mat-spinner diameter="18" />
           } @else {

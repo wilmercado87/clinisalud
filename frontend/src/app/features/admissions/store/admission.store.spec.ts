@@ -1,12 +1,16 @@
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
 import {
-  provideHttpClientTesting,
-  HttpTestingController,
-} from '@angular/common/http/testing';
-import { HttpErrorResponse } from '@angular/common/http';
+  AdmissionStateResponse,
+  CreateAdmissionRequest,
+  CreateAdmissionResponse,
+  DischargeAdmissionResponse,
+  PatientLookupResponse,
+  UpdateAdmissionRequest,
+  UpdateAdmissionResponse,
+} from '@features/admissions/models/admissions.model';
 import { AdmissionStore } from './admission.store';
-import { AdmissionStateResponse, CreateAdmissionRequest, CreateAdmissionResponse, DischargeAdmissionResponse, PatientLookupResponse, UpdateAdmissionRequest, UpdateAdmissionResponse } from '@features/admissions/models/admissions.model';
 
 async function flushResource(): Promise<void> {
   await TestBed.flushEffects();
@@ -152,9 +156,7 @@ describe('AdmissionStore', () => {
 
     store.dischargeAdmission('2026-000001');
     await flushResource();
-    const req = httpMock.expectOne(
-      (r) => r.url.endsWith('/admissions/2026-000001/discharge') && r.method === 'POST',
-    );
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admissions/2026-000001/discharge') && r.method === 'POST');
     req.flush(result);
     await flushResource();
 
@@ -165,13 +167,8 @@ describe('AdmissionStore', () => {
   it('exposes the discharge error on failure', async () => {
     store.dischargeAdmission('2026-000001');
     await flushResource();
-    const req = httpMock.expectOne(
-      (r) => r.url.endsWith('/admissions/2026-000001/discharge') && r.method === 'POST',
-    );
-    req.flush(
-      { message: 'La admisión ya fue egresada' },
-      { status: 409, statusText: 'Conflict' },
-    );
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admissions/2026-000001/discharge') && r.method === 'POST');
+    req.flush({ message: 'La admisión ya fue egresada' }, { status: 409, statusText: 'Conflict' });
     await flushResource();
 
     expect(store.dischargeResult()).toBeUndefined();
@@ -187,9 +184,7 @@ describe('AdmissionStore', () => {
 
     store.updateAdmissionState('2026-000001', 'EN_ATENCION');
     await flushResource();
-    const req = httpMock.expectOne(
-      (r) => r.url.endsWith('/admissions/2026-000001/state') && r.method === 'PATCH',
-    );
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admissions/2026-000001/state') && r.method === 'PATCH');
     expect(req.request.body).toEqual({ state: 'EN_ATENCION' });
     req.flush(result);
     await flushResource();
@@ -214,9 +209,7 @@ describe('AdmissionStore', () => {
 
     store.updateAdmission('2026-000001', data);
     await flushResource();
-    const req = httpMock.expectOne(
-      (r) => r.url.endsWith('/admissions/2026-000001') && r.method === 'PATCH',
-    );
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admissions/2026-000001') && r.method === 'PATCH');
     expect(req.request.body).toEqual(data);
     req.flush(result);
     await flushResource();
@@ -228,13 +221,8 @@ describe('AdmissionStore', () => {
   it('exposes the update error on failure (INV-ADM-07)', async () => {
     store.updateAdmission('2026-000001', { roomId: 4 });
     await flushResource();
-    const req = httpMock.expectOne(
-      (r) => r.url.endsWith('/admissions/2026-000001') && r.method === 'PATCH',
-    );
-    req.flush(
-      { message: 'La cama seleccionada no está disponible' },
-      { status: 409, statusText: 'Conflict' },
-    );
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admissions/2026-000001') && r.method === 'PATCH');
+    req.flush({ message: 'La cama seleccionada no está disponible' }, { status: 409, statusText: 'Conflict' });
     await flushResource();
 
     expect(store.updateResult()).toBeUndefined();
@@ -244,9 +232,7 @@ describe('AdmissionStore', () => {
   it('clears the update result', async () => {
     store.updateAdmission('2026-000001', { roomId: 4 });
     await flushResource();
-    const req = httpMock.expectOne(
-      (r) => r.url.endsWith('/admissions/2026-000001') && r.method === 'PATCH',
-    );
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admissions/2026-000001') && r.method === 'PATCH');
     req.flush({ admissionNumber: '2026-000001', roomId: 4, authorizations: [] });
     await flushResource();
     store.clearUpdateResult();
@@ -258,13 +244,8 @@ describe('AdmissionStore', () => {
   it('exposes the state transition error on failure', async () => {
     store.updateAdmissionState('2026-000001', 'FACTURADA');
     await flushResource();
-    const req = httpMock.expectOne(
-      (r) => r.url.endsWith('/admissions/2026-000001/state') && r.method === 'PATCH',
-    );
-    req.flush(
-      { message: 'Transición de estado no permitida' },
-      { status: 409, statusText: 'Conflict' },
-    );
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admissions/2026-000001/state') && r.method === 'PATCH');
+    req.flush({ message: 'Transición de estado no permitida' }, { status: 409, statusText: 'Conflict' });
     await flushResource();
 
     expect(store.updateStateResult()).toBeUndefined();

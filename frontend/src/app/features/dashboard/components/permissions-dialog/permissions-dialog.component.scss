@@ -1,4 +1,4 @@
-@use "variables" as v;
+@use 'variables' as v;
 
 .permissions-dialog {
   padding: 8px 16px;
@@ -40,7 +40,9 @@
     align-items: center;
     gap: 10px;
 
-    mat-icon { color: v.$navy-500; }
+    mat-icon {
+      color: v.$navy-500;
+    }
 
     span {
       font-weight: 700;
@@ -71,13 +73,17 @@
     margin-bottom: 16px;
     color: v.$color-rose-700;
 
-    mat-icon { font-size: 20px; }
+    mat-icon {
+      font-size: 20px;
+    }
 
     &-text {
       display: flex;
       flex-direction: column;
       font-size: 12px;
-      strong { font-weight: 700; }
+      strong {
+        font-weight: 700;
+      }
     }
   }
 

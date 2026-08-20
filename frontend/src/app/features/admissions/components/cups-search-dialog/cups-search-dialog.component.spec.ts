@@ -1,13 +1,10 @@
 // @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (búsqueda de CUPS)
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { of, throwError } from 'rxjs';
-import {
-  CupsSearchDialogComponent,
-  CupsSearchDialogData,
-} from './cups-search-dialog.component';
-import { CatalogService } from '@core/services/catalog.service';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CupsPageResponse } from '@core/models/catalog.model';
+import { CatalogService } from '@core/services/catalog.service';
+import { of, throwError } from 'rxjs';
+import { CupsSearchDialogComponent, CupsSearchDialogData } from './cups-search-dialog.component';
 
 jest.setTimeout(6000);
 
@@ -47,7 +44,8 @@ describe('CupsSearchDialogComponent', () => {
 
   beforeEach(() => {
     apiService = {
-      searchCups: jest.fn()
+      searchCups: jest
+        .fn()
         .mockImplementation((_q: string, feeScheduleId: number, page: number) =>
           of(page === 1 ? firstPage : secondPage),
         ),

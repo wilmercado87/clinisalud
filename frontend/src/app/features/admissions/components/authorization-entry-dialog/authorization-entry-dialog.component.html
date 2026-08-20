@@ -12,12 +12,7 @@
           />
           <mat-form-field appearance="outline">
             <mat-label>N° Autorización</mat-label>
-            <input
-              matInput
-              [formControl]="entry.controls.authNumber"
-              placeholder="Número"
-              required
-            />
+            <input matInput [formControl]="entry.controls.authNumber" placeholder="Número" required />
             @if (errors()[$index]['authNumber']) {
               <mat-error>{{ errors()[$index]['authNumber'] }}</mat-error>
             }
@@ -30,20 +25,13 @@
           />
           <mat-form-field appearance="outline">
             <mat-label>Código MAPIISS</mat-label>
-            <input
-              matInput
-              [formControl]="entry.controls.mapiissCode"
-              readonly
-              required
-            />
+            <input matInput [formControl]="entry.controls.mapiissCode" readonly required />
             <button
               matSuffix
               mat-icon-button
               type="button"
               (click)="openCupsSearch($index)"
-              [disabled]="
-                entry.controls.feeScheduleId.value === null || entry.controls.authTypeId.value === null
-              "
+              [disabled]="entry.controls.feeScheduleId.value === null || entry.controls.authTypeId.value === null"
             >
               <mat-icon>search</mat-icon>
             </button>
@@ -53,14 +41,7 @@
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Cantidad</mat-label>
-            <input
-              matInput
-              type="number"
-              [formControl]="entry.controls.quantity"
-              min="1"
-              placeholder="1"
-              required
-            />
+            <input matInput type="number" [formControl]="entry.controls.quantity" min="1" placeholder="1" required />
             @if (entry.controls.maxQuantity.value !== null) {
               <mat-hint>Máx: {{ entry.controls.maxQuantity.value }}</mat-hint>
             }
@@ -100,8 +81,6 @@
   </mat-dialog-content>
   <mat-dialog-actions align="end" class="auth-dialog__actions">
     <button mat-stroked-button type="button" (click)="cancel()">Cancelar</button>
-    <button mat-raised-button color="primary" type="button" [disabled]="!canApply()" (click)="apply()">
-      Aplicar
-    </button>
+    <button mat-raised-button color="primary" type="button" [disabled]="!canApply()" (click)="apply()">Aplicar</button>
   </mat-dialog-actions>
 </div>

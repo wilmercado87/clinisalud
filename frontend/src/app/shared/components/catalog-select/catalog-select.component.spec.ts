@@ -1,24 +1,18 @@
 // @spec:COM-CAT-01 — Validación de selección requerida (rojo tras entrar y salir, mensaje por campo)
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatOption } from '@angular/material/core';
 import { By } from '@angular/platform-browser';
+import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { of } from 'rxjs';
 import { CatalogSelectComponent } from './catalog-select.component';
-import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 
 @Component({
   selector: 'app-catalog-select-host',
   standalone: true,
   imports: [CatalogSelectComponent, ReactiveFormsModule],
-  template: `
-    <app-catalog-select
-      catalogType="fee-schedules"
-      label="Tarifario"
-      [formControl]="control"
-    />
-  `,
+  template: ` <app-catalog-select catalogType="fee-schedules" label="Tarifario" [formControl]="control" /> `,
 })
 class HostComponent {
   control = new FormControl<number | null>(null, Validators.required);
@@ -29,12 +23,7 @@ class HostComponent {
   standalone: true,
   imports: [CatalogSelectComponent, ReactiveFormsModule],
   template: `
-    <app-catalog-select
-      catalogType="fee-schedules"
-      label="Tarifario"
-      [formControl]="control"
-      [required]="required"
-    />
+    <app-catalog-select catalogType="fee-schedules" label="Tarifario" [formControl]="control" [required]="required" />
   `,
 })
 class RequiredInputHostComponent {
@@ -80,8 +69,7 @@ describe('CatalogSelectComponent', () => {
           useValue: {
             getCatalog: () => [],
             versionOf: () => 0,
-            loadCatalog: (type: string) =>
-              of(type === 'beds' ? BEDS_FIXTURE : []),
+            loadCatalog: (type: string) => of(type === 'beds' ? BEDS_FIXTURE : []),
           },
         },
       ],
@@ -93,9 +81,7 @@ describe('CatalogSelectComponent', () => {
   });
 
   function component(): CatalogSelectComponent {
-    return fixture.debugElement.query(
-      (el) => el.componentInstance instanceof CatalogSelectComponent,
-    ).componentInstance;
+    return fixture.debugElement.query((el) => el.componentInstance instanceof CatalogSelectComponent).componentInstance;
   }
 
   it('no muestra error hasta que el usuario entra y sale del campo', () => {
@@ -114,7 +100,7 @@ describe('CatalogSelectComponent', () => {
 
   it('muestra Ingreso no válido cuando se escribe un valor que no está en el listado', () => {
     const cmp = component();
-    cmp.onInput({ target: { value: "Inexistente" } } as unknown as Event);
+    cmp.onInput({ target: { value: 'Inexistente' } } as unknown as Event);
     cmp.onBlur();
 
     expect(cmp.optionInvalid()).toBe(true);
@@ -164,9 +150,8 @@ describe('CatalogSelectComponent', () => {
     const hostFixture = TestBed.createComponent(RequiredInputHostComponent);
     hostFixture.componentInstance.required = true;
     hostFixture.detectChanges();
-    const cmp = hostFixture.debugElement.query(
-      (el) => el.componentInstance instanceof CatalogSelectComponent,
-    ).componentInstance as CatalogSelectComponent;
+    const cmp = hostFixture.debugElement.query((el) => el.componentInstance instanceof CatalogSelectComponent)
+      .componentInstance as CatalogSelectComponent;
 
     expect(cmp.isRequired()).toBe(true);
 
@@ -180,9 +165,8 @@ describe('CatalogSelectComponent', () => {
     hostFixture.componentInstance.includeOccupiedBeds = false;
     hostFixture.detectChanges();
     await hostFixture.whenStable();
-    const cmp = hostFixture.debugElement.query(
-      (el) => el.componentInstance instanceof CatalogSelectComponent,
-    ).componentInstance as CatalogSelectComponent;
+    const cmp = hostFixture.debugElement.query((el) => el.componentInstance instanceof CatalogSelectComponent)
+      .componentInstance as CatalogSelectComponent;
 
     expect(cmp.items().map((item) => item.id)).toEqual([2]);
     expect(cmp.isOptionDisabled(cmp.items()[0])).toBe(false);
@@ -206,9 +190,8 @@ describe('CatalogSelectComponent', () => {
     hostFixture.componentInstance.includeOccupiedBeds = true;
     hostFixture.detectChanges();
     await hostFixture.whenStable();
-    const cmp = hostFixture.debugElement.query(
-      (el) => el.componentInstance instanceof CatalogSelectComponent,
-    ).componentInstance as CatalogSelectComponent;
+    const cmp = hostFixture.debugElement.query((el) => el.componentInstance instanceof CatalogSelectComponent)
+      .componentInstance as CatalogSelectComponent;
 
     cmp.writeValue(1);
     hostFixture.detectChanges();
@@ -228,9 +211,8 @@ describe('CatalogSelectComponent', () => {
     hostFixture.componentInstance.includeOccupiedBeds = true;
     hostFixture.detectChanges();
     await hostFixture.whenStable();
-    const cmp = hostFixture.debugElement.query(
-      (el) => el.componentInstance instanceof CatalogSelectComponent,
-    ).componentInstance as CatalogSelectComponent;
+    const cmp = hostFixture.debugElement.query((el) => el.componentInstance instanceof CatalogSelectComponent)
+      .componentInstance as CatalogSelectComponent;
 
     cmp.writeValue(2);
     hostFixture.detectChanges();
@@ -249,9 +231,8 @@ describe('CatalogSelectComponent', () => {
     hostFixture.componentInstance.clearable = false;
     hostFixture.detectChanges();
     await hostFixture.whenStable();
-    const cmp = hostFixture.debugElement.query(
-      (el) => el.componentInstance instanceof CatalogSelectComponent,
-    ).componentInstance as CatalogSelectComponent;
+    const cmp = hostFixture.debugElement.query((el) => el.componentInstance instanceof CatalogSelectComponent)
+      .componentInstance as CatalogSelectComponent;
 
     cmp.writeValue(1);
     hostFixture.detectChanges();
@@ -267,9 +248,8 @@ describe('CatalogSelectComponent', () => {
     hostFixture.componentInstance.includeOccupiedBeds = true;
     hostFixture.detectChanges();
     await hostFixture.whenStable();
-    const cmp = hostFixture.debugElement.query(
-      (el) => el.componentInstance instanceof CatalogSelectComponent,
-    ).componentInstance as CatalogSelectComponent;
+    const cmp = hostFixture.debugElement.query((el) => el.componentInstance instanceof CatalogSelectComponent)
+      .componentInstance as CatalogSelectComponent;
 
     cmp.writeValue(1);
     hostFixture.detectChanges();

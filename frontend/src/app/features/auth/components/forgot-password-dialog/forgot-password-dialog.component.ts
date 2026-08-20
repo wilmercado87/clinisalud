@@ -1,14 +1,14 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { toSignal, rxResource } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { of } from 'rxjs';
 
 import { AuthService } from '@core/services/auth.service';
 import { extractFieldErrors } from '@shared/utils/form-field-errors';
@@ -22,7 +22,16 @@ const FORGOT_ERROR_RULES = {
 
 @Component({
   selector: 'app-forgot-password-dialog',
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+  ],
   templateUrl: './forgot-password-dialog.component.html',
   styleUrl: './forgot-password-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,10 +45,7 @@ export class ForgotPasswordDialogComponent {
     email: ['', [Validators.required, Validators.email]],
   });
 
-  private readonly formStatusSignal = toSignal(
-    this.form.statusChanges,
-    { initialValue: this.form.status },
-  );
+  private readonly formStatusSignal = toSignal(this.form.statusChanges, { initialValue: this.form.status });
 
   public readonly userErrors = computed(() => {
     this.formStatusSignal();
@@ -60,9 +66,7 @@ export class ForgotPasswordDialogComponent {
   public readonly sent = computed(() => !!this.sendResource.value());
   public readonly sendError = this.sendResource.error;
 
-  public canSubmit = computed(() =>
-    this.formStatusSignal() === 'VALID' && !this.isSending()
-  );
+  public canSubmit = computed(() => this.formStatusSignal() === 'VALID' && !this.isSending());
 
   public onSend(): void {
     if (!this.canSubmit()) return;

@@ -1,7 +1,28 @@
-import { computed, DestroyRef, effect, inject, Injectable, signal } from '@angular/core';
+import { computed, DestroyRef, effect, inject, Injectable, signal, Signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AdmissionStore } from '@features/admissions/store/admission.store';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
+import { AdmissionAuthorization, PatientLookupResponse } from '@features/admissions/models/admissions.model';
+import { AdmissionStore } from '@features/admissions/store/admission.store';
+import {
+  applyAdmissionFormState,
+  buildAdmissionRequest,
+  buildUpdateAdmissionRequest,
+  hasPendingAdmissionChanges,
+} from '@features/admissions/utils/admission/admission-form.builder';
+import {
+  createAdmissionForm,
+  createCompanionForm,
+  createPatientForm,
+} from '@features/admissions/utils/admission/admission-form.factory';
+import {
+  AdmissionForm,
+  AdmissionFormValue,
+  CompanionForm,
+  CompanionFormValue,
+  FormMode,
+  PatientForm,
+  PatientFormValue,
+} from '@features/admissions/utils/admission/admission-form.types';
 import {
   ADMISSION_ERROR_RULES,
   applyRequiredValidators,
@@ -11,44 +32,22 @@ import {
   createPatientFormatValidators,
   PATIENT_ERROR_RULES,
   PATIENT_REQUIRED_KEYS,
-} from '@features/admissions/utils/admission-form-validator';
-import { extractFieldErrors } from '@shared/utils/form-field-errors';
+} from '@features/admissions/utils/admission/admission-form.validator';
+import { patientToFormValue } from '@features/admissions/utils/admission/admission.mapper';
+import { createAuthorizationForm } from '@features/admissions/utils/authorization/authorization-form.factory';
+import {
+  AuthorizationFormGroup,
+  AuthorizationFormValue,
+} from '@features/admissions/utils/authorization/authorization-form.types';
 import { formatBedLabel, toAuthRowViewModel } from '@shared/utils/catalog-mapper';
-import { ADMISSION_MESSAGES, formatMessage } from '@shared/utils/messages';
-import {
-  AdmissionAuthorization,
-  PatientLookupResponse,
-} from '@features/admissions/models/admissions.model';
-import { startOfToday } from '@shared/utils/form-validators';
-import { HTTP_STATUS } from '@shared/utils/status.codes';
-import { getHttpErrorMessage, getHttpErrorStatus } from '@shared/utils/http-error';
-import { patientToFormValue } from '@features/admissions/utils/admission.mapper';
 import { calculateAge } from '@shared/utils/date-utils';
+import { createFormFeedback, FormFeedback } from '@shared/utils/form-feedback';
+import { extractFieldErrors } from '@shared/utils/form-field-errors';
 import { trackFormSignals } from '@shared/utils/form-tracking';
-import {
-  AdmissionForm,
-  AdmissionFormValue,
-  AuthFormGroup,
-  AuthFormValue,
-  CompanionForm,
-  CompanionFormValue,
-  FormFeedback,
-  FormMode,
-  PatientForm,
-  PatientFormValue,
-} from '@features/admissions/utils/admission-form.types';
-import {
-  createAdmissionForm,
-  createAuthEntryForm,
-  createCompanionForm,
-  createPatientForm,
-} from '@features/admissions/utils/admission-form.factory';
-import {
-  applyAdmissionFormState,
-  buildAdmissionRequest,
-  buildUpdateAdmissionRequest,
-  hasPendingAdmissionChanges,
-} from '@features/admissions/utils/admission-form.builder';
+import { startOfToday } from '@shared/utils/form-validators';
+import { getHttpErrorMessage, getHttpErrorStatus } from '@shared/utils/http-error';
+import { ADMISSION_MESSAGES, formatMessage } from '@shared/utils/messages';
+import { HTTP_STATUS } from '@shared/utils/status.codes';
 
 @Injectable()
 export class AdmissionFormFacade {
@@ -63,8 +62,9 @@ export class AdmissionFormFacade {
   readonly admissionForm: AdmissionForm = createAdmissionForm();
 
   readonly mode = signal<FormMode>('IDLE');
-  readonly feedback = signal<FormFeedback | null>(null);
-  readonly authEntries = signal<AuthFormGroup[]>([]);
+  private readonly feedbackController = createFormFeedback();
+  readonly feedback: Signal<FormFeedback | null> = this.feedbackController.signal;
+  readonly authEntries = signal<AuthorizationFormGroup[]>([]);
   readonly existingAuthorizations = signal<AdmissionAuthorization[]>([]);
   readonly companionActive = signal(false);
   readonly resetToken = signal(0);
@@ -89,10 +89,7 @@ export class AdmissionFormFacade {
   readonly isUpdatingMode = computed(() => this.mode() === 'FOUND' && !!this.activeAdmission());
 
   readonly occupiedBedLabel = computed(() =>
-    formatBedLabel(
-      this.catalogStore.getCatalog('beds'),
-      this.activeAdmission()?.roomId ?? null,
-    ),
+    formatBedLabel(this.catalogStore.getCatalog('beds'), this.activeAdmission()?.roomId ?? null),
   );
 
   readonly patientErrors = computed(() => {
@@ -184,7 +181,7 @@ export class AdmissionFormFacade {
     const docTypeId = this.patientForm.controls.documentTypeId.value;
     const doc = this.patientForm.controls.document.value?.trim();
     if (!docTypeId || !doc) {
-      this.setFeedback('info', ADMISSION_MESSAGES.PATIENT_LOOKUP_INVALID_INPUT);
+      this.feedbackController.set('info', ADMISSION_MESSAGES.PATIENT_LOOKUP_INVALID_INPUT);
       return;
     }
 
@@ -193,7 +190,7 @@ export class AdmissionFormFacade {
 
     this.lastSearchKey.set(searchKey);
 
-    this.clearFeedback();
+    this.feedbackController.clear();
     this.mode.set('SEARCHING');
     this.applyFormState();
     this.lookupRequested = true;
@@ -215,7 +212,7 @@ export class AdmissionFormFacade {
   }
 
   onCancel(): void {
-    this.clearFeedback();
+    this.feedbackController.clear();
     this.lastSearchKey.set(null);
     this.resetAll();
   }
@@ -227,16 +224,16 @@ export class AdmissionFormFacade {
     }
 
     if (!this.canSubmit()) {
-      this.setFeedback('info', ADMISSION_MESSAGES.REQUIRED_FIELDS);
+      this.feedbackController.set('info', ADMISSION_MESSAGES.REQUIRED_FIELDS);
       return;
     }
 
     if (this.activeAdmission()) {
-      this.setFeedback('info', ADMISSION_MESSAGES.ACTIVE_ADMISSION_INFO);
+      this.feedbackController.set('info', ADMISSION_MESSAGES.ACTIVE_ADMISSION_INFO);
       return;
     }
 
-    this.clearFeedback();
+    this.feedbackController.clear();
     const isNew = this.mode() === 'NOT_FOUND';
     this.store.createAdmission(
       buildAdmissionRequest({
@@ -250,9 +247,9 @@ export class AdmissionFormFacade {
     );
   }
 
-  appendAuthEntries(values: AuthFormValue[]): void {
+  appendAuthEntries(values: AuthorizationFormValue[]): void {
     const entries = values.map((value) => {
-      const fg = createAuthEntryForm();
+      const fg = createAuthorizationForm();
       fg.patchValue(value);
       return fg;
     });
@@ -279,14 +276,14 @@ export class AdmissionFormFacade {
 
   private submitUpdate(): void {
     if (!this.canSubmit()) {
-      this.setFeedback('info', ADMISSION_MESSAGES.UPDATE_REQUIRED_FIELDS);
+      this.feedbackController.set('info', ADMISSION_MESSAGES.UPDATE_REQUIRED_FIELDS);
       return;
     }
 
     const activeAdmission = this.activeAdmission();
     if (!activeAdmission) return;
 
-    this.clearFeedback();
+    this.feedbackController.clear();
     this.store.updateAdmission(
       activeAdmission.admissionNumber,
       buildUpdateAdmissionRequest({
@@ -363,7 +360,7 @@ export class AdmissionFormFacade {
       return;
     }
     this.mode.set('IDLE');
-    this.setFeedback('error', getHttpErrorMessage(err, ADMISSION_MESSAGES.PATIENT_LOOKUP_ERROR));
+    this.feedbackController.set('error', getHttpErrorMessage(err, ADMISSION_MESSAGES.PATIENT_LOOKUP_ERROR));
     this.applyFormState();
   }
 
@@ -381,7 +378,7 @@ export class AdmissionFormFacade {
       });
       this.existingAuthorizations.set(activeAdmission.authorizations);
       if (this.feedback()?.type !== 'success') {
-        this.setFeedback(
+        this.feedbackController.set(
           'info',
           formatMessage(ADMISSION_MESSAGES.ACTIVE_ADMISSION_UPDATE_HINT, {
             admissionNumber: activeAdmission.admissionNumber,
@@ -397,7 +394,7 @@ export class AdmissionFormFacade {
   private watchCreateResult(): void {
     const result = this.createResult();
     if (result && 'admissionNumber' in result) {
-      this.setFeedback(
+      this.feedbackController.set(
         'success',
         formatMessage(ADMISSION_MESSAGES.ADMISSION_CREATED, {
           admissionNumber: result.admissionNumber,
@@ -412,14 +409,14 @@ export class AdmissionFormFacade {
   private watchCreateError(): void {
     const err = this.createError();
     if (err) {
-      this.setFeedback('error', getHttpErrorMessage(err, ADMISSION_MESSAGES.ADMISSION_CREATE_ERROR));
+      this.feedbackController.set('error', getHttpErrorMessage(err, ADMISSION_MESSAGES.ADMISSION_CREATE_ERROR));
     }
   }
 
   private watchUpdateResult(): void {
     const result = this.updateResult();
     if (result && 'admissionNumber' in result) {
-      this.setFeedback(
+      this.feedbackController.set(
         'success',
         formatMessage(ADMISSION_MESSAGES.ADMISSION_UPDATED, {
           admissionNumber: result.admissionNumber,
@@ -435,7 +432,7 @@ export class AdmissionFormFacade {
   private watchUpdateError(): void {
     const err = this.updateError();
     if (err) {
-      this.setFeedback('error', getHttpErrorMessage(err, ADMISSION_MESSAGES.ADMISSION_UPDATE_ERROR));
+      this.feedbackController.set('error', getHttpErrorMessage(err, ADMISSION_MESSAGES.ADMISSION_UPDATE_ERROR));
     }
   }
 
@@ -464,12 +461,7 @@ export class AdmissionFormFacade {
     const lastName = this.companionForm.controls.lastName.value?.trim();
     const active = Boolean(firstName || lastName);
     this.companionActive.set(active);
-    applyRequiredValidators(
-      this.companionForm,
-      COMPANION_REQUIRED_KEYS,
-      COMPANION_FORMAT_VALIDATORS,
-      active,
-    );
+    applyRequiredValidators(this.companionForm, COMPANION_REQUIRED_KEYS, COMPANION_FORMAT_VALIDATORS, active);
   }
 
   private clearBlurTimer(): void {
@@ -477,13 +469,5 @@ export class AdmissionFormFacade {
       clearTimeout(this.blurTimer);
       this.blurTimer = null;
     }
-  }
-
-  private setFeedback(type: FormFeedback['type'], message: string): void {
-    this.feedback.set({ type, message });
-  }
-
-  private clearFeedback(): void {
-    this.feedback.set(null);
   }
 }

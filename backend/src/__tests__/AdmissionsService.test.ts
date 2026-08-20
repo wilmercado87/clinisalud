@@ -344,6 +344,62 @@ describe("AdmissionsService", () => {
       );
     });
 
+    it("should reject authorizations whose accumulated quantity exceeds the patient max (INV-ADM-02)", async () => {
+      const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+      jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+
+      jest.spyOn(Paciente, "findOne").mockResolvedValue(null as any);
+      jest.spyOn(Paciente, "create").mockResolvedValue({ id: 1, toJSON: () => ({ id: 1 }) } as any);
+      jest.spyOn(Convenio, "findByPk").mockResolvedValue({ idEps: 1 } as any);
+      jest.spyOn(TipoAutorizacion, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Tarifario, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-001", maxQuantity: 10, feeScheduleId: 1 } as any);
+
+      await expect(
+        service.createAdmission(
+          {
+            ...validData,
+            roomId: undefined,
+            authorizations: [
+              { authTypeId: 1, authNumber: "AUTH-001", mapiissCode: "CUP-001", quantity: 6, feeScheduleId: 1 },
+              { authTypeId: 2, authNumber: "AUTH-002", mapiissCode: "CUP-001", quantity: 6, feeScheduleId: 1 },
+            ],
+          },
+          1,
+          "admin@test.com",
+          "SUPER_ADMIN",
+        ),
+      ).rejects.toThrow("supera la cantidad de procedimientos por paciente");
+    });
+
+    it("should reject two authorizations with the same number, CUPS and tariff (INV-ADM-02)", async () => {
+      const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+      jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+
+      jest.spyOn(Paciente, "findOne").mockResolvedValue(null as any);
+      jest.spyOn(Paciente, "create").mockResolvedValue({ id: 1, toJSON: () => ({ id: 1 }) } as any);
+      jest.spyOn(Convenio, "findByPk").mockResolvedValue({ idEps: 1 } as any);
+      jest.spyOn(TipoAutorizacion, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Tarifario, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-001", maxQuantity: 10, feeScheduleId: 1 } as any);
+
+      await expect(
+        service.createAdmission(
+          {
+            ...validData,
+            roomId: undefined,
+            authorizations: [
+              { authTypeId: 1, authNumber: "AUTH-001", mapiissCode: "CUP-001", quantity: 1, feeScheduleId: 1 },
+              { authTypeId: 2, authNumber: "AUTH-001", mapiissCode: "CUP-001", quantity: 1, feeScheduleId: 1 },
+            ],
+          },
+          1,
+          "admin@test.com",
+          "SUPER_ADMIN",
+        ),
+      ).rejects.toThrow("ya existe para esta admisión");
+    });
+
     it("should reject duplicate patient document (INV-ADM-01)", async () => {
       const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
       jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
@@ -779,7 +835,7 @@ describe("AdmissionsService", () => {
       createAdmissionMock(null);
       jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
       jest.spyOn(Autorizacion, "findAll").mockResolvedValue([
-        { authTypeId: 1, mapiissCode: "CUP-001", feeScheduleId: 1 },
+        { authTypeId: 1, authNumber: "AUTH-000", mapiissCode: "CUP-001", feeScheduleId: 1 },
       ] as any);
 
       await expect(
@@ -789,6 +845,54 @@ describe("AdmissionsService", () => {
           ],
         }, 1),
       ).rejects.toThrow("ya existe para esta admisión");
+      expect(Autorizacion.bulkCreate).not.toHaveBeenCalled();
+    });
+
+    it("should reject an authorization whose number, CUPS and tariff already exist (INV-ADM-02)", async () => {
+      createAdmissionMock(null);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      jest.spyOn(Autorizacion, "findAll").mockResolvedValue([
+        { authTypeId: 2, authNumber: "AUTH-001", mapiissCode: "CUP-001", feeScheduleId: 1 },
+      ] as any);
+      jest.spyOn(TipoAutorizacion, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Tarifario, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({
+        mapiissCode: "CUP-001",
+        maxQuantity: 10,
+        feeScheduleId: 1,
+      } as any);
+
+      await expect(
+        service.updateAdmission(admissionNumber, {
+          authorizations: [
+            { authTypeId: 1, authNumber: "AUTH-001", mapiissCode: "CUP-001", quantity: 1, feeScheduleId: 1 },
+          ],
+        }, 1),
+      ).rejects.toThrow("ya existe para esta admisión");
+      expect(Autorizacion.bulkCreate).not.toHaveBeenCalled();
+    });
+
+    it("should reject authorizations when the accumulated quantity with existing ones exceeds the max (INV-ADM-02)", async () => {
+      createAdmissionMock(null);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      jest.spyOn(Autorizacion, "findAll").mockResolvedValue([
+        { authTypeId: 1, authNumber: "AUTH-000", mapiissCode: "CUP-001", quantity: 8, feeScheduleId: 1 },
+      ] as any);
+      jest.spyOn(TipoAutorizacion, "findByPk").mockResolvedValue({ id: 2 } as any);
+      jest.spyOn(Tarifario, "findByPk").mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(Cups, "findOne").mockResolvedValue({
+        mapiissCode: "CUP-001",
+        maxQuantity: 10,
+        feeScheduleId: 1,
+      } as any);
+
+      await expect(
+        service.updateAdmission(admissionNumber, {
+          authorizations: [
+            { authTypeId: 2, authNumber: "AUTH-001", mapiissCode: "CUP-001", quantity: 3, feeScheduleId: 1 },
+          ],
+        }, 1),
+      ).rejects.toThrow("supera la cantidad de procedimientos por paciente");
       expect(Autorizacion.bulkCreate).not.toHaveBeenCalled();
     });
 

@@ -1,32 +1,23 @@
-import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatIconModule } from '@angular/material/icon';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatOptionModule } from '@angular/material/core';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 
-import { UserStore } from '@features/dashboard/store/user-store/user.store';
-import { CreateUserRequest } from '@core/models/user.model';
-import { RoleStore } from '@core/stores/role-store/role.store';
-import { AuthStore } from '@core/stores/auth-store/auth.store';
+import { CreateUserRequest, MenuOption } from '@core/models/user.model';
 import { ToastService } from '@core/services/toast.service';
-import { MenuOption } from '@core/models/user.model';
-import { ERROR_MAPPING, HTTP_STATUS } from '@shared/utils/status.codes';
-import { getBusinessErrorMessage, getHttpErrorMessage } from '@shared/utils/http-error';
-import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
-import { ROLE_CODES } from '@shared/utils/role-constants';
-import { USER_ERROR_RULES } from '@features/dashboard/utils/user-form-validator';
-import { extractFieldErrors } from '@shared/utils/form-field-errors';
-import { USER_MESSAGES } from '@shared/utils/messages';
+import { AuthStore } from '@core/stores/auth-store/auth.store';
+import { RoleStore } from '@core/stores/role-store/role.store';
+import { UserStore } from '@features/dashboard/store/user-store/user.store';
 import {
   allMenuOptionIds,
   collectGroupIds,
@@ -34,6 +25,13 @@ import {
   toggleChildSelection,
   toggleParentSelection,
 } from '@features/dashboard/utils/menu-selection-utils';
+import { USER_ERROR_RULES } from '@features/dashboard/utils/user-form-validator';
+import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
+import { extractFieldErrors } from '@shared/utils/form-field-errors';
+import { getBusinessErrorMessage, getHttpErrorMessage } from '@shared/utils/http-error';
+import { USER_MESSAGES } from '@shared/utils/messages';
+import { ROLE_CODES } from '@shared/utils/role-constants';
+import { ERROR_MAPPING, HTTP_STATUS } from '@shared/utils/status.codes';
 
 const ALREADY_EXISTS_FIELD: Record<string, string> = {
   EMAIL_EXISTS: 'email',
@@ -42,7 +40,20 @@ const ALREADY_EXISTS_FIELD: Record<string, string> = {
 
 @Component({
   selector: 'app-user-form-dialog',
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatCheckboxModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, CatalogSelectComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatOptionModule,
+    MatCheckboxModule,
+    MatIconModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    CatalogSelectComponent,
+  ],
   templateUrl: './user-form-dialog.component.html',
   styleUrl: './user-form-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,10 +85,9 @@ export class UserFormDialogComponent {
     roleId: [null as number | null, Validators.required],
   });
 
-  private readonly roleIdSignal = toSignal(
-    this.userForm.controls['roleId'].valueChanges,
-    { initialValue: this.userForm.controls['roleId'].value }
-  );
+  private readonly roleIdSignal = toSignal(this.userForm.controls['roleId'].valueChanges, {
+    initialValue: this.userForm.controls['roleId'].value,
+  });
 
   private formSubmitted = false;
 
@@ -97,20 +107,20 @@ export class UserFormDialogComponent {
   public availableRoles = computed(() => {
     const items = this.roles() ?? [];
     if (this.isCurrentUserSuperAdmin()) return items;
-    return items.filter(r => r.code !== ROLE_CODES.SUPER_ADMIN);
+    return items.filter((r) => r.code !== ROLE_CODES.SUPER_ADMIN);
   });
 
   public isAdmin = computed(() => {
     const roleId = this.roleIdSignal();
     const items = this.roles() ?? [];
-    const selectedRole = items.find(r => r.id === roleId);
+    const selectedRole = items.find((r) => r.id === roleId);
     return selectedRole?.code === ROLE_CODES.ADMIN || selectedRole?.code === ROLE_CODES.SUPER_ADMIN;
   });
 
   public isSuperAdminRole = computed(() => {
     const roleId = this.roleIdSignal();
     const items = this.roles() ?? [];
-    return items.find(r => r.id === roleId)?.code === ROLE_CODES.SUPER_ADMIN;
+    return items.find((r) => r.id === roleId)?.code === ROLE_CODES.SUPER_ADMIN;
   });
 
   public isPermissionsLocked = computed(() => this.isSuperAdminRole());
@@ -118,13 +128,13 @@ export class UserFormDialogComponent {
   public filteredMenuOptions = computed(() => {
     const items = this.menuOptions() ?? [];
     const roleId = this.roleIdSignal();
-    const selectedRole = (this.roles() ?? []).find(r => r.id === roleId);
+    const selectedRole = (this.roles() ?? []).find((r) => r.id === roleId);
     const hideGestor =
       selectedRole?.code === ROLE_CODES.MEDICO ||
       selectedRole?.code === ROLE_CODES.FACTURADOR ||
       selectedRole?.code === ROLE_CODES.ADMISIONES;
     if (!hideGestor) return items;
-    return items.filter(g => !isUserManagerGroup(g));
+    return items.filter((g) => !isUserManagerGroup(g));
   });
 
   private gestorUsuariosIds = computed<Set<number>>(() => {
@@ -136,22 +146,20 @@ export class UserFormDialogComponent {
   public isGestorUsuariosForced = computed(() => {
     const roleId = this.roleIdSignal();
     const items = this.roles() ?? [];
-    const selectedRole = items.find(r => r.id === roleId);
+    const selectedRole = items.find((r) => r.id === roleId);
     return selectedRole?.code === ROLE_CODES.ADMIN;
   });
 
   public effectiveSelectedIds = computed(() => {
     const ids = new Set(this.selectedIds());
     if (this.isGestorUsuariosForced()) {
-      this.gestorUsuariosIds().forEach(id => ids.add(id));
+      this.gestorUsuariosIds().forEach((id) => ids.add(id));
     }
     return ids;
   });
 
-  public canSubmit = computed(() =>
-    this.formStatus() === 'VALID' &&
-    this.effectiveSelectedIds().size > 0 &&
-    !this.isCreating()
+  public canSubmit = computed(
+    () => this.formStatus() === 'VALID' && this.effectiveSelectedIds().size > 0 && !this.isCreating(),
   );
 
   constructor() {

@@ -1,5 +1,5 @@
-import { signal, computed, effect, Signal } from '@angular/core';
-import { NotificationUI, NotificationDetailUI } from '@core/models/notification.model';
+import { computed, effect, signal, Signal } from '@angular/core';
+import { NotificationDetailUI, NotificationUI } from '@core/models/notification.model';
 import { getNotificationTypeLabel } from '@core/utils/notification.mapper';
 import { formatNotificationDate } from '@shared/utils/date-utils';
 
@@ -40,39 +40,38 @@ export function createNotificationFilter(dataNotifications: Signal<NotificationU
 
   const uniqueRoles = computed<string[]>(() => {
     const items = dataNotifications();
-    const rawRoles = items.map(n => n.actorRole);
-    return Array.from(new Set(rawRoles)).sort(
-      (a, b) => a.localeCompare(b)
-    );
+    const rawRoles = items.map((n) => n.actorRole);
+    return Array.from(new Set(rawRoles)).sort((a, b) => a.localeCompare(b));
   });
 
   const uniqueTypes = computed<{ type: string; label: string }[]>(() => {
     const items = dataNotifications();
-    const rawTypes = items.map(n => n.type);
-    return Array.from(new Set(rawTypes)).map(type => ({
+    const rawTypes = items.map((n) => n.type);
+    return Array.from(new Set(rawTypes)).map((type) => ({
       type,
-      label: getNotificationTypeLabel(type)
+      label: getNotificationTypeLabel(type),
     }));
   });
 
   const filteredNotifications = computed<NotificationDetailUI[]>(() => {
     const items = dataNotifications();
-    const filtered = items.filter(n => evaluateCriteria(n));
+    const filtered = items.filter((n) => evaluateCriteria(n));
     const sorted = sortItems(filtered, sortOrder());
-    return sorted.map(n => ({
+    return sorted.map((n) => ({
       ...n,
       typeLabel: getNotificationTypeLabel(n.type),
       formattedDate: formatNotificationDate(n.createdAt),
     }));
   });
 
-  const hasActiveFilters = computed<boolean>(() =>
-    searchQuery() !== '' ||
-    filterRole() !== ALL_TEXT ||
-    filterStatus() !== ALL_TEXT ||
-    filterType() !== ALL_TEXT ||
-    dateFrom() !== null ||
-    dateTo() !== null
+  const hasActiveFilters = computed<boolean>(
+    () =>
+      searchQuery() !== '' ||
+      filterRole() !== ALL_TEXT ||
+      filterStatus() !== ALL_TEXT ||
+      filterType() !== ALL_TEXT ||
+      dateFrom() !== null ||
+      dateTo() !== null,
   );
 
   function evaluateCriteria(n: NotificationUI): boolean {
@@ -97,7 +96,7 @@ export function createNotificationFilter(dataNotifications: Signal<NotificationU
     const ts = n.createdAtDate.getTime();
 
     const matchesFrom = !from || ts >= from.getTime();
-    const matchesTo = !to || ts <= (to.getTime() + 86400000);
+    const matchesTo = !to || ts <= to.getTime() + 86400000;
 
     return matchesFrom && matchesTo;
   }
@@ -120,7 +119,7 @@ export function createNotificationFilter(dataNotifications: Signal<NotificationU
   }
 
   function toggleSort(): void {
-    sortOrder.update(c => (c === 'newest' ? 'oldest' : 'newest'));
+    sortOrder.update((c) => (c === 'newest' ? 'oldest' : 'newest'));
   }
 
   return {

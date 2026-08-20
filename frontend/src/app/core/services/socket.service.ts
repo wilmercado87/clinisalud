@@ -1,7 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { io, Socket } from 'socket.io-client';
-import { environment } from '@env/environment';
+import { computed, Injectable, signal } from '@angular/core';
 import { NotificationResponse } from '@core/models/notification.model';
+import { environment } from '@env/environment';
+import { io, Socket } from 'socket.io-client';
 
 @Injectable({
   providedIn: 'root',

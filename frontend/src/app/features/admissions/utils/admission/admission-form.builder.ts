@@ -1,22 +1,22 @@
 import { FormGroup } from '@angular/forms';
-import { isBlank, toIsoDateString } from '@shared/utils/form-validators';
 import {
   AuthorizationData,
   CompanionData,
   CreateAdmissionRequest,
   UpdateAdmissionRequest,
 } from '@features/admissions/models/admissions.model';
+import { isBlank, toIsoDateString } from '@shared/utils/form-validators';
+import { AuthorizationFormGroup } from '../authorization/authorization-form.types';
+import { ADMISSION_KEYS, PATIENT_DATA_KEYS } from './admission-form.factory';
 import {
   AdmissionForm,
   AdmissionFormValue,
-  AuthFormGroup,
   CompanionForm,
   CompanionFormValue,
   FormMode,
   PatientForm,
   PatientFormValue,
 } from './admission-form.types';
-import { ADMISSION_KEYS, PATIENT_DATA_KEYS } from './admission-form.factory';
 
 export function toApiBirthDate(value: Date | string | null): string | undefined {
   if (!value) return undefined;
@@ -39,7 +39,7 @@ export function buildCompanionRequest(value: CompanionFormValue): CompanionData 
 }
 
 export function buildAuthorizationsRequest(
-  authForms: AuthFormGroup[],
+  authForms: AuthorizationFormGroup[],
   enabled: boolean,
 ): AuthorizationData[] | undefined {
   if (!enabled) return undefined;
@@ -57,7 +57,7 @@ export function buildAdmissionRequest(params: {
   patient: PatientFormValue;
   admission: AdmissionFormValue;
   companion: CompanionFormValue;
-  authForms: AuthFormGroup[];
+  authForms: AuthorizationFormGroup[];
   authorizationsEnabled: boolean;
 }): CreateAdmissionRequest {
   const { isNewPatient, patient, admission, companion, authForms, authorizationsEnabled } = params;
@@ -89,17 +89,10 @@ export function buildUpdateAdmissionRequest(params: {
   previousRoomId: number | null;
   observations?: string | null;
   previousObservations?: string | null;
-  authForms: AuthFormGroup[];
+  authForms: AuthorizationFormGroup[];
   authorizationsEnabled: boolean;
 }): UpdateAdmissionRequest {
-  const {
-    roomId,
-    previousRoomId,
-    observations,
-    previousObservations,
-    authForms,
-    authorizationsEnabled,
-  } = params;
+  const { roomId, previousRoomId, observations, previousObservations, authForms, authorizationsEnabled } = params;
 
   const request: UpdateAdmissionRequest = {};
   if (roomId && roomId !== previousRoomId) {
@@ -140,9 +133,7 @@ export function applyAdmissionFormState(
 
   PATIENT_DATA_KEYS.forEach((key) => setControl(forms.patient, key, dataEnabled && !updateOnly));
 
-  Object.keys(forms.companion.controls).forEach((key) =>
-    setControl(forms.companion, key, dataEnabled && !updateOnly),
-  );
+  Object.keys(forms.companion.controls).forEach((key) => setControl(forms.companion, key, dataEnabled && !updateOnly));
 
   ADMISSION_KEYS.forEach((key) => setControl(forms.admission, key, dataEnabled && !updateOnly));
 

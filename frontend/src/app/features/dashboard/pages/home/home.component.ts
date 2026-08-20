@@ -1,4 +1,4 @@
-import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { AuthStore } from '@core/stores/auth-store/auth.store';
 
 @Component({
@@ -11,7 +11,5 @@ import { AuthStore } from '@core/stores/auth-store/auth.store';
 export class HomeComponent {
   private readonly authStore = inject(AuthStore);
 
-  public userName = computed(() =>
-    this.authStore.currentUser()?.email.split('@')[0] || 'Usuario'
-  );
+  public userName = computed(() => this.authStore.currentUser()?.email.split('@')[0] || 'Usuario');
 }

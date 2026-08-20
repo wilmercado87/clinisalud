@@ -1,18 +1,19 @@
+import { CommonModule } from '@angular/common';
 import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
-  input,
+  computed,
+  DestroyRef,
+  effect,
   forwardRef,
   inject,
-  ChangeDetectionStrategy,
-  signal,
-  effect,
-  computed,
-  ViewChild,
   Injector,
-  AfterViewInit,
-  DestroyRef,
+  input,
+  signal,
+  ViewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ControlValueAccessor,
   FormControl,
@@ -21,18 +22,17 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { ErrorStateMatcher, MatOption } from '@angular/material/core';
-import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { CatalogOptionUI, mapCatalogItemToOption } from '@shared/utils/catalog-mapper';
 import { CATALOG_MESSAGES, formatMessage } from '@shared/utils/messages';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-catalog-select',
@@ -98,10 +98,7 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
 
   readonly errorMatcher: ErrorStateMatcher = {
     isErrorState: () =>
-      this.optionInvalid() ||
-      (this.requiredState() &&
-        this.touched() &&
-        (this.ngControl?.control?.invalid ?? false)),
+      this.optionInvalid() || (this.requiredState() && this.touched() && (this.ngControl?.control?.invalid ?? false)),
   };
 
   readonly resolvedErrorMessage = computed((): string | null => {
@@ -113,9 +110,7 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
     if (this.controlStatus() !== 'INVALID') return null;
 
     const label = this.label();
-    return label
-      ? formatMessage(CATALOG_MESSAGES.REQUIRED_FIELD, { field: label })
-      : CATALOG_MESSAGES.REQUIRED_DEFAULT;
+    return label ? formatMessage(CATALOG_MESSAGES.REQUIRED_FIELD, { field: label }) : CATALOG_MESSAGES.REQUIRED_DEFAULT;
   });
 
   private readonly loadTrigger = signal<string | null>(null);
@@ -139,9 +134,10 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
   readonly items = computed<CatalogOptionUI[]>(() => {
     const raw = this.itemsResource.value() ?? [];
     const type = this.catalogType();
-    const available = type === 'beds' && !this.includeOccupiedBeds()
-      ? raw.filter((item) => 'bedStatus' in item && item.bedStatus === 0)
-      : raw;
+    const available =
+      type === 'beds' && !this.includeOccupiedBeds()
+        ? raw.filter((item) => 'bedStatus' in item && item.bedStatus === 0)
+        : raw;
     return available.map((item) => mapCatalogItemToOption(type, item));
   });
 
@@ -156,8 +152,7 @@ export class CatalogSelectComponent implements ControlValueAccessor, AfterViewIn
     const term = this.searchTerm().trim().toLowerCase();
     const list = this.items();
     if (!term) return list;
-    const current =
-      this.value() !== null ? this.selectedDescription().trim().toLowerCase() : '';
+    const current = this.value() !== null ? this.selectedDescription().trim().toLowerCase() : '';
     if (term === current) return list;
     return list.filter((i) => i.description.toLowerCase().includes(term));
   });

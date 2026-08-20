@@ -1,9 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import {
-  provideHttpClientTesting,
-  HttpTestingController,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ToastService } from '@core/services/toast.service';
 
 import { CensusComponent } from './census.component';
@@ -34,9 +31,7 @@ describe('CensusComponent', () => {
     fixture = TestBed.createComponent(CensusComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    httpMock
-      .expectOne((r) => r.url.endsWith('/admissions/census'))
-      .flush([]);
+    httpMock.expectOne((r) => r.url.endsWith('/admissions/census')).flush([]);
     fixture.detectChanges();
   });
 

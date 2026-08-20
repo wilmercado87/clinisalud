@@ -1,14 +1,13 @@
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError } from 'rxjs';
 import { AuthStore } from '@core/stores/auth-store/auth.store';
+import { catchError, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authStore = inject(AuthStore);
   const token = authStore.getToken();
   const currentUser = authStore.currentUser();
-  const isAuthEndpoint =
-    req.url.includes('/auth/login') || req.url.includes('/auth/forgot-password');
+  const isAuthEndpoint = req.url.includes('/auth/login') || req.url.includes('/auth/forgot-password');
 
   if (token && currentUser && !currentUser.isActive && !isAuthEndpoint) {
     authStore.logout();
@@ -26,8 +25,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(cloned).pipe(
     catchError((error: HttpErrorResponse) => {
-      const isAuthEndpoint =
-        req.url.includes('/auth/login') || req.url.includes('/auth/forgot-password');
+      const isAuthEndpoint = req.url.includes('/auth/login') || req.url.includes('/auth/forgot-password');
       if ((error.status === 401 || error.status === 403) && !isAuthEndpoint) {
         authStore.logout();
       }

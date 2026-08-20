@@ -2,11 +2,6 @@ import { FormControl, FormGroup } from '@angular/forms';
 
 export type FormMode = 'IDLE' | 'SEARCHING' | 'FOUND' | 'NOT_FOUND';
 
-export type FormFeedback = {
-  type: 'success' | 'error' | 'info';
-  message: string;
-};
-
 export type PatientForm = FormGroup<{
   documentTypeId: FormControl<number | null>;
   document: FormControl<string>;
@@ -67,24 +62,4 @@ export type AdmissionFormValue = {
   epsId: number | null;
   roomId: number | null;
   observations: string;
-};
-
-export type AuthFormGroup = FormGroup<{
-  authTypeId: FormControl<number | null>;
-  authNumber: FormControl<string>;
-  feeScheduleId: FormControl<number | null>;
-  mapiissCode: FormControl<string>;
-  quantity: FormControl<number | null>;
-  description: FormControl<string>;
-  maxQuantity: FormControl<number | null>;
-}>;
-
-export type AuthFormValue = {
-  authTypeId: number | null;
-  authNumber: string;
-  feeScheduleId: number | null;
-  mapiissCode: string;
-  quantity: number | null;
-  description: string;
-  maxQuantity: number | null;
 };

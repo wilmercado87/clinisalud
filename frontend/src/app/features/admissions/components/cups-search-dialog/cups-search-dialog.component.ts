@@ -1,26 +1,19 @@
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  ChangeDetectionStrategy,
-  signal,
-} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { debounceTime, map, of } from 'rxjs';
-import { CatalogService } from '@core/services/catalog.service';
 import { CupsPageResponse, CupsSearchItem } from '@core/models/catalog.model';
+import { CatalogService } from '@core/services/catalog.service';
 import { getHttpErrorMessage } from '@shared/utils/http-error';
 import { ADMISSION_MESSAGES } from '@shared/utils/messages';
+import { debounceTime, map, of } from 'rxjs';
 
 export interface CupsSearchDialogData {
   feeScheduleId: number;
@@ -88,13 +81,7 @@ export class CupsSearchDialogComponent {
     loader: ({ request }) =>
       request.term.length >= CUPS_MIN_CHARS
         ? this.catalogApi
-            .searchCups(
-              request.term,
-              request.feeScheduleId,
-              request.page,
-              CUPS_PAGE_SIZE,
-              request.attentionLevelId,
-            )
+            .searchCups(request.term, request.feeScheduleId, request.page, CUPS_PAGE_SIZE, request.attentionLevelId)
             .pipe(map((resp) => ({ ...resp, page: request.page })))
         : of({ ...EMPTY_PAGE, page: request.page }),
   });
@@ -108,9 +95,7 @@ export class CupsSearchDialogComponent {
   );
 
   readonly hasMore = computed(() => this.items().length < this.total());
-  readonly summary = computed(() =>
-    this.total() === 0 ? '' : `${this.items().length} de ${this.total()}`,
-  );
+  readonly summary = computed(() => (this.total() === 0 ? '' : `${this.items().length} de ${this.total()}`));
 
   constructor() {
     this.registerEffects();

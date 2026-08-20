@@ -1,17 +1,17 @@
-import { Injectable, signal, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { inject, Injectable, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { of, tap } from 'rxjs';
-import { UserResponse, MenuOption } from '@core/models/user.model';
+import { Router } from '@angular/router';
 import { AuthResponse, LoginRequest } from '@core/models/auth.model';
+import { MenuOption, UserResponse } from '@core/models/user.model';
 import { AuthService } from '@core/services/auth.service';
-import { SocketService } from '@core/services/socket.service';
-import { RoleService } from '@core/services/roles.service';
 import { MenuService } from '@core/services/menu.service';
+import { RoleService } from '@core/services/roles.service';
+import { SocketService } from '@core/services/socket.service';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
-import { RoleStore } from '@core/stores/role-store/role.store';
 import { NotificationStore } from '@core/stores/notification-store/notification.store';
+import { RoleStore } from '@core/stores/role-store/role.store';
 import { UserStore } from '@features/dashboard/store/user-store/user.store';
+import { of, tap } from 'rxjs';
 
 const STORAGE_KEYS = {
   TOKEN: 'token',
@@ -45,9 +45,7 @@ export class AuthStore {
     request: () => this.loginTrigger(),
     loader: ({ request: credentials }) => {
       if (!credentials) return of(undefined);
-      return this.authApi.login(credentials).pipe(
-        tap((res) => this.saveSession(res)),
-      );
+      return this.authApi.login(credentials).pipe(tap((res) => this.saveSession(res)));
     },
   });
 
@@ -146,7 +144,9 @@ export class AuthStore {
     return !!this.getToken();
   }
 
-  public updateProfile(data: Partial<{ email: string; firstName: string; lastName: string; phone: string; address: string }>): void {
+  public updateProfile(
+    data: Partial<{ email: string; firstName: string; lastName: string; phone: string; address: string }>,
+  ): void {
     this.updateTrigger.set(data);
   }
 

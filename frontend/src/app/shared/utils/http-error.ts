@@ -6,9 +6,7 @@ export function getHttpErrorStatus(err: unknown): number | undefined {
 }
 
 export function getHttpErrorMessage(err: unknown, fallback: string): string {
-  return err instanceof HttpErrorResponse && err.error?.message
-    ? err.error.message
-    : fallback;
+  return err instanceof HttpErrorResponse && err.error?.message ? err.error.message : fallback;
 }
 
 export function getBusinessErrorMessage(error: HttpErrorResponse): string {

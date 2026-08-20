@@ -5,6 +5,6 @@ export class UiStore {
   public readonly isSidebarExpanded = signal(true);
 
   public toggleSidebar(): void {
-    this.isSidebarExpanded.update(val => !val);
+    this.isSidebarExpanded.update((val) => !val);
   }
 }

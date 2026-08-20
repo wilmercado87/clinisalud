@@ -1,10 +1,5 @@
-export const formatMessage = (
-  template: string,
-  params: Record<string, string | number>,
-): string =>
-  template.replace(/\{(\w+)\}/g, (match, key: string) =>
-    params[key] !== undefined ? String(params[key]) : match,
-  );
+export const formatMessage = (template: string, params: Record<string, string | number>): string =>
+  template.replace(/\{(\w+)\}/g, (match, key: string) => (params[key] !== undefined ? String(params[key]) : match));
 
 export const APP_MESSAGES = {
   OPERATION_ERROR: 'Ocurrió un error en la operación',
@@ -22,8 +17,7 @@ export const ADMISSION_MESSAGES = {
   ACTIVE_ADMISSION_EXISTS:
     'El paciente ya tiene una admisión activa ({admissionNumber}). Debe egresarla para crear una nueva admisión',
   ACTIVE_ADMISSION_INFO: 'El paciente ya tiene una admisión activa',
-  ACTIVE_ADMISSION_UPDATE_HINT:
-    'Admisión activa {admissionNumber}: puede asignar cama y agregar autorizaciones',
+  ACTIVE_ADMISSION_UPDATE_HINT: 'Admisión activa {admissionNumber}: puede asignar cama y agregar autorizaciones',
   ADMISSION_CREATED: 'Admisión {admissionNumber} registrada correctamente',
   ADMISSION_CREATE_ERROR: 'Error al registrar admisión',
   ADMISSION_UPDATED: 'Admisión {admissionNumber} actualizada correctamente',
@@ -39,8 +33,10 @@ export const ADMISSION_MESSAGES = {
 } as const;
 
 export const AUTH_MESSAGES = {
-  DUPLICATE_AUTH_NUMBER: 'Número de autorización ya registrado en esta admisión',
   DUPLICATE_COMPOSITE_KEY: 'Ya existe autorización para este tipo, CUPS y tarifario',
+  DUPLICATE_AUTH_KEY: 'Ya existe una autorización para este N°, CUPS y tarifario en la admisión',
+  QUANTITY_EXCEEDS_MAPIISS_MAX:
+    'La cantidad autorizada de este MAPIISS supera la cantidad de procedimientos por paciente',
 } as const;
 
 export const USER_MESSAGES = {

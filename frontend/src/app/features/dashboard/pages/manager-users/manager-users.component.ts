@@ -1,35 +1,55 @@
-import { Component, inject, ViewChild, signal, effect, AfterViewInit, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-import { MatDialog } from '@angular/material/dialog';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatSortModule } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatIconModule } from '@angular/material/icon';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ViewChild,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
+import { ToastService } from '@core/services/toast.service';
+import { PermissionsDialogComponent } from '@features/dashboard/components/permissions-dialog/permissions-dialog.component';
+import { UserFormDialogComponent } from '@features/dashboard/components/user-form-dialog/user-form-dialog.component';
 import { UserStore } from '@features/dashboard/store/user-store/user.store';
 import { UserUI, toUserUI } from '@features/dashboard/utils/user.mapper';
-import { ROLE_CODES } from '@shared/utils/role-constants';
-import { PAGINATION } from '@shared/utils/pagination-constants';
-import { ApiError } from '@shared/utils/status.codes';
-import { USER_MESSAGES } from '@shared/utils/messages';
-import { UserFormDialogComponent } from '@features/dashboard/components/user-form-dialog/user-form-dialog.component';
-import { PermissionsDialogComponent } from '@features/dashboard/components/permissions-dialog/permissions-dialog.component';
-import { ToastService } from '@core/services/toast.service';
-import { createTableUtils } from '@shared/utils/table-utils';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+import { USER_MESSAGES } from '@shared/utils/messages';
+import { PAGINATION } from '@shared/utils/pagination-constants';
+import { ROLE_CODES } from '@shared/utils/role-constants';
+import { ApiError } from '@shared/utils/status.codes';
+import { createTableUtils } from '@shared/utils/table-utils';
 
 @Component({
   selector: 'app-manager-users',
-  imports: [CommonModule, MatPaginatorModule, MatSortModule, MatTableModule, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatMenuModule, MatProgressSpinnerModule, MatTooltipModule, EmptyStateComponent],
+  imports: [
+    CommonModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatTableModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatButtonModule,
+    MatMenuModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+    EmptyStateComponent,
+  ],
   templateUrl: './manager-users.component.html',
   styleUrl: './manager-users.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -97,32 +117,30 @@ export class ManagerUsersComponent implements AfterViewInit {
   }
 
   public openCreateDialog(): void {
-    this.dialog.open(UserFormDialogComponent, { width: '820px', disableClose: true })
+    this.dialog
+      .open(UserFormDialogComponent, { width: '820px', disableClose: true })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(result => result && this.userStore.loadUsers());
+      .subscribe((result) => result && this.userStore.loadUsers());
   }
 
   public openPermissionsDialog(user: UserUI): void {
     this.userStore.resetUpdatePermissions();
-    this.dialog.open(PermissionsDialogComponent, { width: '600px', disableClose: true, data: { user: user.source } })
+    this.dialog
+      .open(PermissionsDialogComponent, { width: '600px', disableClose: true, data: { user: user.source } })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(result => result?.success && this.userStore.loadUsers());
+      .subscribe((result) => result?.success && this.userStore.loadUsers());
   }
 
   private filterPredicate(data: UserUI, filter: string): boolean {
-    const searchTerms = [
-      data.fullName,
-      data.dni,
-      data.email,
-      data.roleName,
-      data.isActiveLabel.toLowerCase(),
-    ].join(' ').toLowerCase();
+    const searchTerms = [data.fullName, data.dni, data.email, data.roleName, data.isActiveLabel.toLowerCase()]
+      .join(' ')
+      .toLowerCase();
 
     return filter
       .trim()
       .split(/\s+/)
-      .every(term => searchTerms.includes(term.toLowerCase()));
+      .every((term) => searchTerms.includes(term.toLowerCase()));
   }
 }

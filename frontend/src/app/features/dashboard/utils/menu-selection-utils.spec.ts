@@ -14,10 +14,7 @@ function menuOption(id: number, label: string, children: MenuOption[] = []): Men
 }
 
 describe('menu-selection-utils', () => {
-  const userManagerGroup = menuOption(1, 'Gestor Usuarios', [
-    menuOption(2, 'Usuarios'),
-    menuOption(3, 'Roles'),
-  ]);
+  const userManagerGroup = menuOption(1, 'Gestor Usuarios', [menuOption(2, 'Usuarios'), menuOption(3, 'Roles')]);
 
   const plainGroup = menuOption(10, 'Admisiones', [menuOption(11, 'Ingresos')]);
 

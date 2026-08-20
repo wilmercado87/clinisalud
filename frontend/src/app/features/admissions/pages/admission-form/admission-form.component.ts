@@ -1,31 +1,26 @@
-import {
-  Component,
-  effect,
-  inject,
-  ChangeDetectionStrategy,
-  DestroyRef,
-  ViewChildren,
-  QueryList,
-} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, QueryList, ViewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
-import { AuthEntryDialogComponent } from '@features/admissions/components/auth-entry-dialog/auth-entry-dialog.component';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { RouterModule } from '@angular/router';
+import {
+  AuthorizationEntryDialogComponent,
+  AuthorizationEntryDialogData,
+} from '@features/admissions/components/authorization-entry-dialog/authorization-entry-dialog.component';
 import { AdmissionFormFacade } from '@features/admissions/services/admission-form.facade';
-import { AuthFormValue } from '@features/admissions/utils/admission-form.types';
+import { AuthorizationFormValue } from '@features/admissions/utils/authorization/authorization-form.types';
+import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 
 @Component({
   selector: 'app-admission-form',
@@ -113,7 +108,7 @@ export class AdmissionFormComponent {
     this.facade.onSubmit();
   }
 
-  appendAuthEntries(values: AuthFormValue[]): void {
+  appendAuthEntries(values: AuthorizationFormValue[]): void {
     this.facade.appendAuthEntries(values);
   }
 
@@ -122,17 +117,23 @@ export class AdmissionFormComponent {
   }
 
   openAuthorizationsDialog(): void {
-    const dialogRef = this.dialog.open(AuthEntryDialogComponent, {
+    const data: AuthorizationEntryDialogData = {
+      existingAuthorizations: this.facade.existingAuthorizations(),
+      queuedAuthorizations: this.facade.authEntries().map((fg) => fg.getRawValue()),
+    };
+
+    const dialogRef = this.dialog.open(AuthorizationEntryDialogComponent, {
       width: '1200px',
       maxWidth: '95vw',
       autoFocus: false,
       disableClose: true,
+      data,
     });
 
     dialogRef
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((values?: AuthFormValue[]) => {
+      .subscribe((values?: AuthorizationFormValue[]) => {
         if (!values || values.length === 0) return;
         this.appendAuthEntries(values);
       });

@@ -6,21 +6,9 @@ import {
   numericValidator,
   phoneValidator,
 } from '@shared/utils/form-validators';
-import { AuthFormGroup } from './admission-form.types';
-export {
-  ErrorRules,
-  extractFieldErrors,
-  FieldErrors,
-} from '@shared/utils/form-field-errors';
+export { ErrorRules, extractFieldErrors, FieldErrors } from '@shared/utils/form-field-errors';
 
-export const PATIENT_REQUIRED_KEYS = [
-  'firstName',
-  'lastName',
-  'birthDate',
-  'genderId',
-  'disability',
-  'userTypeId',
-];
+export const PATIENT_REQUIRED_KEYS = ['firstName', 'lastName', 'birthDate', 'genderId', 'disability', 'userTypeId'];
 
 export const COMPANION_REQUIRED_KEYS = [
   'firstName',
@@ -99,42 +87,3 @@ export const COMPANION_ERROR_RULES = {
 export const ADMISSION_ERROR_RULES = {
   observations: [['required', 'Las observaciones son requeridas']],
 } satisfies Record<string, [string, string][]>;
-
-export const AUTH_ERROR_RULES = {
-  authTypeId: [['required', 'Seleccione Tipo Autorización']],
-  authNumber: [['required', 'N° Autorización requerido']],
-  feeScheduleId: [['required', 'Seleccione Tarifario']],
-  mapiissCode: [['required', 'Seleccione MAPIISS']],
-  quantity: [
-    ['required', 'Cantidad requerida'],
-    ['invalidNumeric', 'Solo números'],
-    ['min', 'Mínimo 1'],
-    ['max', 'Excede el máximo'],
-  ],
-} satisfies Record<string, [string, string][]>;
-
-export function applyAuthQuantityMax(fg: AuthFormGroup, maxQuantity: number | null): void {
-  const validators: ValidatorFn[] = [Validators.required, numericValidator, Validators.min(1)];
-  if (maxQuantity !== null && maxQuantity > 0) {
-    validators.push(Validators.max(maxQuantity));
-  }
-  fg.controls.quantity.setValidators(validators);
-  fg.controls.quantity.updateValueAndValidity({ emitEvent: false });
-}
-
-export function applyAuthCupsSelection(
-  fg: AuthFormGroup,
-  cups: { code: string; description: string; maxQuantity: number },
-): void {
-  fg.patchValue({
-    mapiissCode: cups.code,
-    description: cups.description,
-    maxQuantity: cups.maxQuantity,
-  });
-  applyAuthQuantityMax(fg, cups.maxQuantity);
-}
-
-export function clearAuthCupsSelection(fg: AuthFormGroup): void {
-  fg.patchValue({ mapiissCode: '', description: '', maxQuantity: null });
-  applyAuthQuantityMax(fg, null);
-}

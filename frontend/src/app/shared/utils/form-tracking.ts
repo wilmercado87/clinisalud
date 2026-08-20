@@ -17,9 +17,6 @@ export interface FormTrackSignals<TValue> {
 export function trackFormSignals<TValue>(form: TrackableForm<TValue>): FormTrackSignals<TValue> {
   return {
     status: toSignal(form.statusChanges, { initialValue: form.status }),
-    value: toSignal(
-      form.valueChanges.pipe(map(() => form.getRawValue())),
-      { initialValue: form.getRawValue() },
-    ),
+    value: toSignal(form.valueChanges.pipe(map(() => form.getRawValue())), { initialValue: form.getRawValue() }),
   };
 }

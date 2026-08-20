@@ -1,9 +1,9 @@
-@use "@angular/material" as mat;
-@use "variables" as v;
+@use '@angular/material' as mat;
+@use 'variables' as v;
 @include mat.elevation-classes();
 @include mat.app-background();
 
-@import "@angular/material/prebuilt-themes/indigo-pink.css";
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
 
 // 1. MATERIAL THEME PALETTE (from design tokens)
 $clinisalud-navy: (
@@ -37,8 +37,8 @@ $theme: mat.m2-define-light-theme(
       accent: $accent,
     ),
     typography: mat.m2-define-typography-config(
-      $font-family: "'Inter', sans-serif",
-    ),
+        $font-family: "'Inter', sans-serif",
+      ),
   )
 );
 
@@ -50,7 +50,7 @@ body {
   height: 100%;
   margin: 0;
   background-color: v.$color-gray-body !important;
-  font-family: "Inter", sans-serif !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
 // 4. GLOBAL MATERIAL OVERRIDES
@@ -95,20 +95,35 @@ body {
 
   &--success {
     --mdc-snackbar-container-color: #{v.$color-green-light-100};
-    .mdc-snackbar__label { color: #{v.$color-green-light-600} !important; font-weight: 700; }
-    .mat-mdc-snack-bar-action { color: #{v.$color-green-light-600} !important; }
+    .mdc-snackbar__label {
+      color: #{v.$color-green-light-600} !important;
+      font-weight: 700;
+    }
+    .mat-mdc-snack-bar-action {
+      color: #{v.$color-green-light-600} !important;
+    }
   }
 
   &--error {
     --mdc-snackbar-container-color: #{v.$color-red-light-100};
-    .mdc-snackbar__label { color: #{v.$color-red-light-600} !important; font-weight: 700; }
-    .mat-mdc-snack-bar-action { color: #{v.$color-red-light-600} !important; }
+    .mdc-snackbar__label {
+      color: #{v.$color-red-light-600} !important;
+      font-weight: 700;
+    }
+    .mat-mdc-snack-bar-action {
+      color: #{v.$color-red-light-600} !important;
+    }
   }
 
   &--info {
     --mdc-snackbar-container-color: #{v.$color-blue-light-100};
-    .mdc-snackbar__label { color: #{v.$color-blue-light-600} !important; font-weight: 700; }
-    .mat-mdc-snack-bar-action { color: #{v.$color-blue-light-600} !important; }
+    .mdc-snackbar__label {
+      color: #{v.$color-blue-light-600} !important;
+      font-weight: 700;
+    }
+    .mat-mdc-snack-bar-action {
+      color: #{v.$color-blue-light-600} !important;
+    }
   }
 }
 

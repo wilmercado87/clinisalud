@@ -1,10 +1,4 @@
-import {
-  APP_MESSAGES,
-  ADMISSION_MESSAGES,
-  USER_MESSAGES,
-  NOTIFICATION_MESSAGES,
-  formatMessage,
-} from './messages';
+import { ADMISSION_MESSAGES, APP_MESSAGES, NOTIFICATION_MESSAGES, USER_MESSAGES, formatMessage } from './messages';
 
 describe('messages', () => {
   describe('formatMessage', () => {

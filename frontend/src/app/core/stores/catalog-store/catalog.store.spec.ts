@@ -1,12 +1,9 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import {
-  provideHttpClientTesting,
-  HttpTestingController,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { CatalogItemResponse } from '@core/models/catalog.model';
 import { firstValueFrom } from 'rxjs';
 import { CatalogStore } from './catalog.store';
-import { CatalogItemResponse } from '@core/models/catalog.model';
 
 describe('CatalogStore', () => {
   let store: CatalogStore;
@@ -76,12 +73,8 @@ describe('CatalogStore', () => {
     const req = httpMock.expectOne((r) => r.url.endsWith('/catalogs/authorization-types'));
     expect(req.request.headers.has('Cache-Control')).toBe(true);
 
-    req.flush([
-      { id: 1, name: 'Nuevo', description: 'Nuevo', attentionLevelId: 2 } satisfies CatalogItemResponse,
-    ]);
-    expect(await reload).toEqual([
-      { id: 1, name: 'Nuevo', description: 'Nuevo', attentionLevelId: 2 },
-    ]);
+    req.flush([{ id: 1, name: 'Nuevo', description: 'Nuevo', attentionLevelId: 2 } satisfies CatalogItemResponse]);
+    expect(await reload).toEqual([{ id: 1, name: 'Nuevo', description: 'Nuevo', attentionLevelId: 2 }]);
     expect(store.getCatalog('authorization-types')).toEqual([
       { id: 1, name: 'Nuevo', description: 'Nuevo', attentionLevelId: 2 },
     ]);

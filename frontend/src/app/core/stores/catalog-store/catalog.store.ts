@@ -1,8 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, of, shareReplay, tap, map } from 'rxjs';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { CatalogService } from '@core/services/catalog.service';
 import { CatalogSourceItem } from '@core/models/catalog.model';
+import { CatalogService } from '@core/services/catalog.service';
+import { Observable, map, of, shareReplay, tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogStore {
@@ -25,9 +25,10 @@ export class CatalogStore {
     if (cached) return of(cached);
 
     if (!this.observables.has(type)) {
-      const source: Observable<CatalogSourceItem[]> = type === 'beds'
-        ? this.catalogApi.getBeds(undefined, 100).pipe(map((page) => page.items))
-        : this.catalogApi.getCatalog(type);
+      const source: Observable<CatalogSourceItem[]> =
+        type === 'beds'
+          ? this.catalogApi.getBeds(undefined, 100).pipe(map((page) => page.items))
+          : this.catalogApi.getCatalog(type);
       this.observables.set(
         type,
         source.pipe(

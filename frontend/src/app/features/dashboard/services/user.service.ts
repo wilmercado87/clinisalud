@@ -1,8 +1,14 @@
-import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { CreateUserRequest, UserResponse, CreateUserResponse, PermissionsRequest, ToggleStatusResponse } from '@core/models/user.model';
+import { inject, Injectable } from '@angular/core';
+import {
+  CreateUserRequest,
+  CreateUserResponse,
+  PermissionsRequest,
+  ToggleStatusResponse,
+  UserResponse,
+} from '@core/models/user.model';
 import { environment } from '@env/environment';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -19,10 +25,7 @@ export class UserService {
     return this.http.post<CreateUserResponse>(this.apiUrl, userData);
   }
 
-  public updatePermissions(
-    userId: number,
-    permissions: PermissionsRequest['permissions'],
-  ): Observable<void> {
+  public updatePermissions(userId: number, permissions: PermissionsRequest['permissions']): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${userId}/permissions`, { permissions });
   }
 

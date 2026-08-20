@@ -105,6 +105,7 @@ export class AdmissionsService {
       }
       await this.assertEpsExists(data.epsId, t);
       await this.assertAuthorizationsAreValid(data.authorizations, t);
+      await this.assertCumulativeQuantityWithinMax(null, data.authorizations, t);
 
       const registeredStatusId = await getStatusIdByDescription(ADMISSION_STATUS.REGISTERED, t);
       const admission = await this.createAdmissionRecord(data, patientId, userId, registeredStatusId, t);
@@ -156,6 +157,11 @@ export class AdmissionsService {
 
       await this.assertAuthorizationsAreValid(data.authorizations, t);
       await this.assertAuthorizationsAreNew(admissionNumber, data.authorizations, t);
+      await this.assertCumulativeQuantityWithinMax(
+        admissionNumber,
+        data.authorizations,
+        t,
+      );
       await this.createAuthorizationsIfPresent(admissionNumber, data.authorizations, userId, t);
 
       return {
@@ -198,6 +204,7 @@ export class AdmissionsService {
     if (!authorizations || authorizations.length === 0) return;
 
     const seenKeys = new Set<string>();
+    const seenAuthKeys = new Set<string>();
     for (const authorization of authorizations) {
       const key = `${authorization.authTypeId}|${authorization.mapiissCode}|${authorization.feeScheduleId}`;
       if (seenKeys.has(key)) {
@@ -208,10 +215,22 @@ export class AdmissionsService {
       }
       seenKeys.add(key);
 
+      const authKey = this.buildAuthKey(
+        authorization.authNumber,
+        authorization.feeScheduleId,
+        authorization.mapiissCode,
+      );
+      if (seenAuthKeys.has(authKey)) {
+        throw ApiError.conflict(
+          ERROR_MESSAGES_ADMISION.AUTH_ALREADY_EXISTS,
+          ADMISSION_ERROR_CODES.AUTH_ALREADY_EXISTS,
+        );
+      }
+      seenAuthKeys.add(authKey);
+
       await this.assertAuthTypeExists(authorization.authTypeId, t);
       const cups = await this.assertMapiissCodeExists(authorization.mapiissCode, t);
       await this.assertFeeScheduleMatchesCups(authorization.feeScheduleId, cups, t);
-      this.assertQuantityWithinMax(authorization, cups);
     }
   }
 
@@ -224,19 +243,75 @@ export class AdmissionsService {
 
     const existing = await Autorizacion.findAll({
       where: { admissionNumber },
-      attributes: ["authTypeId", "mapiissCode", "feeScheduleId"],
+      attributes: ["authTypeId", "authNumber", "mapiissCode", "feeScheduleId"],
       transaction: t,
     });
     const existingKeys = new Set(
       existing.map((a) => `${a.authTypeId}|${a.mapiissCode}|${a.feeScheduleId}`),
     );
+    const existingAuthKeys = new Set(
+      existing.map((a) => this.buildAuthKey(a.authNumber, a.feeScheduleId, a.mapiissCode)),
+    );
     for (const authorization of authorizations) {
       const key = `${authorization.authTypeId}|${authorization.mapiissCode}|${authorization.feeScheduleId}`;
-      if (existingKeys.has(key)) {
+      const authKey = this.buildAuthKey(
+        authorization.authNumber,
+        authorization.feeScheduleId,
+        authorization.mapiissCode,
+      );
+      if (existingKeys.has(key) || existingAuthKeys.has(authKey)) {
         throw ApiError.conflict(
           ERROR_MESSAGES_ADMISION.AUTH_ALREADY_EXISTS,
           ADMISSION_ERROR_CODES.AUTH_ALREADY_EXISTS,
         );
+      }
+    }
+  }
+
+  private buildAuthKey(
+    authNumber: string,
+    feeScheduleId: number,
+    mapiissCode: string,
+  ): string {
+    const normalize = (value: string): string => value.trim().toUpperCase();
+    return `${normalize(authNumber)}|${feeScheduleId}|${normalize(mapiissCode)}`;
+  }
+
+  private async assertCumulativeQuantityWithinMax(
+    admissionNumber: string | null,
+    authorizations: AuthorizationData[] | undefined,
+    t: Transaction,
+  ): Promise<void> {
+    if (!authorizations || authorizations.length === 0) return;
+
+    const existingByKey = new Map<string, number>();
+    if (admissionNumber) {
+      const existing = await Autorizacion.findAll({
+        where: { admissionNumber },
+        attributes: ["mapiissCode", "feeScheduleId", "quantity"],
+        transaction: t,
+      });
+      for (const auth of existing) {
+        const key = `${auth.mapiissCode}|${auth.feeScheduleId}`;
+        existingByKey.set(key, (existingByKey.get(key) ?? 0) + (auth.quantity ?? 1));
+      }
+    }
+
+    const incomingTotals = new Map<string, number>();
+    for (const authorization of authorizations) {
+      const key = `${authorization.mapiissCode}|${authorization.feeScheduleId}`;
+      incomingTotals.set(key, (incomingTotals.get(key) ?? 0) + (authorization.quantity ?? 1));
+    }
+
+    for (const [key, total] of incomingTotals) {
+      const [mapiissCode, feeScheduleId] = key.split("|");
+      const cups = await Cups.findOne({
+        where: { mapiissCode, feeScheduleId: Number(feeScheduleId) },
+        transaction: t,
+      });
+      const totalWithExisting = total + (existingByKey.get(key) ?? 0);
+      if (cups && totalWithExisting > cups.maxQuantity) {
+        throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.AUTH_QUANTITY_EXCEEDS_MAPIISS_MAX);
       }
     }
   }
@@ -274,17 +349,6 @@ export class AdmissionsService {
   private async assertAuthTypeExists(authTypeId: number, t: Transaction): Promise<void> {
     const authType = await TipoAutorizacion.findByPk(authTypeId, { transaction: t });
     if (!authType) throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.AUTH_TYPE_NOT_FOUND);
-  }
-
-  private assertQuantityWithinMax(authorization: AuthorizationData, cups: Cups): void {
-    if (!authorization.quantity || authorization.quantity <= 0) return;
-    if (authorization.quantity > cups.maxQuantity) {
-      throw ApiError.badRequest(
-        formatMessage(ERROR_MESSAGES_ADMISION.AUTH_QUANTITY_EXCEEDS_MAX, {
-          maxQuantity: cups.maxQuantity,
-        }),
-      );
-    }
   }
 
   private async createAdmissionRecord(

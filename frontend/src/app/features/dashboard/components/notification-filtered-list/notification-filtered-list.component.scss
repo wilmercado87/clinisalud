@@ -1,4 +1,4 @@
-@use "variables" as v;
+@use 'variables' as v;
 
 :host {
   display: contents;
@@ -7,11 +7,13 @@
 .filter-bar {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 16px; 
+  gap: 16px;
   padding: 20px;
   background-color: v.$navy-contrast;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(v.$black, 0.05), 0 4px 12px rgba(v.$black, 0.02);
+  box-shadow:
+    0 1px 3px rgba(v.$black, 0.05),
+    0 4px 12px rgba(v.$black, 0.02);
   margin-bottom: 24px;
   align-items: center;
   width: 100%;

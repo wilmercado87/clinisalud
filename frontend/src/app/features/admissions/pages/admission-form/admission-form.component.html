@@ -4,12 +4,7 @@
       <h1 class="admission-form__title">Registro de Admisión</h1>
       <p class="admission-form__subtitle">Gestión de ingresos hospitalarios y censo.</p>
     </div>
-    <a
-      mat-stroked-button
-      color="primary"
-      class="admission-form__census-btn"
-      routerLink="/dashboard/admission/census"
-    >
+    <a mat-stroked-button color="primary" class="admission-form__census-btn" routerLink="/dashboard/admission/census">
       <mat-icon>meeting_room</mat-icon>
       Ver censo
     </a>
@@ -63,9 +58,7 @@
           @if (activeAdmission()) {
             <div class="admission-form__alert admission-form__alert--info">
               <mat-icon>info</mat-icon>
-              Admisión activa
-              ({{ activeAdmission()!.admissionNumber }}): puede asignar cama y agregar
-              autorizaciones.
+              Admisión activa ({{ activeAdmission()!.admissionNumber }}): puede asignar cama y agregar autorizaciones.
             </div>
           }
         } @else if (mode() === 'NOT_FOUND') {
@@ -81,24 +74,14 @@
         <div class="admission-form__grid">
           <mat-form-field appearance="outline">
             <mat-label>Nombres</mat-label>
-            <input
-              matInput
-              formControlName="firstName"
-              placeholder="Nombres"
-              [required]="mode() === 'NOT_FOUND'"
-            />
+            <input matInput formControlName="firstName" placeholder="Nombres" [required]="mode() === 'NOT_FOUND'" />
             @if (patientErrors().firstName) {
               <mat-error>{{ patientErrors().firstName }}</mat-error>
             }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Apellidos</mat-label>
-            <input
-              matInput
-              formControlName="lastName"
-              placeholder="Apellidos"
-              [required]="mode() === 'NOT_FOUND'"
-            />
+            <input matInput formControlName="lastName" placeholder="Apellidos" [required]="mode() === 'NOT_FOUND'" />
             @if (patientErrors().lastName) {
               <mat-error>{{ patientErrors().lastName }}</mat-error>
             }
@@ -132,12 +115,7 @@
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Discapacidad</mat-label>
-            <input
-              matInput
-              formControlName="disability"
-              placeholder="SÍ / NO"
-              [required]="mode() === 'NOT_FOUND'"
-            />
+            <input matInput formControlName="disability" placeholder="SÍ / NO" [required]="mode() === 'NOT_FOUND'" />
             @if (patientErrors().disability) {
               <mat-error>{{ patientErrors().disability }}</mat-error>
             }
@@ -176,33 +154,22 @@
       <mat-card-header>
         <mat-card-title>Datos del Acompañante</mat-card-title>
         <mat-card-subtitle>
-          Si el paciente llegó con un acompañante, registre sus datos. Estos no se prellenan
-          al buscar un paciente existente. Al digitar el nombre o apellido, todos los campos
-          pasan a ser requeridos.
+          Si el paciente llegó con un acompañante, registre sus datos. Estos no se prellenan al buscar un paciente
+          existente. Al digitar el nombre o apellido, todos los campos pasan a ser requeridos.
         </mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <div class="admission-form__grid">
           <mat-form-field appearance="outline">
             <mat-label>Nombres</mat-label>
-            <input
-              matInput
-              formControlName="firstName"
-              placeholder="Nombres"
-              [required]="companionActive()"
-            />
+            <input matInput formControlName="firstName" placeholder="Nombres" [required]="companionActive()" />
             @if (companionErrors().firstName) {
               <mat-error>{{ companionErrors().firstName }}</mat-error>
             }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Apellidos</mat-label>
-            <input
-              matInput
-              formControlName="lastName"
-              placeholder="Apellidos"
-              [required]="companionActive()"
-            />
+            <input matInput formControlName="lastName" placeholder="Apellidos" [required]="companionActive()" />
             @if (companionErrors().lastName) {
               <mat-error>{{ companionErrors().lastName }}</mat-error>
             }
@@ -215,24 +182,14 @@
           />
           <mat-form-field appearance="outline">
             <mat-label>Documento</mat-label>
-            <input
-              matInput
-              formControlName="document"
-              placeholder="Documento"
-              [required]="companionActive()"
-            />
+            <input matInput formControlName="document" placeholder="Documento" [required]="companionActive()" />
             @if (companionErrors().document) {
               <mat-error>{{ companionErrors().document }}</mat-error>
             }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Dirección</mat-label>
-            <input
-              matInput
-              formControlName="address"
-              placeholder="Dirección"
-              [required]="companionActive()"
-            />
+            <input matInput formControlName="address" placeholder="Dirección" [required]="companionActive()" />
             @if (companionErrors().address) {
               <mat-error>{{ companionErrors().address }}</mat-error>
             }
@@ -245,12 +202,7 @@
           />
           <mat-form-field appearance="outline">
             <mat-label>Teléfono</mat-label>
-            <input
-              matInput
-              formControlName="phone"
-              placeholder="Teléfono"
-              [required]="companionActive()"
-            />
+            <input matInput formControlName="phone" placeholder="Teléfono" [required]="companionActive()" />
             @if (companionErrors().phone) {
               <mat-error>{{ companionErrors().phone }}</mat-error>
             }
@@ -267,11 +219,7 @@
       </mat-card-header>
       <mat-card-content>
         <div class="admission-form__grid">
-          <app-catalog-select
-            catalogType="eps"
-            label="EPS"
-            formControlName="epsId"
-          />
+          <app-catalog-select catalogType="eps" label="EPS" formControlName="epsId" />
           <div class="admission-form__bed-field">
             @if (isUpdatingMode() && occupiedBedLabel(); as bedLabel) {
               <span class="admission-form__bed-hint">Cama ocupada: {{ bedLabel }}</span>
@@ -285,13 +233,7 @@
           </div>
           <mat-form-field appearance="outline" class="admission-form__field--full">
             <mat-label>Observaciones</mat-label>
-            <textarea
-              matInput
-              formControlName="observations"
-              rows="3"
-              placeholder="Observaciones"
-              required
-            ></textarea>
+            <textarea matInput formControlName="observations" rows="3" placeholder="Observaciones" required></textarea>
             @if (admissionErrors().observations) {
               <mat-error>{{ admissionErrors().observations }}</mat-error>
             }
@@ -304,8 +246,7 @@
       <mat-card-header>
         <mat-card-title>Autorizaciones</mat-card-title>
         <mat-card-subtitle>
-          Registre las autorizaciones previas de los servicios que las requieran según el
-          contrato de la EPS.
+          Registre las autorizaciones previas de los servicios que las requieran según el contrato de la EPS.
         </mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
@@ -380,21 +321,11 @@
   }
 
   <div class="admission-form__actions">
-    <button
-      mat-stroked-button
-      color="warn"
-      type="button"
-      (click)="onCancel()"
-    >
+    <button mat-stroked-button color="warn" type="button" (click)="onCancel()">
       <mat-icon>restart_alt</mat-icon>
       Cancelar
     </button>
-    <button
-      mat-raised-button
-      color="primary"
-      (click)="onSubmit()"
-      [disabled]="!canSubmit()"
-    >
+    <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="!canSubmit()">
       @if (isCreating() || isUpdating()) {
         <mat-spinner diameter="20" />
       } @else {

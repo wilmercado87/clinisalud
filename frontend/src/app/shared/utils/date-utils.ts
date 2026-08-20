@@ -37,7 +37,7 @@ export function calculateAge(birthDate: Date | string | null | undefined): strin
 
 export const MILLISECONDS_PER_DAY = 86400000;
 export const MILLISECONDS_PER_MINUTE = 60000;
-export  const MINUTES_NOW = 1;
+export const MINUTES_NOW = 1;
 export const DAYS_PER_WEEK = 7;
 export const HOURS_PER_DAY = 24;
 export const MINUTES_PER_HOUR = 60;

@@ -1,5 +1,6 @@
 // @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (build del request)
 // @spec:INV-ADM-07 — Actualización de Admisión Activa (build del request de actualización)
+import { createAuthorizationForm } from '../authorization/authorization-form.factory';
 import {
   applyAdmissionFormState,
   buildAdmissionRequest,
@@ -8,12 +9,7 @@ import {
   buildUpdateAdmissionRequest,
   toApiBirthDate,
 } from './admission-form.builder';
-import {
-  createAdmissionForm,
-  createAuthEntryForm,
-  createCompanionForm,
-  createPatientForm,
-} from './admission-form.factory';
+import { createAdmissionForm, createCompanionForm, createPatientForm } from './admission-form.factory';
 
 describe('admission-form.builder', () => {
   describe('buildCompanionRequest', () => {
@@ -57,11 +53,11 @@ describe('admission-form.builder', () => {
   describe('buildAuthorizationsRequest', () => {
     it('returns undefined when disabled', () => {
       expect(buildAuthorizationsRequest([], false)).toBeUndefined();
-      expect(buildAuthorizationsRequest([createAuthEntryForm()], false)).toBeUndefined();
+      expect(buildAuthorizationsRequest([createAuthorizationForm()], false)).toBeUndefined();
     });
 
     it('maps entries with a default quantity of 1', () => {
-      const form = createAuthEntryForm();
+      const form = createAuthorizationForm();
       form.patchValue({
         authTypeId: 2,
         authNumber: 'AUTH-001',
@@ -76,7 +72,7 @@ describe('admission-form.builder', () => {
     });
 
     it('uses 1 when quantity is null', () => {
-      const form = createAuthEntryForm();
+      const form = createAuthorizationForm();
       form.controls.quantity.setValue(null);
 
       const authorizations = buildAuthorizationsRequest([form], true);
@@ -255,7 +251,7 @@ describe('admission-form.builder', () => {
     });
 
     it('includes authorizations when entries were added (INV-ADM-07)', () => {
-      const form = createAuthEntryForm();
+      const form = createAuthorizationForm();
       form.patchValue({
         authTypeId: 2,
         authNumber: 'AUTH-100',

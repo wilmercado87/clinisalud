@@ -1,15 +1,15 @@
-import { Component, inject, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthStore } from '@core/stores/auth-store/auth.store';
 import { ConfigStore } from '@core/stores/config-store/config.store';
@@ -17,7 +17,17 @@ import { ForgotPasswordDialogComponent } from '@features/auth/components/forgot-
 
 @Component({
   selector: 'app-login',
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatDialogModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatDialogModule,
+  ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,9 +48,7 @@ export class LoginComponent {
 
   public formStatus = toSignal(this.loginForm.statusChanges, { initialValue: this.loginForm.status });
 
-  public canSubmit = computed(() =>
-    this.formStatus() === 'VALID' && !this.isLoggingIn()
-  );
+  public canSubmit = computed(() => this.formStatus() === 'VALID' && !this.isLoggingIn());
 
   public errorMessage = computed(() => {
     const err = this.authStore.loginError();

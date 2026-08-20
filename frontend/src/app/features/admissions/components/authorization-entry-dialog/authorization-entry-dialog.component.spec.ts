@@ -1,14 +1,16 @@
-// @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (modal de registro)
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, forwardRef, input } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { of } from 'rxjs';
-import { AuthEntryDialogComponent } from './auth-entry-dialog.component';
-import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
-import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
-import { AuthFormGroup } from '@features/admissions/utils/admission-form.types';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { CupsSearchItem } from '@core/models/catalog.model';
+import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
+import { AuthorizationFormGroup } from '@features/admissions/utils/authorization/authorization-form.types';
+import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
+import { of } from 'rxjs';
+import {
+  AuthorizationEntryDialogComponent,
+  AuthorizationEntryDialogData,
+} from './authorization-entry-dialog.component';
 
 @Component({
   selector: 'app-catalog-select',
@@ -40,15 +42,20 @@ class MockCatalogSelectComponent implements ControlValueAccessor {
   setDisabledState(): void {}
 }
 
-describe('AuthEntryDialogComponent', () => {
-  let fixture: ComponentFixture<AuthEntryDialogComponent>;
-  let component: AuthEntryDialogComponent;
+describe('AuthorizationEntryDialogComponent', () => {
+  let fixture: ComponentFixture<AuthorizationEntryDialogComponent>;
+  let component: AuthorizationEntryDialogComponent;
   let dialogRef: { close: jest.Mock };
   let dialog: { open: jest.Mock };
   let authTypes: Array<{ id: number; name: string; description: string; attentionLevelId?: number }>;
   let catalogData: Record<string, unknown[]>;
   let reloadResult: unknown[];
   let reloadCatalogSpy: jest.Mock;
+
+  const defaultDialogData: AuthorizationEntryDialogData = {
+    existingAuthorizations: [],
+    queuedAuthorizations: [],
+  };
 
   beforeEach(async () => {
     dialogRef = { close: jest.fn() };
@@ -79,10 +86,11 @@ describe('AuthEntryDialogComponent', () => {
     });
 
     await TestBed.configureTestingModule({
-      imports: [AuthEntryDialogComponent],
+      imports: [AuthorizationEntryDialogComponent],
       providers: [
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: MatDialog, useValue: dialog },
+        { provide: MAT_DIALOG_DATA, useValue: defaultDialogData },
         {
           provide: CatalogStore,
           useValue: {
@@ -93,18 +101,18 @@ describe('AuthEntryDialogComponent', () => {
       ],
     })
       .overrideProvider(MatDialog, { useValue: dialog })
-      .overrideComponent(AuthEntryDialogComponent, {
+      .overrideComponent(AuthorizationEntryDialogComponent, {
         remove: { imports: [CatalogSelectComponent] },
         add: { imports: [MockCatalogSelectComponent] },
       })
       .compileComponents();
 
-    fixture = TestBed.createComponent(AuthEntryDialogComponent);
+    fixture = TestBed.createComponent(AuthorizationEntryDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  function fillEntry(entry: AuthFormGroup): void {
+  function fillEntry(entry: AuthorizationFormGroup): void {
     entry.patchValue({
       authTypeId: 5,
       authNumber: 'AUTH-001',
@@ -213,7 +221,7 @@ describe('AuthEntryDialogComponent', () => {
     fillEntry(entry);
     component.openCupsSearch(0);
 
-    const [, dialogConfig] = dialog.open.mock.calls.at(-1)!
+    const [, dialogConfig] = dialog.open.mock.calls.at(-1)!;
     expect(dialogConfig.data).toEqual({
       feeScheduleId: 2,
       feeScheduleName: 'ISS 2001',
@@ -238,7 +246,7 @@ describe('AuthEntryDialogComponent', () => {
 
     expect(reloadCatalogSpy).toHaveBeenCalledWith('authorization-types');
     expect(dialog.open).toHaveBeenCalled();
-    const [, dialogConfig] = dialog.open.mock.calls.at(-1)!
+    const [, dialogConfig] = dialog.open.mock.calls.at(-1)!;
     expect(dialogConfig.data.attentionLevelId).toBe(2);
   });
 
