@@ -258,6 +258,7 @@
                 <th>N° Autorización</th>
                 <th>Código MAPIISS</th>
                 <th>Cantidad</th>
+                <th>Observaciones</th>
                 <th class="admission-form__auth-table--actions"></th>
               </tr>
             </thead>
@@ -266,8 +267,22 @@
                 <tr>
                   <td>{{ row.authTypeName }}</td>
                   <td>{{ row.authNumber }}</td>
-                  <td>{{ row.mapiissCode }}</td>
+                  <td>
+                    <div>{{ row.mapiissCode }}</div>
+                    @if (row.mapiissDescription) {
+                      <span class="admission-form__cups-desc" [matTooltip]="row.mapiissDescription" matTooltipPosition="above" matTooltipShowDelay="300">
+                        {{ row.mapiissDescription }}
+                      </span>
+                    }
+                  </td>
                   <td>{{ row.quantity }}</td>
+                  <td>
+                    @if (row.observaciones) {
+                      <span class="admission-form__obs-text" [matTooltip]="row.observaciones" matTooltipPosition="above" matTooltipShowDelay="300">
+                        {{ row.observaciones }}
+                      </span>
+                    }
+                  </td>
                   <td class="admission-form__auth-table--actions"></td>
                 </tr>
               }
@@ -275,9 +290,32 @@
                 <tr>
                   <td>{{ row.authTypeName }}</td>
                   <td>{{ row.authNumber }}</td>
-                  <td>{{ row.mapiissCode }}</td>
+                  <td>
+                    <div>{{ row.mapiissCode }}</div>
+                    @if (row.description) {
+                      <span class="admission-form__cups-desc" [matTooltip]="row.description" matTooltipPosition="above" matTooltipShowDelay="300">
+                        {{ row.description }}
+                      </span>
+                    }
+                  </td>
                   <td>{{ row.quantity }}</td>
+                  <td>
+                    @if (row.observaciones) {
+                      <span class="admission-form__obs-text" [matTooltip]="row.observaciones" matTooltipPosition="above" matTooltipShowDelay="300">
+                        {{ row.observaciones }}
+                      </span>
+                    }
+                  </td>
                   <td class="admission-form__auth-table--actions">
+                    <button
+                      mat-icon-button
+                      color="primary"
+                      type="button"
+                      aria-label="Editar autorización"
+                      (click)="editAuthEntry($index)"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
                     <button
                       mat-icon-button
                       color="warn"

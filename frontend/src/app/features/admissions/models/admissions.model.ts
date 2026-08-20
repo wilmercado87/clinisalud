@@ -28,6 +28,8 @@ export interface AdmissionAuthorization {
   mapiissCode: string;
   quantity: number;
   feeScheduleId: number;
+  mapiissDescription?: string;
+  observaciones?: string;
 }
 
 export interface CreateAdmissionRequest {

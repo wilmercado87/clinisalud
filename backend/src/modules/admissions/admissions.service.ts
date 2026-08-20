@@ -429,6 +429,7 @@ export class AdmissionsService {
       mapiissCode: a.mapiissCode,
       feeScheduleId: a.feeScheduleId,
       quantity: a.quantity || 1,
+      observaciones: a.observaciones || null,
       systemUserId: userId,
     }));
     try {
@@ -450,7 +451,10 @@ export class AdmissionsService {
   ): Promise<AdmissionAuthorization[]> {
     const authorizations = await Autorizacion.findAll({
       where: { admissionNumber },
-      include: [{ association: "authType", attributes: ["id", "description"] }],
+      include: [
+        { association: "authType", attributes: ["id", "description"] },
+        { association: "cups", attributes: ["mapiissCode", "mapiissDescription"] },
+      ],
       order: [["createdAt", "ASC"]],
       transaction: t,
     });
@@ -462,7 +466,9 @@ export class AdmissionsService {
         mapiissCode: string;
         quantity: number;
         feeScheduleId: number;
+        observaciones: string | null;
         authType?: { id: number; description: string } | null;
+        cups?: { mapiissCode: string; mapiissDescription: string } | null;
       };
       return {
         authTypeId: json.authTypeId,
@@ -471,6 +477,8 @@ export class AdmissionsService {
         mapiissCode: json.mapiissCode,
         quantity: json.quantity,
         feeScheduleId: json.feeScheduleId,
+        mapiissDescription: json.cups?.mapiissDescription ?? undefined,
+        observaciones: json.observaciones ?? undefined,
       };
     });
   }

@@ -144,6 +144,7 @@ describe('authorization-form.validator', () => {
         mapiissCode: 'MAPIISS-1',
         quantity: 2,
         description: '',
+        observaciones: '',
         maxQuantity: 5,
         ...overrides,
       };
@@ -186,12 +187,12 @@ describe('authorization-form.validator', () => {
       expect(violations).toEqual([]);
     });
 
-    it('blocks a CUPS duplicate by auth type, CUPS and fee schedule against persisted ones', () => {
+    it('allows a different authNumber for the same CUPS and fee schedule (different authorization)', () => {
       const entry = createAuthorizationForm();
       fillEntry(entry);
 
       const violations = evaluateAuthorizationEntryRules([entry], [existingAuth({ authNumber: 'AUTH-002' })], []);
-      expect(violations).toMatchObject([{ row: 0, kind: 'duplicate-service' }]);
+      expect(violations).toEqual([]);
     });
 
     it('blocks an entry when the accumulated quantity of the MAPIISS exceeds the patient max', () => {
@@ -242,30 +243,16 @@ describe('authorization-form.validator', () => {
   });
 
   describe('formatAuthorizationViolationMessage', () => {
-    const names = { authType: 'Aut. Cirugía Ambulatoria' };
-
     it('includes the auth number and CUPS in a duplicate-entry message', () => {
       const message = formatAuthorizationViolationMessage(
         { row: 0, kind: 'duplicate-entry', authNumber: 'AUTH-001', mapiissCode: 'MAPIISS-1', feeScheduleId: 2 },
-        names,
       );
-      expect(message).toBe(
-        'Ya existe una autorización con N° AUTH-001 para el CUPS MAPIISS-1 en la admisión o en esta solicitud',
-      );
-    });
-
-    it('includes the auth type and CUPS in a duplicate-service message', () => {
-      const message = formatAuthorizationViolationMessage(
-        { row: 0, kind: 'duplicate-service', authTypeId: 5, mapiissCode: 'MAPIISS-1', feeScheduleId: 2 },
-        names,
-      );
-      expect(message).toBe('Ya existe una autorización de tipo Aut. Cirugía Ambulatoria para el CUPS MAPIISS-1');
+      expect(message).toBe('Ya existe una autorización con N° AUTH-001 para el CUPS MAPIISS-1 en la admisión o en esta solicitud');
     });
 
     it('includes the quantity, CUPS and max quantity in a quantity-exceeded message', () => {
       const message = formatAuthorizationViolationMessage(
         { row: 0, kind: 'quantity-exceeded', mapiissCode: 'MAPIISS-1', quantity: 2, maxQuantity: 5 },
-        names,
       );
       expect(message).toBe(
         'La cantidad autorizada (2) del CUPS MAPIISS-1 supera el máximo permitido por paciente (5)',

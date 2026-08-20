@@ -118,6 +118,8 @@ export class AdmissionFormFacade {
         authNumber: auth.authNumber,
         mapiissCode: auth.mapiissCode,
         quantity: auth.quantity,
+        mapiissDescription: auth.mapiissDescription ?? undefined,
+        observaciones: auth.observaciones ?? undefined,
       }),
     ),
   );
@@ -130,6 +132,8 @@ export class AdmissionFormFacade {
         authNumber: values.authNumber,
         mapiissCode: values.mapiissCode,
         quantity: values.quantity ?? 1,
+        description: values.description,
+        observaciones: values.observaciones || undefined,
       });
     }),
   );
@@ -260,6 +264,16 @@ export class AdmissionFormFacade {
     const fg = this.authEntries()[index];
     if (!fg) return;
     this.authEntries.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  updateAuthEntry(index: number, value: AuthorizationFormValue): void {
+    const fg = createAuthorizationForm();
+    fg.patchValue(value);
+    this.authEntries.update((list) => {
+      const newList = [...list];
+      newList[index] = fg;
+      return newList;
+    });
   }
 
   resetAll(): void {

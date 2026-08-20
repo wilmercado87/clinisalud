@@ -6,6 +6,7 @@ import { AuthorizationFormGroup } from './authorization-form.types';
 export function createAuthorizationForm(): AuthorizationFormGroup {
   const description = createFormControl<string>('');
   description.disable();
+  const observaciones = createFormControl<string>('');
   const maxQuantity = createFormControl<number | null>(null);
   maxQuantity.disable();
   return new FormGroup({
@@ -15,6 +16,7 @@ export function createAuthorizationForm(): AuthorizationFormGroup {
     mapiissCode: createFormControl<string>('', Validators.required),
     quantity: createFormControl<number | null>(1, Validators.required, numericValidator, Validators.min(1)),
     description,
+    observaciones,
     maxQuantity,
   });
 }

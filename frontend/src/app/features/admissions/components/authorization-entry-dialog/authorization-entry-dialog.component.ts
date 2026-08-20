@@ -35,6 +35,8 @@ export interface AuthorizationEntryDialogData {
   existingAuthorizations: AdmissionAuthorization[];
   queuedAuthorizations: AuthorizationFormValue[];
   epsId: number | null;
+  editIndex?: number;
+  initialEntry?: AuthorizationFormValue;
 }
 
 @Component({
@@ -135,7 +137,15 @@ export class AuthorizationEntryDialogComponent {
     if (epsId !== null && epsId !== undefined) {
       this.catalogStore.loadContracts(epsId);
     }
-    this.addEntry();
+    const { editIndex, initialEntry } = this.dialogData();
+    if (editIndex !== undefined && initialEntry) {
+      const fg = createAuthorizationForm();
+      fg.patchValue(initialEntry);
+      this.entryValues.set(fg, toSignal(fg.valueChanges, { initialValue: fg.getRawValue(), injector: this.injector }));
+      this.entries.set([fg]);
+    } else {
+      this.addEntry();
+    }
     this.registerEffects();
   }
 
@@ -252,7 +262,12 @@ export class AuthorizationEntryDialogComponent {
       this.applyAttempted.set(true);
       return;
     }
-    this.dialogRef.close(this.entries().map((fg) => fg.getRawValue()));
+    const { editIndex } = this.dialogData();
+    if (editIndex !== undefined) {
+      this.dialogRef.close({ editIndex, entry: this.entries()[0].getRawValue() });
+    } else {
+      this.dialogRef.close(this.entries().map((fg) => fg.getRawValue()));
+    }
   }
 
   cancel(): void {

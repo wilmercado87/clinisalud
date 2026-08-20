@@ -13,6 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 import {
   AuthorizationEntryDialogComponent,
@@ -38,6 +39,7 @@ import { CatalogSelectComponent } from '@shared/components/catalog-select/catalo
     MatDatepickerModule,
     MatNativeDateModule,
     MatDialogModule,
+    MatTooltipModule,
     CatalogSelectComponent,
     RouterModule,
   ],
@@ -114,6 +116,33 @@ export class AdmissionFormComponent {
 
   removeAuthEntry(index: number): void {
     this.facade.removeAuthEntry(index);
+  }
+
+  editAuthEntry(index: number): void {
+    const fg = this.facade.authEntries()[index];
+    if (!fg) return;
+
+    const dialogRef = this.dialog.open(AuthorizationEntryDialogComponent, {
+      width: '1200px',
+      maxWidth: '95vw',
+      autoFocus: false,
+      disableClose: true,
+      data: {
+        existingAuthorizations: this.facade.existingAuthorizations(),
+        queuedAuthorizations: this.facade.authEntries().map((f) => f.getRawValue()),
+        epsId: this.facade.admissionForm.controls.epsId.value ?? null,
+        editIndex: index,
+        initialEntry: fg.getRawValue(),
+      } satisfies AuthorizationEntryDialogData,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result?: { editIndex: number; entry: AuthorizationFormValue }) => {
+        if (!result || result.editIndex === undefined) return;
+        this.facade.updateAuthEntry(result.editIndex, result.entry);
+      });
   }
 
   openAuthorizationsDialog(): void {

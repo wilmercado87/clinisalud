@@ -7,6 +7,7 @@ export type AuthorizationFormGroup = FormGroup<{
   mapiissCode: FormControl<string>;
   quantity: FormControl<number | null>;
   description: FormControl<string>;
+  observaciones: FormControl<string>;
   maxQuantity: FormControl<number | null>;
 }>;
 
@@ -17,6 +18,7 @@ export type AuthorizationFormValue = {
   mapiissCode: string;
   quantity: number | null;
   description: string;
+  observaciones: string;
   maxQuantity: number | null;
 };
 

@@ -1,5 +1,5 @@
 <div class="auth-dialog">
-  <h2 mat-dialog-title>Agregar Autorizaciones</h2>
+  <h2 mat-dialog-title>{{ dialogData().editIndex !== undefined ? 'Editar Autorización' : 'Agregar Autorizaciones' }}</h2>
   <div class="auth-dialog__tariff-note">{{ tariffNoteMessage() }}</div>
   <mat-dialog-content class="auth-dialog__content">
     @for (entry of entries(); track $index) {
@@ -63,6 +63,15 @@
             rows="2"
             placeholder="Descripción del procedimiento seleccionado"
             readonly
+          ></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="auth-dialog__obs">
+          <mat-label>Observaciones</mat-label>
+          <textarea
+            matInput
+            [formControl]="entry.controls.observaciones"
+            rows="2"
+            placeholder="Observaciones de la autorización"
           ></textarea>
         </mat-form-field>
       </div>

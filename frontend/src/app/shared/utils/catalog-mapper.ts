@@ -12,6 +12,9 @@ export interface AuthRowViewModel {
   authNumber: string;
   mapiissCode: string | null;
   quantity: number;
+  description?: string;
+  mapiissDescription?: string;
+  observaciones?: string;
 }
 
 export function formatBedLabel(catalog: CatalogSourceItem[], roomId: number | null): string | null {
@@ -28,6 +31,9 @@ export function toAuthRowViewModel(
     authNumber: string;
     mapiissCode: string | null;
     quantity: number;
+    description?: string;
+    mapiissDescription?: string;
+    observaciones?: string;
   },
 ): AuthRowViewModel {
   return {
@@ -35,6 +41,9 @@ export function toAuthRowViewModel(
     authNumber: row.authNumber,
     mapiissCode: row.mapiissCode,
     quantity: row.quantity,
+    description: row.description,
+    mapiissDescription: row.mapiissDescription,
+    observaciones: row.observaciones,
   };
 }
 

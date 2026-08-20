@@ -174,6 +174,7 @@ describe('AuthorizationEntryDialogComponent', () => {
         mapiissCode: 'MAPIISS-1',
         quantity: 2,
         description: '',
+        observaciones: '',
         maxQuantity: null,
       },
     ]);
