@@ -33,10 +33,10 @@ export const ADMISSION_MESSAGES = {
 } as const;
 
 export const AUTH_MESSAGES = {
-  DUPLICATE_COMPOSITE_KEY: 'Ya existe autorización para este tipo, CUPS y tarifario',
-  DUPLICATE_AUTH_KEY: 'Ya existe una autorización para este N°, CUPS y tarifario en la admisión',
+  DUPLICATE_AUTH_KEY:
+    'Ya existe una autorización con N° {authNumber} para el CUPS {cups} en la admisión o en esta solicitud',
   QUANTITY_EXCEEDS_MAPIISS_MAX:
-    'La cantidad autorizada de este MAPIISS supera la cantidad de procedimientos por paciente',
+    'La cantidad autorizada ({quantity}) del CUPS {cups} supera el máximo permitido por paciente ({maxQuantity})',
 } as const;
 
 export const USER_MESSAGES = {

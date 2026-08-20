@@ -1,12 +1,14 @@
 import { FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import {
-  ageValidator,
+  birthDateAgeValidator,
   disabilityValidator,
   maxDateValidator,
   numericValidator,
   phoneValidator,
 } from '@shared/utils/form-validators';
 export { ErrorRules, extractFieldErrors, FieldErrors } from '@shared/utils/form-field-errors';
+
+export const AGE_INVALID_MESSAGE = 'Edad no válida (0 a 120 años)';
 
 export const PATIENT_REQUIRED_KEYS = ['firstName', 'lastName', 'birthDate', 'genderId', 'disability', 'userTypeId'];
 
@@ -22,8 +24,7 @@ export const COMPANION_REQUIRED_KEYS = [
 
 export function createPatientFormatValidators(today: Date): Record<string, ValidatorFn[]> {
   return {
-    birthDate: [maxDateValidator(today)],
-    age: [ageValidator],
+    birthDate: [maxDateValidator(today), birthDateAgeValidator],
     disability: [disabilityValidator],
     phone: [phoneValidator],
     email: [Validators.email],
@@ -61,6 +62,7 @@ export const PATIENT_ERROR_RULES = {
   birthDate: [
     ['required', 'La fecha de nacimiento es requerida'],
     ['dateInFuture', 'La fecha no puede ser mayor a la actual'],
+    ['invalidAge', AGE_INVALID_MESSAGE],
   ],
   disability: [
     ['required', 'La discapacidad es requerida'],

@@ -1,7 +1,6 @@
 import { FormGroup, Validators } from '@angular/forms';
 import { createFormControl } from '@shared/utils/form-control';
 import {
-  ageValidator,
   disabilityValidator,
   maxDateValidator,
   numericValidator,
@@ -32,7 +31,7 @@ export function createPatientForm(today: Date): PatientForm {
     lastName: createFormControl<string>(''),
     birthDate: createFormControl<Date | null>(null, maxDateValidator(today)),
     genderId: createFormControl<number | null>(null),
-    age: createFormControl<string>('', ageValidator),
+    age: createFormControl<string>(''),
     disability: createFormControl<string>('', disabilityValidator),
     userTypeId: createFormControl<number | null>(null),
     address: createFormControl<string>(''),

@@ -7,7 +7,7 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angu
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { CupsSearchItem } from '@core/models/catalog.model';
+import { ContratoResponse, CupsSearchItem, CatalogSourceItem } from '@core/models/catalog.model';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import {
   CupsSearchDialogComponent,
@@ -23,7 +23,9 @@ import {
 import {
   applyAuthorizationCupsSelection,
   clearAuthorizationCupsSelection,
-  computeAuthorizationEntryErrors,
+  computeAuthorizationFieldErrors,
+  evaluateAuthorizationEntryRules,
+  formatAuthorizationViolationMessage,
 } from '@features/admissions/utils/authorization/authorization-form.validator';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import { findCatalogItemName } from '@shared/utils/catalog-mapper';
@@ -32,6 +34,7 @@ import { firstValueFrom } from 'rxjs';
 export interface AuthorizationEntryDialogData {
   existingAuthorizations: AdmissionAuthorization[];
   queuedAuthorizations: AuthorizationFormValue[];
+  epsId: number | null;
 }
 
 @Component({
@@ -60,17 +63,57 @@ export class AuthorizationEntryDialogComponent {
 
   readonly entries = signal<AuthorizationFormGroup[]>([]);
   private readonly entryValues = new Map<AuthorizationFormGroup, Signal<Partial<AuthorizationFormValue>>>();
-  private readonly lastFeeSchedule = new Map<AuthorizationFormGroup, number | null>();
   private readonly lastAuthType = new Map<AuthorizationFormGroup, number | null>();
+
+  readonly contractFeeScheduleId = computed(() => {
+    const epsId = this.dialogData().epsId;
+    if (epsId === null || epsId === undefined) return null;
+    const contracts = this.catalogStore.contracts() ?? [];
+    if (contracts.length === 0) return null;
+    return this.resolveContractFeeSchedule(contracts);
+  });
+
+  private readonly feeScheduleCatalog = signal<CatalogSourceItem[]>([]);
+
+  readonly feeScheduleName = computed(() => this.catalogFeeScheduleName(this.contractFeeScheduleId()));
+
+  readonly tariffNoteMessage = computed(() => {
+    const name = this.feeScheduleName();
+    return name
+      ? `El tarifario ${name} se identifica automáticamente según el contrato de la EPS.`
+      : 'El tarifario se identifica automáticamente según el contrato de la EPS.';
+  });
 
   readonly errors = computed(() => {
     const entries = this.entries();
+    for (const fg of entries) this.entryValues.get(fg)?.();
+    return computeAuthorizationFieldErrors(entries);
+  });
+
+  readonly ruleViolations = computed(() => {
+    const entries = this.entries();
     const { existingAuthorizations, queuedAuthorizations } = this.dialogData();
     for (const fg of entries) this.entryValues.get(fg)?.();
-    return computeAuthorizationEntryErrors(entries, existingAuthorizations, queuedAuthorizations);
+    return evaluateAuthorizationEntryRules(entries, existingAuthorizations, queuedAuthorizations);
+  });
+
+  readonly affectedRows = computed(() => {
+    if (!this.applyAttempted()) return new Set<number>();
+    return new Set(this.ruleViolations().map((violation) => violation.row));
+  });
+
+  private readonly applyAttempted = signal(false);
+
+  readonly statusMessage = computed(() => {
+    if (this.tariffBlockedMessage()) return this.tariffBlockedMessage();
+    if (!this.applyAttempted()) return null;
+    const violation = this.ruleViolations()[0];
+    if (!violation) return null;
+    return formatAuthorizationViolationMessage(violation);
   });
 
   readonly canApply = computed(() => {
+    if (this.contractFeeScheduleId() === null) return false;
     const list = this.entries();
     if (list.length === 0) return false;
     const hasErrors = this.errors().some((e: AuthorizationEntryError) => Object.keys(e).length > 0);
@@ -78,9 +121,30 @@ export class AuthorizationEntryDialogComponent {
     return list.every((fg) => fg.valid);
   });
 
+  private readonly tariffBlockedMessage = computed(() => {
+    if (this.contractFeeScheduleId() !== null) return null;
+    const epsId = this.dialogData().epsId;
+    return epsId === null || epsId === undefined
+      ? 'Seleccione la EPS para identificar el tarifario antes de registrar autorizaciones'
+      : 'La EPS seleccionada no tiene un contrato con tarifario asociado';
+  });
+
   constructor() {
+    this.loadFeeScheduleCatalog();
+    const epsId = this.dialogData().epsId;
+    if (epsId !== null && epsId !== undefined) {
+      this.catalogStore.loadContracts(epsId);
+    }
     this.addEntry();
     this.registerEffects();
+  }
+
+  private loadFeeScheduleCatalog(): void {
+    const cached = this.catalogStore.getCatalog('fee-schedules');
+    if (cached.length > 0) this.feeScheduleCatalog.set(cached);
+    void firstValueFrom(this.catalogStore.loadCatalog('fee-schedules')).then((items) => {
+      this.feeScheduleCatalog.set(items);
+    });
   }
 
   addEntry(): void {
@@ -94,25 +158,20 @@ export class AuthorizationEntryDialogComponent {
     if (!fg) return;
     this.entries.update((list) => list.filter((_, i) => i !== index));
     this.entryValues.delete(fg);
-    this.lastFeeSchedule.delete(fg);
     this.lastAuthType.delete(fg);
   }
 
   private registerEffects(): void {
     effect(() => {
+      const feeScheduleId = this.contractFeeScheduleId();
+      for (const fg of this.entries()) {
+        this.syncContractFeeSchedule(fg, feeScheduleId);
+      }
+    });
+
+    effect(() => {
       for (const fg of this.entries()) {
         this.entryValues.get(fg)?.();
-        const feeScheduleId = fg.controls.feeScheduleId.value;
-        const previousFeeSchedule = this.lastFeeSchedule.get(fg);
-        this.lastFeeSchedule.set(fg, feeScheduleId);
-        if (
-          previousFeeSchedule !== undefined &&
-          previousFeeSchedule !== null &&
-          previousFeeSchedule !== feeScheduleId
-        ) {
-          clearAuthorizationCupsSelection(fg);
-        }
-
         const authTypeId = fg.controls.authTypeId.value;
         const previousAuthType = this.lastAuthType.get(fg);
         this.lastAuthType.set(fg, authTypeId);
@@ -121,6 +180,23 @@ export class AuthorizationEntryDialogComponent {
         }
       }
     });
+  }
+
+  private syncContractFeeSchedule(formGroup: AuthorizationFormGroup, feeScheduleId: number | null): void {
+    if (!formGroup.controls.feeScheduleId.disabled || formGroup.controls.feeScheduleId.value !== feeScheduleId) {
+      formGroup.controls.feeScheduleId.disable();
+      formGroup.controls.feeScheduleId.setValue(feeScheduleId);
+    }
+  }
+
+  private resolveContractFeeSchedule(contracts: ContratoResponse[]): number | null {
+    const sorted = [...contracts].sort((a, b) => this.contractEndKey(b.endDate) - this.contractEndKey(a.endDate));
+    return sorted[0]?.feeScheduleId ?? null;
+  }
+
+  private contractEndKey(endDate: string): number {
+    const [day, month, year] = endDate.split('/');
+    return Number(`${year}${month.padStart(2, '0')}${day.padStart(2, '0')}`);
   }
 
   async openCupsSearch(index: number): Promise<void> {
@@ -142,7 +218,7 @@ export class AuthorizationEntryDialogComponent {
       maxWidth: '90vw',
       data: {
         feeScheduleId,
-        feeScheduleName: this.feeScheduleName(feeScheduleId),
+        feeScheduleName: this.catalogFeeScheduleName(feeScheduleId),
         attentionLevelId,
       } satisfies CupsSearchDialogData,
     });
@@ -160,12 +236,22 @@ export class AuthorizationEntryDialogComponent {
     return item && 'attentionLevelId' in item ? item.attentionLevelId : undefined;
   }
 
-  private feeScheduleName(feeScheduleId: number): string {
-    return findCatalogItemName(this.catalogStore.getCatalog('fee-schedules'), feeScheduleId) || `#${feeScheduleId}`;
+  private catalogFeeScheduleName(feeScheduleId: number | null | undefined): string {
+    if (feeScheduleId === null || feeScheduleId === undefined) return '';
+    return (findCatalogItemName(this.feeScheduleCatalog(), feeScheduleId) || `#${feeScheduleId}`).replaceAll('_', ' ');
+  }
+
+  private authorizationTypeName(authTypeId: number | null | undefined): string {
+    if (authTypeId === null || authTypeId === undefined) return '';
+    return findCatalogItemName(this.catalogStore.getCatalog('authorization-types'), authTypeId) || `#${authTypeId}`;
   }
 
   apply(): void {
     if (!this.canApply()) return;
+    if (this.ruleViolations().length > 0) {
+      this.applyAttempted.set(true);
+      return;
+    }
     this.dialogRef.close(this.entries().map((fg) => fg.getRawValue()));
   }
 

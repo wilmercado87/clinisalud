@@ -99,9 +99,7 @@
             />
             <mat-datepicker-toggle matIconSuffix [for]="birthPicker"></mat-datepicker-toggle>
             <mat-datepicker #birthPicker></mat-datepicker>
-            @if (patientErrors().birthDate) {
-              <mat-error>{{ patientErrors().birthDate }}</mat-error>
-            }
+            <mat-error>{{ patientErrors().birthDate }}</mat-error>
           </mat-form-field>
           <app-catalog-select
             catalogType="genders"

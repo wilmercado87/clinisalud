@@ -9,7 +9,9 @@ import {
   applyAuthorizationQuantityMax,
   AUTHORIZATION_ERROR_RULES,
   clearAuthorizationCupsSelection,
-  computeAuthorizationEntryErrors,
+  computeAuthorizationFieldErrors,
+  evaluateAuthorizationEntryRules,
+  formatAuthorizationViolationMessage,
 } from './authorization-form.validator';
 
 describe('authorization-form.validator', () => {
@@ -20,7 +22,6 @@ describe('authorization-form.validator', () => {
       const errors = extractFieldErrors(group, AUTHORIZATION_ERROR_RULES);
       expect(errors.authTypeId).toBe('Seleccione Tipo Autorización');
       expect(errors.authNumber).toBe('N° Autorización requerido');
-      expect(errors.feeScheduleId).toBe('Seleccione Tarifario');
       expect(errors.mapiissCode).toBe('Seleccione MAPIISS');
       expect(errors.quantity).toBe('Mínimo 1');
     });
@@ -75,7 +76,34 @@ describe('authorization-form.validator', () => {
     });
   });
 
-  describe('computeAuthorizationEntryErrors (INV-ADM-02)', () => {
+  describe('computeAuthorizationFieldErrors (INV-ADM-02)', () => {
+    it('only reports field-level errors, not business rules', () => {
+      const first = createAuthorizationForm();
+      first.patchValue({ authTypeId: 5, authNumber: 'AUTH-001', feeScheduleId: 2, mapiissCode: 'MAPIISS-1', quantity: 2 });
+      const second = createAuthorizationForm();
+      second.patchValue({
+        authTypeId: 5,
+        authNumber: 'AUTH-001',
+        feeScheduleId: 2,
+        mapiissCode: 'MAPIISS-1',
+        quantity: 2,
+      });
+
+      const errors = computeAuthorizationFieldErrors([first, second]);
+      expect(errors[0]).toEqual({});
+      expect(errors[1]).toEqual({});
+    });
+
+    it('still reports missing required fields per entry', () => {
+      const entry = createAuthorizationForm();
+      entry.controls.quantity.setValue(0);
+      const errors = computeAuthorizationFieldErrors([entry]);
+      expect(errors[0].authTypeId).toBe('Seleccione Tipo Autorización');
+      expect(errors[0].quantity).toBe('Mínimo 1');
+    });
+  });
+
+  describe('evaluateAuthorizationEntryRules (INV-ADM-02)', () => {
     function fillEntry(entry: AuthorizationFormGroup, overrides: Partial<AuthorizationFormValue> = {}): void {
       entry.patchValue({
         authTypeId: 5,
@@ -125,8 +153,8 @@ describe('authorization-form.validator', () => {
       const entry = createAuthorizationForm();
       fillEntry(entry);
 
-      const errors = computeAuthorizationEntryErrors([entry], [existingAuth({ authTypeId: 4 })], []);
-      expect(errors[0].authNumber).toBe(AUTH_MESSAGES.DUPLICATE_AUTH_KEY);
+      const violations = evaluateAuthorizationEntryRules([entry], [existingAuth({ authTypeId: 4 })], []);
+      expect(violations).toMatchObject([{ row: 0, kind: 'duplicate-entry' }]);
     });
 
     it('blocks an entry that duplicates another entry in the modal', () => {
@@ -135,17 +163,17 @@ describe('authorization-form.validator', () => {
       const second = createAuthorizationForm();
       fillEntry(second);
 
-      const errors = computeAuthorizationEntryErrors([first, second], [], []);
-      expect(errors[0].authNumber).toBe(AUTH_MESSAGES.DUPLICATE_AUTH_KEY);
-      expect(errors[1].authNumber).toBe(AUTH_MESSAGES.DUPLICATE_AUTH_KEY);
+      const violations = evaluateAuthorizationEntryRules([first, second], [], []);
+      expect(violations.map((v) => v.row)).toEqual([0, 1]);
+      expect(violations.every((v) => v.kind === 'duplicate-entry')).toBe(true);
     });
 
     it('blocks an entry that duplicates a queued authorization not yet persisted', () => {
       const entry = createAuthorizationForm();
       fillEntry(entry);
 
-      const errors = computeAuthorizationEntryErrors([entry], [], [queuedAuth()]);
-      expect(errors[0].authNumber).toBe(AUTH_MESSAGES.DUPLICATE_AUTH_KEY);
+      const violations = evaluateAuthorizationEntryRules([entry], [], [queuedAuth()]);
+      expect(violations).toMatchObject([{ row: 0, kind: 'duplicate-entry' }]);
     });
 
     it('allows the same authNumber for a different CUPS or fee schedule', () => {
@@ -154,32 +182,32 @@ describe('authorization-form.validator', () => {
       const second = createAuthorizationForm();
       fillEntry(second, { mapiissCode: 'MAPIISS-2' });
 
-      const errors = computeAuthorizationEntryErrors([first, second], [], []);
-      expect(errors[1].authNumber).toBeUndefined();
+      const violations = evaluateAuthorizationEntryRules([first, second], [], []);
+      expect(violations).toEqual([]);
     });
 
     it('blocks a CUPS duplicate by auth type, CUPS and fee schedule against persisted ones', () => {
       const entry = createAuthorizationForm();
       fillEntry(entry);
 
-      const errors = computeAuthorizationEntryErrors([entry], [existingAuth({ authNumber: 'AUTH-002' })], []);
-      expect(errors[0].mapiissCode).toBe(AUTH_MESSAGES.DUPLICATE_COMPOSITE_KEY);
+      const violations = evaluateAuthorizationEntryRules([entry], [existingAuth({ authNumber: 'AUTH-002' })], []);
+      expect(violations).toMatchObject([{ row: 0, kind: 'duplicate-service' }]);
     });
 
     it('blocks an entry when the accumulated quantity of the MAPIISS exceeds the patient max', () => {
       const entry = createAuthorizationForm();
       fillCupsEntry(entry, 'AUTH-100', 2);
 
-      const errors = computeAuthorizationEntryErrors([entry], [existingAuth({ quantity: 4, authTypeId: 4 })], []);
-      expect(errors[0].quantity).toBe(AUTH_MESSAGES.QUANTITY_EXCEEDS_MAPIISS_MAX);
+      const violations = evaluateAuthorizationEntryRules([entry], [existingAuth({ quantity: 4, authTypeId: 4 })], []);
+      expect(violations).toMatchObject([{ row: 0, kind: 'quantity-exceeded', quantity: 2, maxQuantity: 5 }]);
     });
 
     it('allows an entry when the accumulated quantity stays within the patient max', () => {
       const entry = createAuthorizationForm();
       fillCupsEntry(entry, 'AUTH-100', 1);
 
-      const errors = computeAuthorizationEntryErrors([entry], [existingAuth({ quantity: 4, authTypeId: 4 })], []);
-      expect(errors[0].quantity).toBeUndefined();
+      const violations = evaluateAuthorizationEntryRules([entry], [existingAuth({ quantity: 4, authTypeId: 4 })], []);
+      expect(violations).toEqual([]);
     });
 
     it('blocks entries of the same CUPS when their combined quantity exceeds the max', () => {
@@ -188,17 +216,17 @@ describe('authorization-form.validator', () => {
       const second = createAuthorizationForm();
       fillCupsEntry(second, 'AUTH-002', 3);
 
-      const errors = computeAuthorizationEntryErrors([first, second], [], []);
-      expect(errors[0].quantity).toBe(AUTH_MESSAGES.QUANTITY_EXCEEDS_MAPIISS_MAX);
-      expect(errors[1].quantity).toBe(AUTH_MESSAGES.QUANTITY_EXCEEDS_MAPIISS_MAX);
+      const violations = evaluateAuthorizationEntryRules([first, second], [], []);
+      expect(violations.map((v) => v.row)).toEqual([0, 1]);
+      expect(violations.every((v) => v.kind === 'quantity-exceeded')).toBe(true);
     });
 
     it('blocks an entry when quantity exceeds the max accumulated with queued authorizations', () => {
       const entry = createAuthorizationForm();
       fillCupsEntry(entry, 'AUTH-100', 2);
 
-      const errors = computeAuthorizationEntryErrors([entry], [], [queuedAuth({ quantity: 4 })]);
-      expect(errors[0].quantity).toBe(AUTH_MESSAGES.QUANTITY_EXCEEDS_MAPIISS_MAX);
+      const violations = evaluateAuthorizationEntryRules([entry], [], [queuedAuth({ quantity: 4 })]);
+      expect(violations).toMatchObject([{ row: 0, kind: 'quantity-exceeded' }]);
     });
 
     it('detects duplicates case-insensitively and ignoring whitespace', () => {
@@ -207,9 +235,41 @@ describe('authorization-form.validator', () => {
       const second = createAuthorizationForm();
       fillEntry(second, { authNumber: 'AUTH-001' });
 
-      const errors = computeAuthorizationEntryErrors([first, second], [], []);
-      expect(errors[0].authNumber).toBe(AUTH_MESSAGES.DUPLICATE_AUTH_KEY);
-      expect(errors[1].authNumber).toBe(AUTH_MESSAGES.DUPLICATE_AUTH_KEY);
+      const violations = evaluateAuthorizationEntryRules([first, second], [], []);
+      expect(violations.map((v) => v.row)).toEqual([0, 1]);
+      expect(violations.every((v) => v.kind === 'duplicate-entry')).toBe(true);
+    });
+  });
+
+  describe('formatAuthorizationViolationMessage', () => {
+    const names = { authType: 'Aut. Cirugía Ambulatoria' };
+
+    it('includes the auth number and CUPS in a duplicate-entry message', () => {
+      const message = formatAuthorizationViolationMessage(
+        { row: 0, kind: 'duplicate-entry', authNumber: 'AUTH-001', mapiissCode: 'MAPIISS-1', feeScheduleId: 2 },
+        names,
+      );
+      expect(message).toBe(
+        'Ya existe una autorización con N° AUTH-001 para el CUPS MAPIISS-1 en la admisión o en esta solicitud',
+      );
+    });
+
+    it('includes the auth type and CUPS in a duplicate-service message', () => {
+      const message = formatAuthorizationViolationMessage(
+        { row: 0, kind: 'duplicate-service', authTypeId: 5, mapiissCode: 'MAPIISS-1', feeScheduleId: 2 },
+        names,
+      );
+      expect(message).toBe('Ya existe una autorización de tipo Aut. Cirugía Ambulatoria para el CUPS MAPIISS-1');
+    });
+
+    it('includes the quantity, CUPS and max quantity in a quantity-exceeded message', () => {
+      const message = formatAuthorizationViolationMessage(
+        { row: 0, kind: 'quantity-exceeded', mapiissCode: 'MAPIISS-1', quantity: 2, maxQuantity: 5 },
+        names,
+      );
+      expect(message).toBe(
+        'La cantidad autorizada (2) del CUPS MAPIISS-1 supera el máximo permitido por paciente (5)',
+      );
     });
   });
 });

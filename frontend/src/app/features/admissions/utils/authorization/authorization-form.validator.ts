@@ -2,7 +2,7 @@ import { ValidatorFn, Validators } from '@angular/forms';
 import { AdmissionAuthorization } from '@features/admissions/models/admissions.model';
 import { extractFieldErrors } from '@shared/utils/form-field-errors';
 import { numericValidator } from '@shared/utils/form-validators';
-import { AUTH_MESSAGES } from '@shared/utils/messages';
+import { AUTH_MESSAGES, formatMessage } from '@shared/utils/messages';
 import {
   AuthorizationEntryError,
   AuthorizationFormGroup,
@@ -13,7 +13,6 @@ import {
 export const AUTHORIZATION_ERROR_RULES = {
   authTypeId: [['required', 'Seleccione Tipo Autorización']],
   authNumber: [['required', 'N° Autorización requerido']],
-  feeScheduleId: [['required', 'Seleccione Tarifario']],
   mapiissCode: [['required', 'Seleccione MAPIISS']],
   quantity: [
     ['required', 'Cantidad requerida'],
@@ -24,6 +23,34 @@ export const AUTHORIZATION_ERROR_RULES = {
 } satisfies Record<string, [string, string][]>;
 
 export type AuthorizationKeyCounts = Map<string, number>;
+
+export type AuthorizationEntryViolationKind = 'duplicate-entry' | 'quantity-exceeded';
+
+export interface AuthorizationEntryViolation {
+  row: number;
+  kind: AuthorizationEntryViolationKind;
+  authNumber?: string;
+  mapiissCode?: string;
+  feeScheduleId?: number | null;
+  quantity?: number | null;
+  maxQuantity?: number | null;
+}
+
+export function formatAuthorizationViolationMessage(violation: AuthorizationEntryViolation): string {
+  switch (violation.kind) {
+    case 'duplicate-entry':
+      return formatMessage(AUTH_MESSAGES.DUPLICATE_AUTH_KEY, {
+        authNumber: violation.authNumber ?? '',
+        cups: violation.mapiissCode ?? '',
+      });
+    case 'quantity-exceeded':
+      return formatMessage(AUTH_MESSAGES.QUANTITY_EXCEEDS_MAPIISS_MAX, {
+        quantity: violation.quantity ?? 0,
+        cups: violation.mapiissCode ?? '',
+        maxQuantity: violation.maxQuantity ?? 0,
+      });
+  }
+}
 
 export function applyAuthorizationQuantityMax(formGroup: AuthorizationFormGroup, maxQuantity: number | null): void {
   const validators: ValidatorFn[] = [Validators.required, numericValidator, Validators.min(1)];
@@ -51,22 +78,36 @@ export function clearAuthorizationCupsSelection(formGroup: AuthorizationFormGrou
   applyAuthorizationQuantityMax(formGroup, null);
 }
 
-export function computeAuthorizationEntryErrors(
+export function computeAuthorizationFieldErrors(entries: AuthorizationFormGroup[]): AuthorizationEntryError[] {
+  return entries.map((formGroup) => baseEntryErrors(formGroup));
+}
+
+export function evaluateAuthorizationEntryRules(
   entries: AuthorizationFormGroup[],
   existingAuthorizations: AdmissionAuthorization[],
   queuedAuthorizations: AuthorizationFormValue[],
-): AuthorizationEntryError[] {
+): AuthorizationEntryViolation[] {
   const entranceKeyCounts = countKeys(entryKeyOf, entries, existingAuthorizations, queuedAuthorizations);
-  const serviceKeyCounts = countKeys(serviceKeyOf, entries, existingAuthorizations, queuedAuthorizations);
 
-  return entries.map((formGroup) =>
-    mergeEntryErrors(
-      baseEntryErrors(formGroup),
-      checkEntryDuplicate(formGroup, entranceKeyCounts),
-      checkServiceDuplicate(formGroup, serviceKeyCounts),
-      checkAccumulatedQuantity(formGroup, existingAuthorizations, queuedAuthorizations, entries),
-    ),
-  );
+  const violations: AuthorizationEntryViolation[] = [];
+  for (const [row, formGroup] of entries.entries()) {
+    const detail = entryRuleDetail(formGroup, entranceKeyCounts, existingAuthorizations, queuedAuthorizations, entries);
+    if (detail) violations.push({ row, ...detail });
+  }
+  return violations;
+}
+
+function entryRuleDetail(
+  formGroup: AuthorizationFormGroup,
+  entranceKeyCounts: AuthorizationKeyCounts,
+  existingAuthorizations: AdmissionAuthorization[],
+  queuedAuthorizations: AuthorizationFormValue[],
+  entries: AuthorizationFormGroup[],
+): Omit<AuthorizationEntryViolation, 'row'> | null {
+  const duplicateEntry = checkEntryDuplicate(formGroup, entranceKeyCounts);
+  if (duplicateEntry) return duplicateEntry;
+
+  return checkAccumulatedQuantity(formGroup, existingAuthorizations, queuedAuthorizations, entries);
 }
 
 function baseEntryErrors(formGroup: AuthorizationFormGroup): AuthorizationEntryError {
@@ -80,26 +121,19 @@ function baseEntryErrors(formGroup: AuthorizationFormGroup): AuthorizationEntryE
   return result;
 }
 
-function mergeEntryErrors(...errorGroups: AuthorizationEntryError[]): AuthorizationEntryError {
-  return errorGroups.reduce((accumulator, current) => ({ ...accumulator, ...current }), {});
-}
-
 function checkEntryDuplicate(
   formGroup: AuthorizationFormGroup,
   keyCounts: AuthorizationKeyCounts,
-): AuthorizationEntryError {
-  const key = entryKeyOf(identityFromForm(formGroup));
-  if (!key || (keyCounts.get(key) ?? 0) <= 1) return {};
-  return { authNumber: AUTH_MESSAGES.DUPLICATE_AUTH_KEY };
-}
-
-function checkServiceDuplicate(
-  formGroup: AuthorizationFormGroup,
-  keyCounts: AuthorizationKeyCounts,
-): AuthorizationEntryError {
-  const key = serviceKeyOf(identityFromForm(formGroup));
-  if (!key || (keyCounts.get(key) ?? 0) <= 1) return {};
-  return { mapiissCode: AUTH_MESSAGES.DUPLICATE_COMPOSITE_KEY };
+): Omit<AuthorizationEntryViolation, 'row'> | null {
+  const identity = identityFromForm(formGroup);
+  const key = entryKeyOf(identity);
+  if (!key || (keyCounts.get(key) ?? 0) <= 1) return null;
+  return {
+    kind: 'duplicate-entry',
+    authNumber: identity.authNumber,
+    mapiissCode: identity.mapiissCode,
+    feeScheduleId: identity.feeScheduleId,
+  };
 }
 
 function checkAccumulatedQuantity(
@@ -107,17 +141,17 @@ function checkAccumulatedQuantity(
   existingAuthorizations: AdmissionAuthorization[],
   queuedAuthorizations: AuthorizationFormValue[],
   entries: AuthorizationFormGroup[],
-): AuthorizationEntryError {
+): Omit<AuthorizationEntryViolation, 'row'> | null {
   const identity = identityFromForm(formGroup);
   const maxQuantity = formGroup.controls.maxQuantity.value;
   const quantity = formGroup.controls.quantity.value;
   if (!isCompleteService(identity) || maxQuantity === null || maxQuantity <= 0 || quantity === null || quantity <= 0) {
-    return {};
+    return null;
   }
 
   const total = accumulatedQuantityOf(formGroup, identity, existingAuthorizations, queuedAuthorizations, entries);
-  if (total <= maxQuantity) return {};
-  return { quantity: AUTH_MESSAGES.QUANTITY_EXCEEDS_MAPIISS_MAX };
+  if (total <= maxQuantity) return null;
+  return { kind: 'quantity-exceeded', mapiissCode: identity.mapiissCode, quantity, maxQuantity };
 }
 
 function accumulatedQuantityOf(
@@ -189,12 +223,6 @@ function entryKeyOf(identity: AuthorizationIdentity): string | null {
   const mapiissCode = normalizeCode(identity.mapiissCode);
   if (!authNumber || !mapiissCode || identity.feeScheduleId === null) return null;
   return `${authNumber}|${identity.feeScheduleId}|${mapiissCode}`;
-}
-
-function serviceKeyOf(identity: AuthorizationIdentity): string | null {
-  const mapiissCode = normalizeCode(identity.mapiissCode);
-  if (identity.authTypeId === null || !mapiissCode || identity.feeScheduleId === null) return null;
-  return `${identity.authTypeId}|${mapiissCode}|${identity.feeScheduleId}`;
 }
 
 function isCompleteService(identity: AuthorizationIdentity): boolean {

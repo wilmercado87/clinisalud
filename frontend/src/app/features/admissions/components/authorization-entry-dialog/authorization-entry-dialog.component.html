@@ -1,8 +1,9 @@
 <div class="auth-dialog">
   <h2 mat-dialog-title>Agregar Autorizaciones</h2>
+  <div class="auth-dialog__tariff-note">{{ tariffNoteMessage() }}</div>
   <mat-dialog-content class="auth-dialog__content">
     @for (entry of entries(); track $index) {
-      <div class="auth-dialog__entry">
+      <div class="auth-dialog__entry" [class.auth-dialog__entry--invalid]="affectedRows().has($index)">
         <div class="auth-dialog__row">
           <app-catalog-select
             catalogType="authorization-types"
@@ -17,12 +18,6 @@
               <mat-error>{{ errors()[$index]['authNumber'] }}</mat-error>
             }
           </mat-form-field>
-          <app-catalog-select
-            catalogType="fee-schedules"
-            label="Tarifario"
-            [formControl]="entry.controls.feeScheduleId"
-            [errorMessage]="errors()[$index]['feeScheduleId'] || null"
-          />
           <mat-form-field appearance="outline">
             <mat-label>Código MAPIISS</mat-label>
             <input matInput [formControl]="entry.controls.mapiissCode" readonly required />
@@ -78,6 +73,12 @@
         Agregar autorización
       </button>
     </div>
+    @if (statusMessage()) {
+      <div class="auth-dialog__status" role="alert">
+        <mat-icon>warning</mat-icon>
+        <span>{{ statusMessage() }}</span>
+      </div>
+    }
   </mat-dialog-content>
   <mat-dialog-actions align="end" class="auth-dialog__actions">
     <button mat-stroked-button type="button" (click)="cancel()">Cancelar</button>

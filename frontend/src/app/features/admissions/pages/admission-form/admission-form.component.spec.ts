@@ -156,6 +156,36 @@ describe('AdmissionFormComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  describe('birth date age validation', () => {
+    async function goToNotFound(): Promise<void> {
+      component.patientForm.patchValue({ documentTypeId: 1, document: '999999999' });
+      component.onSearchPatient();
+      store.isLookingUp.set(true);
+      store.isLookingUp.set(false);
+      store.lookupError.set(
+        new HttpErrorResponse({ status: 404, statusText: 'Not Found', error: { message: 'Paciente no encontrado' } }),
+      );
+      await flushEffects();
+      expect(component.mode()).toBe('NOT_FOUND');
+    }
+
+it('shows the age validation message under Fecha Nacimiento when the birth date produces an invalid age', async () => {
+      await goToNotFound();
+
+      component.patientForm.controls.birthDate.setValue(new Date(1800, 0, 1));
+      component.patientForm.controls.birthDate.markAsTouched();
+      await flushEffects();
+
+      expect(component.patientForm.controls.birthDate.hasError('invalidAge')).toBe(true);
+      expect(component.patientErrors().birthDate).toBe('Edad no válida (0 a 120 años)');
+
+      const birthField = (
+        fixture.nativeElement.querySelector('input[formcontrolname="birthDate"]') as HTMLElement
+      ).closest('.mat-mdc-form-field') as HTMLElement;
+      expect(birthField.textContent).toContain('Edad no válida (0 a 120 años)');
+    });
+  });
+
   describe('patient lookup', () => {
     it('searches a patient with document type and number', () => {
       component.patientForm.patchValue({ documentTypeId: 1, document: '1020304050' });

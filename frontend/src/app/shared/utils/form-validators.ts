@@ -1,4 +1,5 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { calculateAge } from './date-utils';
 
 export const PHONE_PATTERN = /^[+0-9][0-9\s-]{6,14}$/;
 export const NUMERIC_PATTERN = /^[0-9]+$/;
@@ -20,10 +21,10 @@ export function numericValidator(control: AbstractControl): ValidationErrors | n
   return NUMERIC_PATTERN.test(String(value).trim()) ? null : { invalidNumeric: true };
 }
 
-export function ageValidator(control: AbstractControl): ValidationErrors | null {
+export function birthDateAgeValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
-  if (isBlank(value)) return null;
-  const age = Number(value);
+  if (!value) return null;
+  const age = Number(calculateAge(value));
   return Number.isInteger(age) && age >= 0 && age <= 120 ? null : { invalidAge: true };
 }
 

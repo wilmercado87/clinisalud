@@ -120,6 +120,7 @@ export class AdmissionFormComponent {
     const data: AuthorizationEntryDialogData = {
       existingAuthorizations: this.facade.existingAuthorizations(),
       queuedAuthorizations: this.facade.authEntries().map((fg) => fg.getRawValue()),
+      epsId: this.facade.admissionForm.controls.epsId.value ?? null,
     };
 
     const dialogRef = this.dialog.open(AuthorizationEntryDialogComponent, {

@@ -2,6 +2,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { extractFieldErrors } from '@shared/utils/form-field-errors';
 import {
   ADMISSION_ERROR_RULES,
+  AGE_INVALID_MESSAGE,
   applyRequiredValidators,
   COMPANION_ERROR_RULES,
   COMPANION_FORMAT_VALIDATORS,
@@ -27,10 +28,19 @@ describe('admission-form-validator', () => {
       expect(control.valid).toBe(true);
     });
 
-    it('rejects an invalid age', () => {
+    it('rejects a birth date whose computed age exceeds 120 years', () => {
       const validators = createPatientFormatValidators(today);
-      const control = new FormControl<string>('abc', validators['age']);
+      const control = new FormControl<Date | null>(new Date(1800, 0, 1), validators['birthDate']);
       expect(control.errors?.['invalidAge']).toBeTruthy();
+    });
+
+    it('maps the birth date age error to the PATIENT_ERROR_RULES message', () => {
+      const validators = createPatientFormatValidators(today);
+      const group = new FormGroup({
+        birthDate: new FormControl<Date | null>(new Date(1800, 0, 1), validators['birthDate']),
+      });
+      const errors = extractFieldErrors(group, PATIENT_ERROR_RULES);
+      expect(errors.birthDate).toBe(AGE_INVALID_MESSAGE);
     });
 
     it('rejects an invalid disability value', () => {

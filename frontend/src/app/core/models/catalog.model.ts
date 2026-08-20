@@ -12,7 +12,10 @@ export interface MunicipioResponse extends CatalogItemResponse {
 
 export interface ContratoResponse extends CatalogItemResponse {
   epsId: number;
+  feeScheduleId: number;
   contractNumber: string;
+  startDate: string;
+  endDate: string;
 }
 
 export interface CamaResponse {

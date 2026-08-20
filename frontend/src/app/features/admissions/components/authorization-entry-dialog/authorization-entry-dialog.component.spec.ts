@@ -1,8 +1,8 @@
-import { Component, forwardRef, input } from '@angular/core';
+import { Component, forwardRef, input, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { CupsSearchItem } from '@core/models/catalog.model';
+import { ContratoResponse, CupsSearchItem } from '@core/models/catalog.model';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { AuthorizationFormGroup } from '@features/admissions/utils/authorization/authorization-form.types';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
@@ -51,10 +51,13 @@ describe('AuthorizationEntryDialogComponent', () => {
   let catalogData: Record<string, unknown[]>;
   let reloadResult: unknown[];
   let reloadCatalogSpy: jest.Mock;
+  let contractsSignal: ReturnType<typeof signal<ContratoResponse[]>>;
+  let loadContractsSpy: jest.Mock;
 
   const defaultDialogData: AuthorizationEntryDialogData = {
     existingAuthorizations: [],
     queuedAuthorizations: [],
+    epsId: 8301138310,
   };
 
   beforeEach(async () => {
@@ -77,13 +80,25 @@ describe('AuthorizationEntryDialogComponent', () => {
     ];
     catalogData = {
       'authorization-types': authTypes,
-      'fee-schedules': [{ id: 2, name: 'ISS 2001', description: 'ISS 2001' }],
+      'fee-schedules': [{ id: 2, name: 'ISS_2001', description: 'ISS_2001' }],
     };
     reloadResult = authTypes;
     reloadCatalogSpy = jest.fn().mockImplementation((type: string) => {
       catalogData[type] = reloadResult;
       return of(reloadResult);
     });
+    contractsSignal = signal<ContratoResponse[]>([
+      {
+        id: 1,
+        name: 'CONTR-01',
+        epsId: 8301138310,
+        feeScheduleId: 2,
+        contractNumber: 'CONTR-01',
+        startDate: '1/01/2016',
+        endDate: '31/07/2018',
+      },
+    ]);
+    loadContractsSpy = jest.fn();
 
     await TestBed.configureTestingModule({
       imports: [AuthorizationEntryDialogComponent],
@@ -95,7 +110,10 @@ describe('AuthorizationEntryDialogComponent', () => {
           provide: CatalogStore,
           useValue: {
             getCatalog: (type: string) => catalogData[type] ?? [],
+            loadCatalog: jest.fn().mockImplementation((type: string) => of(catalogData[type] ?? [])),
             reloadCatalog: reloadCatalogSpy,
+            contracts: contractsSignal.asReadonly(),
+            loadContracts: loadContractsSpy,
           },
         },
       ],
@@ -116,7 +134,6 @@ describe('AuthorizationEntryDialogComponent', () => {
     entry.patchValue({
       authTypeId: 5,
       authNumber: 'AUTH-001',
-      feeScheduleId: 2,
       mapiissCode: 'MAPIISS-1',
       quantity: 2,
     });
@@ -168,6 +185,44 @@ describe('AuthorizationEntryDialogComponent', () => {
     expect(dialogRef.close).toHaveBeenCalledWith();
   });
 
+  it('does not close on apply when business rules are violated, shows the status message and marks the row', () => {
+    component.addEntry();
+    fillEntry(component.entries()[0]);
+    fillEntry(component.entries()[1]);
+    expect(component.canApply()).toBe(true);
+
+    expect(component.statusMessage()).toBeNull();
+    expect(component.affectedRows()).toEqual(new Set());
+
+    component.apply();
+
+    expect(dialogRef.close).not.toHaveBeenCalled();
+    expect(component.statusMessage()).toContain('AUTH-001');
+    expect(component.statusMessage()).toContain('MAPIISS-1');
+    expect(component.affectedRows()).toEqual(new Set([0, 1]));
+
+    fixture.detectChanges();
+    const rows = fixture.nativeElement.querySelectorAll('.auth-dialog__entry');
+    expect(rows[0].classList.contains('auth-dialog__entry--invalid')).toBe(true);
+    expect(rows[1].classList.contains('auth-dialog__entry--invalid')).toBe(true);
+    expect(fixture.nativeElement.querySelector('.auth-dialog__status').textContent).toContain('AUTH-001');
+  });
+
+  it('closes on apply once the rule violation is fixed and clears the status', () => {
+    component.addEntry();
+    fillEntry(component.entries()[0]);
+    fillEntry(component.entries()[1]);
+    component.apply();
+    expect(component.statusMessage()).toBeTruthy();
+
+    component.entries()[1].controls.mapiissCode.setValue('MAPIISS-2');
+    fixture.detectChanges();
+    component.apply();
+
+    expect(dialogRef.close).toHaveBeenCalled();
+    expect(component.statusMessage()).toBeNull();
+  });
+
   it('does not apply while a row is invalid even if others are complete', () => {
     fillEntry(component.entries()[0]);
     component.addEntry();
@@ -180,8 +235,6 @@ describe('AuthorizationEntryDialogComponent', () => {
     entry.controls.authTypeId.setValue(5);
     expect(component.canApply()).toBe(false);
     entry.controls.authNumber.setValue('AUTH-001');
-    expect(component.canApply()).toBe(false);
-    entry.controls.feeScheduleId.setValue(2);
     expect(component.canApply()).toBe(false);
     entry.controls.mapiissCode.setValue('MAPIISS-1');
     expect(component.canApply()).toBe(true);
@@ -198,13 +251,38 @@ describe('AuthorizationEntryDialogComponent', () => {
     expect(component.canApply()).toBe(false);
   });
 
-  it('clears the CUPS selection when the fee schedule changes', () => {
+  it('derives the tariff from the EPS contract and applies it to every entry as read-only', () => {
+    expect(loadContractsSpy).toHaveBeenCalledWith(8301138310);
+    expect(component.contractFeeScheduleId()).toBe(2);
+    expect(component.feeScheduleName()).toBe('ISS 2001');
+    expect(component.tariffNoteMessage()).toBe(
+      'El tarifario ISS 2001 se identifica automáticamente según el contrato de la EPS.',
+    );
     const entry = component.entries()[0];
-    fillEntry(entry);
-    entry.controls.feeScheduleId.setValue(3);
+    expect(entry.controls.feeScheduleId.value).toBe(2);
+    expect(entry.controls.feeScheduleId.disabled).toBe(true);
+
+    component.addEntry();
     fixture.detectChanges();
-    expect(entry.controls.mapiissCode.value).toBe('');
-    expect(entry.controls.description.value).toBe('');
+    expect(component.entries()[1].controls.feeScheduleId.value).toBe(2);
+    expect(component.entries()[1].controls.feeScheduleId.disabled).toBe(true);
+  });
+
+  it('blocks apply and explains when the admission has no EPS selected', () => {
+    component.dialogData.set({ ...defaultDialogData, epsId: null });
+    fixture.detectChanges();
+
+    expect(component.contractFeeScheduleId()).toBeNull();
+    expect(component.canApply()).toBe(false);
+    expect(component.statusMessage()).toContain('Seleccione la EPS');
+  });
+
+  it('blocks apply when the EPS has no contract', () => {
+    contractsSignal.set([]);
+    fixture.detectChanges();
+
+    expect(component.canApply()).toBe(false);
+    expect(component.statusMessage()).toContain('no tiene un contrato');
   });
 
   it('clears the CUPS selection when the auth type changes', () => {
@@ -231,7 +309,7 @@ describe('AuthorizationEntryDialogComponent', () => {
 
   it('does not open the CUPS search when the auth type is missing', () => {
     const entry = component.entries()[0];
-    entry.controls.feeScheduleId.setValue(2);
+    entry.controls.authNumber.setValue('AUTH-001');
     fixture.detectChanges();
     component.openCupsSearch(0);
     expect(dialog.open).not.toHaveBeenCalled();
