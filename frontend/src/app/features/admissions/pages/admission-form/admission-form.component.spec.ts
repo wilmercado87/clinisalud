@@ -437,8 +437,7 @@ it('shows the age validation message under Fecha Nacimiento when the birth date 
           feeScheduleId: 2,
           mapiissCode: 'MAPIISS-2',
           quantity: 1,
-          description: 'Consulta',
-          observaciones: '',
+          mapiissDescription: 'Consulta',
           maxQuantity: 3,
         },
       ]);
@@ -625,8 +624,7 @@ it('shows the age validation message under Fecha Nacimiento when the birth date 
           feeScheduleId: 2,
           mapiissCode: 'MAPIISS-1',
           quantity: 2,
-          description: 'Consulta',
-          observaciones: '',
+          mapiissDescription: 'Consulta',
           maxQuantity: 3,
         },
       ]);
@@ -808,8 +806,7 @@ it('shows the age validation message under Fecha Nacimiento when the birth date 
           feeScheduleId: 2,
           mapiissCode: 'MAPIISS-1',
           quantity: 2,
-          description: 'Consulta',
-          observaciones: '',
+          mapiissDescription: 'Consulta',
           maxQuantity: 3,
         },
       ]);

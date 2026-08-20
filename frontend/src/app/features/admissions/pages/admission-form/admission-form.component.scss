@@ -38,6 +38,7 @@
       mat-card-content {
         padding-top: 16px;
         padding-bottom: 24px;
+        overflow-x: auto;
       }
     }
   }
@@ -157,12 +158,17 @@
     margin-bottom: 16px;
     border-collapse: collapse;
     font-size: 13px;
+    table-layout: fixed;
 
     th,
     td {
       padding: 8px 12px;
       text-align: left;
+      vertical-align: middle;
       border-bottom: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     th {
@@ -170,16 +176,53 @@
       color: var(--mat-sys-on-surface-variant, #666);
     }
 
+    th:first-child {
+      width: 25%;
+    }
+
+    th:nth-child(2) {
+      width: 20%;
+    }
+
+    th:nth-child(3) {
+      width: 35%;
+    }
+
+    th:nth-child(4) {
+      width: 8%;
+    }
+
+    th:last-child {
+      width: 12%;
+      text-align: center;
+    }
+
     tr:last-child td {
       border-bottom: none;
     }
 
     &--actions {
-      width: 96px;
       text-align: center;
-      display: flex;
-      gap: 4px;
-      justify-content: center;
+      padding: 4px;
+    }
+  }
+
+  &__auth-actions-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    button {
+      width: 36px;
+      height: 36px;
+      padding: 6px;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
     }
   }
 
@@ -188,16 +231,6 @@
     margin-top: 4px;
     font-size: 11px;
     color: var(--mat-sys-on-surface-variant, #666);
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__obs-text {
-    display: block;
-    font-size: 12px;
-    color: var(--mat-sys-on-surface, #333);
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;

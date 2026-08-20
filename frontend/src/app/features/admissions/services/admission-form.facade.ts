@@ -119,7 +119,6 @@ export class AdmissionFormFacade {
         mapiissCode: auth.mapiissCode,
         quantity: auth.quantity,
         mapiissDescription: auth.mapiissDescription ?? undefined,
-        observaciones: auth.observaciones ?? undefined,
       }),
     ),
   );
@@ -132,8 +131,7 @@ export class AdmissionFormFacade {
         authNumber: values.authNumber,
         mapiissCode: values.mapiissCode,
         quantity: values.quantity ?? 1,
-        description: values.description,
-        observaciones: values.observaciones || undefined,
+        mapiissDescription: values.mapiissDescription,
       });
     }),
   );

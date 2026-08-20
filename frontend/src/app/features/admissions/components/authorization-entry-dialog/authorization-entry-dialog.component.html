@@ -59,19 +59,10 @@
           <mat-label>Descripción del CUPS</mat-label>
           <textarea
             matInput
-            [formControl]="entry.controls.description"
+            [formControl]="entry.controls.mapiissDescription"
             rows="2"
             placeholder="Descripción del procedimiento seleccionado"
             readonly
-          ></textarea>
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="auth-dialog__obs">
-          <mat-label>Observaciones</mat-label>
-          <textarea
-            matInput
-            [formControl]="entry.controls.observaciones"
-            rows="2"
-            placeholder="Observaciones de la autorización"
           ></textarea>
         </mat-form-field>
       </div>

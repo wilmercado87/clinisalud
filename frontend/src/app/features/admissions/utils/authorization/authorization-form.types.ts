@@ -6,8 +6,7 @@ export type AuthorizationFormGroup = FormGroup<{
   feeScheduleId: FormControl<number | null>;
   mapiissCode: FormControl<string>;
   quantity: FormControl<number | null>;
-  description: FormControl<string>;
-  observaciones: FormControl<string>;
+  mapiissDescription: FormControl<string>;
   maxQuantity: FormControl<number | null>;
 }>;
 
@@ -17,8 +16,7 @@ export type AuthorizationFormValue = {
   feeScheduleId: number | null;
   mapiissCode: string;
   quantity: number | null;
-  description: string;
-  observaciones: string;
+  mapiissDescription: string;
   maxQuantity: number | null;
 };
 

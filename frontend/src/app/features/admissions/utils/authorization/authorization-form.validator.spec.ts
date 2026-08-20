@@ -38,7 +38,7 @@ describe('authorization-form.validator', () => {
       applyAuthorizationCupsSelection(group, { code: '123', description: 'Consulta', maxQuantity: 5 });
 
       expect(group.controls.mapiissCode.value).toBe('123');
-      expect(group.controls.description.value).toBe('Consulta');
+      expect(group.controls.mapiissDescription.value).toBe('Consulta');
       expect(group.controls.maxQuantity.value).toBe(5);
 
       group.controls.quantity.setValue(6);
@@ -53,7 +53,7 @@ describe('authorization-form.validator', () => {
       clearAuthorizationCupsSelection(group);
 
       expect(group.controls.mapiissCode.value).toBe('');
-      expect(group.controls.description.value).toBe('');
+      expect(group.controls.mapiissDescription.value).toBe('');
       expect(group.controls.maxQuantity.value).toBeNull();
 
       group.controls.quantity.setValue(50);
@@ -143,8 +143,7 @@ describe('authorization-form.validator', () => {
         feeScheduleId: 2,
         mapiissCode: 'MAPIISS-1',
         quantity: 2,
-        description: '',
-        observaciones: '',
+        mapiissDescription: '',
         maxQuantity: 5,
         ...overrides,
       };

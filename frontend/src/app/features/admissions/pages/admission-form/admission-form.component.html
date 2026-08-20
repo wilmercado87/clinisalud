@@ -252,61 +252,47 @@
           <p class="admission-form__empty">Sin autorizaciones registradas.</p>
         } @else {
           <table class="admission-form__auth-table">
-            <thead>
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>N° Autorización</th>
+              <th>Código MAPIISS</th>
+              <th>Cantidad</th>
+              <th class="admission-form__auth-table--actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of existingAuthRows(); track row.authNumber) {
               <tr>
-                <th>Tipo</th>
-                <th>N° Autorización</th>
-                <th>Código MAPIISS</th>
-                <th>Cantidad</th>
-                <th>Observaciones</th>
-                <th class="admission-form__auth-table--actions"></th>
+                <td>{{ row.authTypeName }}</td>
+                <td>{{ row.authNumber }}</td>
+                <td>
+                  <div>{{ row.mapiissCode }}</div>
+                  @if (row.mapiissDescription) {
+                    <span class="admission-form__cups-desc" [matTooltip]="row.mapiissDescription" matTooltipPosition="above" matTooltipShowDelay="300">
+                      {{ row.mapiissDescription }}
+                    </span>
+                  }
+                </td>
+                <td>{{ row.quantity }}</td>
+                <td class="admission-form__auth-table--actions"></td>
               </tr>
-            </thead>
-            <tbody>
-              @for (row of existingAuthRows(); track row.authNumber) {
-                <tr>
-                  <td>{{ row.authTypeName }}</td>
-                  <td>{{ row.authNumber }}</td>
-                  <td>
-                    <div>{{ row.mapiissCode }}</div>
-                    @if (row.mapiissDescription) {
-                      <span class="admission-form__cups-desc" [matTooltip]="row.mapiissDescription" matTooltipPosition="above" matTooltipShowDelay="300">
-                        {{ row.mapiissDescription }}
-                      </span>
-                    }
-                  </td>
-                  <td>{{ row.quantity }}</td>
-                  <td>
-                    @if (row.observaciones) {
-                      <span class="admission-form__obs-text" [matTooltip]="row.observaciones" matTooltipPosition="above" matTooltipShowDelay="300">
-                        {{ row.observaciones }}
-                      </span>
-                    }
-                  </td>
-                  <td class="admission-form__auth-table--actions"></td>
-                </tr>
-              }
-              @for (row of newAuthRows(); track $index) {
-                <tr>
-                  <td>{{ row.authTypeName }}</td>
-                  <td>{{ row.authNumber }}</td>
-                  <td>
-                    <div>{{ row.mapiissCode }}</div>
-                    @if (row.description) {
-                      <span class="admission-form__cups-desc" [matTooltip]="row.description" matTooltipPosition="above" matTooltipShowDelay="300">
-                        {{ row.description }}
-                      </span>
-                    }
-                  </td>
-                  <td>{{ row.quantity }}</td>
-                  <td>
-                    @if (row.observaciones) {
-                      <span class="admission-form__obs-text" [matTooltip]="row.observaciones" matTooltipPosition="above" matTooltipShowDelay="300">
-                        {{ row.observaciones }}
-                      </span>
-                    }
-                  </td>
-                  <td class="admission-form__auth-table--actions">
+            }
+            @for (row of newAuthRows(); track $index) {
+              <tr>
+                <td>{{ row.authTypeName }}</td>
+                <td>{{ row.authNumber }}</td>
+                <td>
+                  <div>{{ row.mapiissCode }}</div>
+                  @if (row.mapiissDescription) {
+                    <span class="admission-form__cups-desc" [matTooltip]="row.mapiissDescription" matTooltipPosition="above" matTooltipShowDelay="300">
+                      {{ row.mapiissDescription }}
+                    </span>
+                  }
+                </td>
+                <td>{{ row.quantity }}</td>
+                <td class="admission-form__auth-table--actions">
+                  <div class="admission-form__auth-actions-cell">
                     <button
                       mat-icon-button
                       color="primary"
@@ -325,11 +311,12 @@
                     >
                       <mat-icon>remove_circle</mat-icon>
                     </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
         }
         <div class="admission-form__auth-actions">
           <button

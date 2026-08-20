@@ -67,14 +67,14 @@ export function applyAuthorizationCupsSelection(
 ): void {
   formGroup.patchValue({
     mapiissCode: cups.code,
-    description: cups.description,
+    mapiissDescription: cups.description,
     maxQuantity: cups.maxQuantity,
   });
   applyAuthorizationQuantityMax(formGroup, cups.maxQuantity);
 }
 
 export function clearAuthorizationCupsSelection(formGroup: AuthorizationFormGroup): void {
-  formGroup.patchValue({ mapiissCode: '', description: '', maxQuantity: null });
+  formGroup.patchValue({ mapiissCode: '', mapiissDescription: '', maxQuantity: null });
   applyAuthorizationQuantityMax(formGroup, null);
 }
 

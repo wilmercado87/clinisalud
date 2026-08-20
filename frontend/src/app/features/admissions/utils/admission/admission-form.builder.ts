@@ -49,7 +49,6 @@ export function buildAuthorizationsRequest(
     mapiissCode: fg.controls.mapiissCode.value,
     feeScheduleId: fg.controls.feeScheduleId.value ?? 0,
     quantity: fg.controls.quantity.value ?? 1,
-    observaciones: fg.controls.observaciones.value || undefined,
   }));
 }
 

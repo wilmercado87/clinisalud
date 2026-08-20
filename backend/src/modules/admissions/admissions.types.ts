@@ -19,7 +19,6 @@ export interface AuthorizationData {
   mapiissCode: string;
   quantity?: number;
   feeScheduleId: number;
-  observaciones?: string;
 }
 
 export interface CreateAdmissionRequest {
@@ -51,7 +50,6 @@ export interface AdmissionAuthorization {
   quantity: number;
   feeScheduleId: number;
   mapiissDescription?: string;
-  observaciones?: string;
 }
 
 export interface PatientLookupResponse {

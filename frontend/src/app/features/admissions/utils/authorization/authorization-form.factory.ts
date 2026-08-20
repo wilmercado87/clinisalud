@@ -4,9 +4,8 @@ import { numericValidator } from '@shared/utils/form-validators';
 import { AuthorizationFormGroup } from './authorization-form.types';
 
 export function createAuthorizationForm(): AuthorizationFormGroup {
-  const description = createFormControl<string>('');
-  description.disable();
-  const observaciones = createFormControl<string>('');
+  const mapiissDescription = createFormControl<string>('');
+  mapiissDescription.disable();
   const maxQuantity = createFormControl<number | null>(null);
   maxQuantity.disable();
   return new FormGroup({
@@ -15,8 +14,7 @@ export function createAuthorizationForm(): AuthorizationFormGroup {
     feeScheduleId: createFormControl<number | null>(null, Validators.required),
     mapiissCode: createFormControl<string>('', Validators.required),
     quantity: createFormControl<number | null>(1, Validators.required, numericValidator, Validators.min(1)),
-    description,
-    observaciones,
+    mapiissDescription,
     maxQuantity,
   });
 }

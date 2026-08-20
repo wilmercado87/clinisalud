@@ -173,8 +173,7 @@ describe('AuthorizationEntryDialogComponent', () => {
         feeScheduleId: 2,
         mapiissCode: 'MAPIISS-1',
         quantity: 2,
-        description: '',
-        observaciones: '',
+        mapiissDescription: '',
         maxQuantity: null,
       },
     ]);
@@ -292,7 +291,7 @@ describe('AuthorizationEntryDialogComponent', () => {
     entry.controls.authTypeId.setValue(4);
     fixture.detectChanges();
     expect(entry.controls.mapiissCode.value).toBe('');
-    expect(entry.controls.description.value).toBe('');
+    expect(entry.controls.mapiissDescription.value).toBe('');
   });
 
   it('opens the CUPS search filtered by the attention level of the auth type', () => {
@@ -346,7 +345,7 @@ describe('AuthorizationEntryDialogComponent', () => {
     fixture.detectChanges();
 
     expect(entry.controls.mapiissCode.value).toBe('CODS');
-    expect(entry.controls.description.value).toBe('Fisioterapia');
+    expect(entry.controls.mapiissDescription.value).toBe('Fisioterapia');
     expect(entry.controls.maxQuantity.value).toBe(5);
   });
 });

@@ -429,7 +429,6 @@ export class AdmissionsService {
       mapiissCode: a.mapiissCode,
       feeScheduleId: a.feeScheduleId,
       quantity: a.quantity || 1,
-      observaciones: a.observaciones || null,
       systemUserId: userId,
     }));
     try {
@@ -466,7 +465,6 @@ export class AdmissionsService {
         mapiissCode: string;
         quantity: number;
         feeScheduleId: number;
-        observaciones: string | null;
         authType?: { id: number; description: string } | null;
         cups?: { mapiissCode: string; mapiissDescription: string } | null;
       };
@@ -478,7 +476,6 @@ export class AdmissionsService {
         quantity: json.quantity,
         feeScheduleId: json.feeScheduleId,
         mapiissDescription: json.cups?.mapiissDescription ?? undefined,
-        observaciones: json.observaciones ?? undefined,
       };
     });
   }
