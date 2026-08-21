@@ -33,7 +33,7 @@ import {
   PATIENT_ERROR_RULES,
   PATIENT_REQUIRED_KEYS,
 } from '@features/admissions/utils/admission/admission-form.validator';
-import { patientToFormValue } from '@features/admissions/utils/admission/admission.mapper';
+import { patientToFormValue, queuedValuesToAuthorizations } from '@features/admissions/utils/admission/admission.mapper';
 import { createAuthorizationForm } from '@features/admissions/utils/authorization/authorization-form.factory';
 import {
   AuthorizationFormGroup,
@@ -435,10 +435,20 @@ export class AdmissionFormFacade {
         }),
       );
       this.catalogStore.invalidateCatalog('beds');
+      this.mergeQueueIntoExisting();
       this.authEntries.set([]);
       this.store.clearUpdateResult();
       this.reloadCurrentPatient();
     }
+  }
+
+  private mergeQueueIntoExisting(): void {
+    const queued = this.authEntries().map((fg) => fg.getRawValue());
+    if (queued.length === 0) return;
+    this.existingAuthorizations.update((current) => [
+      ...current,
+      ...queuedValuesToAuthorizations(queued),
+    ]);
   }
 
   private watchUpdateError(): void {
