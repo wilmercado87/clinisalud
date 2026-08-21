@@ -51,6 +51,10 @@ export class AuthorizationManagerComponent {
   readonly activeAdmission = this.facade.activeAdmission;
   readonly bedLabel = this.facade.bedLabel;
 
+  readonly contractStatus = this.facade.contractStatus;
+  readonly contractFeeScheduleId = this.facade.contractFeeScheduleId;
+  readonly contractWarningMessage = this.facade.contractWarningMessage;
+
   readonly isSearching = this.facade.isSearching;
   readonly isSaving = this.facade.isSaving;
   readonly feedback = this.facade.feedback;

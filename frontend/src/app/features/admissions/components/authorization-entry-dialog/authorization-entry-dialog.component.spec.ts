@@ -1,4 +1,3 @@
-import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
@@ -19,7 +18,7 @@ describe('AuthorizationEntryDialogComponent', () => {
   const defaultDialogData: AuthorizationEntryDialogData = {
     existingAuthorizations: [],
     queuedAuthorizations: [],
-    epsId: 8301138310,
+    contractFeeScheduleId: 2,
   };
 
   async function setup(data: AuthorizationEntryDialogData): Promise<void> {
@@ -38,8 +37,6 @@ describe('AuthorizationEntryDialogComponent', () => {
             getCatalog: () => [],
             loadCatalog: jest.fn().mockReturnValue(of([])),
             reloadCatalog: jest.fn().mockReturnValue(of([])),
-            contracts: signal([]).asReadonly(),
-            loadContracts: jest.fn(),
             versionOf: () => 0,
           },
         },

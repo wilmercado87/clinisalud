@@ -1,6 +1,13 @@
 import { computed, DestroyRef, effect, inject, Injectable, signal, Signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatDialog } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
+import {
+  AuthorizationEntryDialogComponent,
+  AuthorizationEntryDialogData,
+  AuthorizationEntryDialogResult,
+} from '@features/admissions/components/authorization-entry-dialog/authorization-entry-dialog.component';
 import { AdmissionAuthorization, PatientLookupResponse } from '@features/admissions/models/admissions.model';
 import { AdmissionStore } from '@features/admissions/store/admission.store';
 import {
@@ -35,6 +42,7 @@ import {
 } from '@features/admissions/utils/admission/admission-form.validator';
 import { patientToFormValue, queuedValuesToAuthorizations } from '@features/admissions/utils/admission/admission.mapper';
 import { createAuthorizationForm } from '@features/admissions/utils/authorization/authorization-form.factory';
+import { resolveContractFeeSchedule } from '@features/admissions/utils/authorization/contract.util';
 import {
   AuthorizationFormGroup,
   AuthorizationFormValue,
@@ -46,14 +54,21 @@ import { extractFieldErrors } from '@shared/utils/form-field-errors';
 import { trackFormSignals } from '@shared/utils/form-tracking';
 import { startOfToday } from '@shared/utils/form-validators';
 import { getHttpErrorMessage, getHttpErrorStatus } from '@shared/utils/http-error';
-import { ADMISSION_MESSAGES, formatMessage } from '@shared/utils/messages';
+import { ADMISSION_MESSAGES, AUTHORIZATIONS_MESSAGES, formatMessage } from '@shared/utils/messages';
 import { HTTP_STATUS } from '@shared/utils/status.codes';
+
+export interface AuthorizationEditTarget {
+  editIndex: number;
+  initialEntry: AuthorizationFormValue;
+}
 
 @Injectable()
 export class AdmissionFormFacade {
-  private readonly store = inject(AdmissionStore);
-  private readonly catalogStore = inject(CatalogStore);
+  private readonly store = inject(AdmissionStore);  private readonly catalogStore = inject(CatalogStore);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
+
+  readonly isOpeningAuthDialog = signal(false);
 
   readonly today = startOfToday();
 
@@ -256,6 +271,78 @@ export class AdmissionFormFacade {
       return fg;
     });
     this.authEntries.update((list) => [...list, ...entries]);
+  }
+
+  async resolveContractFeeSchedule(epsId: number | null): Promise<number | null> {
+    if (epsId === null) {
+      this.feedbackController.set('info', AUTHORIZATIONS_MESSAGES.EPS_REQUIRED);
+      return null;
+    }
+
+    try {
+      const contracts = await firstValueFrom(this.catalogStore.resolveContracts(epsId));
+      const feeScheduleId = resolveContractFeeSchedule(contracts);
+      if (feeScheduleId === null) {
+        this.feedbackController.set('info', AUTHORIZATIONS_MESSAGES.EPS_CONTRACT_TARIFF_MISSING);
+      }
+      return feeScheduleId;
+    } catch {
+      this.feedbackController.set('error', AUTHORIZATIONS_MESSAGES.CONTRACT_LOOKUP_ERROR);
+      return null;
+    }
+  }
+
+  async openAuthorizationsDialog(target?: AuthorizationEditTarget): Promise<void> {
+    if (this.isOpeningAuthDialog()) return;
+    this.isOpeningAuthDialog.set(true);
+
+    try {
+      const epsId = this.admissionForm.controls.epsId.value ?? null;
+      const contractFeeScheduleId = await this.resolveContractFeeSchedule(epsId);
+      if (contractFeeScheduleId === null) return;
+
+      const dialogRef = this.dialog.open(AuthorizationEntryDialogComponent, {
+        width: '1200px',
+        maxWidth: '95vw',
+        autoFocus: false,
+        disableClose: true,
+        data: {
+          existingAuthorizations: this.existingAuthorizations(),
+          queuedAuthorizations: this.queuedFormValues(),
+          contractFeeScheduleId,
+          ...target,
+        } satisfies AuthorizationEntryDialogData,
+      });
+
+      const result = await firstValueFrom(
+        dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)),
+      );
+      this.applyAuthorizationDialogResult(result as AuthorizationEntryDialogResult | undefined);
+    } finally {
+      this.isOpeningAuthDialog.set(false);
+    }
+  }
+
+  async editAuthEntry(index: number): Promise<void> {
+    const fg = this.authEntries()[index];
+    if (!fg) return;
+
+    await this.openAuthorizationsDialog({ editIndex: index, initialEntry: fg.getRawValue() });
+  }
+
+  private applyAuthorizationDialogResult(result: AuthorizationEntryDialogResult | undefined): void {
+    if (!result) return;
+    if ('editIndex' in result && result.editIndex !== undefined) {
+      this.updateAuthEntry(result.editIndex, result.entry);
+      return;
+    }
+    if (Array.isArray(result) && result.length > 0) {
+      this.appendAuthEntries(result);
+    }
+  }
+
+  private queuedFormValues(): AuthorizationFormValue[] {
+    return this.authEntries().map((fg) => fg.getRawValue());
   }
 
   removeAuthEntry(index: number): void {

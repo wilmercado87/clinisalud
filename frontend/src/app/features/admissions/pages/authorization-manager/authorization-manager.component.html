@@ -187,19 +187,35 @@
 
           <mat-divider class="authorization-manager__divider" />
 
-          <app-authorization-entry
-            class="authorization-manager__entry"
-            [epsId]="patient.epsId"
-            [existingAuthorizations]="facade.existingAuthorizations()"
-            [queuedAuthorizations]="facade.queuedAuthValues()"
-            [editIndex]="editingEntry()?.index"
-            [initialEntry]="editingEntry()?.value"
-            applyLabel="Agregar a la lista"
-            cancelLabel="Limpiar"
-            (entriesApplied)="appendEntries($event)"
-            (entryUpdated)="updateEntry($event)"
-            (cancelled)="clearEditing()"
-          />
+          @switch (contractStatus()) {
+            @case ('loading') {
+              <div class="authorization-manager__contract-state">
+                <mat-spinner diameter="24" />
+                <span>Consultando contrato de la EPS…</span>
+              </div>
+            }
+            @case ('missing') {
+              <div class="authorization-manager__contract-state authorization-manager__contract-state--warning">
+                <mat-icon>warning_amber</mat-icon>
+                <span>{{ contractWarningMessage() }}</span>
+              </div>
+            }
+            @default {
+              <app-authorization-entry
+                class="authorization-manager__entry"
+                [contractFeeScheduleId]="contractFeeScheduleId()"
+                [existingAuthorizations]="facade.existingAuthorizations()"
+                [queuedAuthorizations]="facade.queuedAuthValues()"
+                [editIndex]="editingEntry()?.index"
+                [initialEntry]="editingEntry()?.value"
+                applyLabel="Agregar a la lista"
+                cancelLabel="Limpiar"
+                (entriesApplied)="appendEntries($event)"
+                (entryUpdated)="updateEntry($event)"
+                (cancelled)="clearEditing()"
+              />
+            }
+          }
 
           <div class="authorization-manager__actions">
             <button mat-stroked-button color="warn" type="button" (click)="onCancel()">

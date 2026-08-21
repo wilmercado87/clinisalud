@@ -1,4 +1,3 @@
-import { signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ContratoResponse } from '@core/models/catalog.model';
@@ -18,7 +17,19 @@ describe('AuthorizationManagerComponent', () => {
   let fixture: ComponentFixture<AuthorizationManagerComponent>;
   let facade: AuthorizationManagerFacade;
   let api: { lookupPatient: jest.Mock; getAdmissionByNumber: jest.Mock; updateAdmission: jest.Mock };
-  let contractsSignal: ReturnType<typeof signal<ContratoResponse[]>>;
+  let resolveContractsMock: jest.Mock;
+
+  const epsContracts: ContratoResponse[] = [
+    {
+      id: 1,
+      name: 'CONTR-01',
+      epsId: 7,
+      feeScheduleId: 2,
+      contractNumber: 'CONTR-01',
+      startDate: '1/01/2016',
+      endDate: '31/07/2018',
+    },
+  ];
 
   const existingAuth: AdmissionAuthorization = {
     authTypeId: 2,
@@ -60,23 +71,12 @@ describe('AuthorizationManagerComponent', () => {
       getAdmissionByNumber: jest.fn().mockReturnValue(of(null)),
       updateAdmission: jest.fn().mockReturnValue(of(null)),
     };
-    contractsSignal = signal<ContratoResponse[]>([
-      {
-        id: 1,
-        name: 'CONTR-01',
-        epsId: 7,
-        feeScheduleId: 2,
-        contractNumber: 'CONTR-01',
-        startDate: '1/01/2016',
-        endDate: '31/07/2018',
-      },
-    ]);
+    resolveContractsMock = jest.fn().mockReturnValue(of(epsContracts));
     const catalogStoreMock = {
       getCatalog: () => [],
       loadCatalog: jest.fn().mockReturnValue(of([])),
       reloadCatalog: jest.fn().mockReturnValue(of([])),
-      contracts: contractsSignal.asReadonly(),
-      loadContracts: jest.fn(),
+      resolveContracts: resolveContractsMock,
       versionOf: () => 0,
       invalidateCatalog: jest.fn(),
     };
@@ -147,15 +147,24 @@ describe('AuthorizationManagerComponent', () => {
     expect(resetSpy).toHaveBeenCalled();
   });
 
-  it('queues an authorization when the embedded entry applies and shows feedback', async () => {
+  async function searchPatient(): Promise<void> {
     api.lookupPatient.mockReturnValue(of(patientResponse));
     facade.documentForm.setValue({ documentTypeId: 1, document: '12345' });
     await facade.onSearch('document');
     fixture.detectChanges();
+    await new Promise<void>((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+  }
 
-    const entry = fixture.debugElement
+  function embeddedEntry(): AuthorizationEntryComponent {
+    return fixture.debugElement
       .query((node) => node.name === 'app-authorization-entry')!
       .injector.get(AuthorizationEntryComponent);
+  }
+
+  it('queues an authorization when the embedded entry applies and shows feedback', async () => {
+    await searchPatient();
+    const entry = embeddedEntry();
 
     entry.entries()[0].patchValue({
       authTypeId: 5,
@@ -174,5 +183,30 @@ describe('AuthorizationManagerComponent', () => {
     expect(facade.feedback()?.message).toContain('agregada a la lista');
     expect(entry.entries().length).toBe(1);
     expect(entry.entries()[0].controls.authNumber.value).toBe('');
+  });
+
+  it('resolves the EPS contract once and mounts the entry with the resolved tariff', async () => {
+    await searchPatient();
+
+    expect(resolveContractsMock).toHaveBeenCalledTimes(1);
+    expect(resolveContractsMock).toHaveBeenCalledWith(7);
+    expect(fixture.componentInstance.contractStatus()).toBe('ready');
+    expect(fixture.componentInstance.contractFeeScheduleId()).toBe(2);
+
+    const entry = embeddedEntry();
+    expect(entry.contractFeeScheduleId()).toBe(2);
+
+    await searchPatient();
+    expect(resolveContractsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the missing-contract state and keeps the entry unmounted', async () => {
+    resolveContractsMock.mockReturnValue(of([]));
+
+    await searchPatient();
+
+    expect(fixture.componentInstance.contractStatus()).toBe('missing');
+    expect(fixture.debugElement.query((node) => node.name === 'app-authorization-entry')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.authorization-manager__contract-state--warning')).toBeTruthy();
   });
 });

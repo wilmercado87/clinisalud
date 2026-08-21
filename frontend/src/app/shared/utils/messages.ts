@@ -48,6 +48,9 @@ export const AUTHORIZATIONS_MESSAGES = {
   AUTH_QUEUED: 'Autorización agregada a la lista. Presione Guardar Autorizaciones para persistirla',
   SAVE_SUCCESS: 'Autorizaciones agregadas a la admisión {admissionNumber}',
   SAVE_ERROR: 'Error al guardar las autorizaciones',
+  EPS_REQUIRED: 'Seleccione la EPS para identificar el tarifario antes de registrar autorizaciones',
+  EPS_CONTRACT_TARIFF_MISSING: 'La EPS seleccionada no tiene un contrato con tarifario asociado',
+  CONTRACT_LOOKUP_ERROR: 'Error al consultar el contrato de la EPS',
 } as const;
 
 export const USER_MESSAGES = {

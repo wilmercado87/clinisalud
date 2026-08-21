@@ -11,7 +11,7 @@ import { AuthorizationFormValue } from '@features/admissions/utils/authorization
 export interface AuthorizationEntryDialogData {
   existingAuthorizations: AdmissionAuthorization[];
   queuedAuthorizations: AuthorizationFormValue[];
-  epsId: number | null;
+  contractFeeScheduleId: number | null;
   editIndex?: number;
   initialEntry?: AuthorizationFormValue;
 }
@@ -25,7 +25,7 @@ export type AuthorizationEntryDialogResult = AuthorizationFormValue[] | Authoriz
     <h2 mat-dialog-title>{{ title() }}</h2>
     <mat-dialog-content class="authorization-entry-dialog__content">
       <app-authorization-entry
-        [epsId]="data().epsId"
+        [contractFeeScheduleId]="data().contractFeeScheduleId"
         [existingAuthorizations]="data().existingAuthorizations"
         [queuedAuthorizations]="data().queuedAuthorizations"
         [editIndex]="data().editIndex"

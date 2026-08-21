@@ -148,3 +148,19 @@
     padding-left: 0;
   }
 }
+
+.authorization-manager__contract-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  color: rgba(0, 0, 0, 0.6);
+
+  &--warning {
+    color: #b26a00;
+
+    mat-icon {
+      color: inherit;
+    }
+  }
+}

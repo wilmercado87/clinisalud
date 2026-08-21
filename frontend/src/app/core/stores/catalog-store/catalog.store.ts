@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { CatalogSourceItem } from '@core/models/catalog.model';
+import { CatalogSourceItem, ContratoResponse } from '@core/models/catalog.model';
 import { CatalogService } from '@core/services/catalog.service';
 import { Observable, map, of, shareReplay, tap } from 'rxjs';
 
@@ -69,19 +69,16 @@ export class CatalogStore {
   readonly isLoadingMunicipalities = this.municipalitiesResource.isLoading;
   readonly municipalitiesError = this.municipalitiesResource.error;
 
-  private readonly contractsTrigger = signal<{ epsId?: number } | null>(null);
+  private readonly contractsCache = new Map<number, Observable<ContratoResponse[]>>();
 
-  private readonly contractsResource = rxResource({
-    request: () => this.contractsTrigger(),
-    loader: ({ request }) => {
-      if (!request) return of([]);
-      return this.catalogApi.getContracts(request.epsId);
-    },
-  });
+  resolveContracts(epsId: number): Observable<ContratoResponse[]> {
+    const cached = this.contractsCache.get(epsId);
+    if (cached) return cached;
 
-  readonly contracts = this.contractsResource.value.asReadonly();
-  readonly isLoadingContracts = this.contractsResource.isLoading;
-  readonly contractsError = this.contractsResource.error;
+    const fresh = this.catalogApi.getContracts(epsId).pipe(shareReplay(1));
+    this.contractsCache.set(epsId, fresh);
+    return fresh;
+  }
 
   searchDiagnostics(q: string): void {
     this.searchDiagTrigger.set(q || null);
@@ -89,10 +86,6 @@ export class CatalogStore {
 
   loadMunicipalities(departmentId?: string): void {
     this.municipalitiesTrigger.set({ departmentId });
-  }
-
-  loadContracts(epsId?: number): void {
-    this.contractsTrigger.set({ epsId });
   }
 
   invalidateCatalog(type: string): void {
@@ -118,8 +111,8 @@ export class CatalogStore {
     this.cache.clear();
     this.observables.clear();
     this.versions.set({});
+    this.contractsCache.clear();
     this.searchDiagTrigger.set(null);
     this.municipalitiesTrigger.set(null);
-    this.contractsTrigger.set(null);
   }
 }

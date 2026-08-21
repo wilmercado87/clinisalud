@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, Signal, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, Signal, signal, untracked } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
@@ -16,12 +16,15 @@ import {
   AuthorizationFormValue,
 } from '@features/admissions/utils/authorization/authorization-form.types';
 import { formatBedLabel, findCatalogItemName, toAuthRowViewModel } from '@shared/utils/catalog-mapper';
+import { resolveContractFeeSchedule } from '@features/admissions/utils/authorization/contract.util';
 import { createFormFeedback, FormFeedback } from '@shared/utils/form-feedback';
 import { getHttpErrorMessage, getHttpErrorStatus } from '@shared/utils/http-error';
 import { ADMISSION_MESSAGES, AUTHORIZATIONS_MESSAGES, formatMessage } from '@shared/utils/messages';
 import { HTTP_STATUS } from '@shared/utils/status.codes';
 
 export type AuthorizationSearchMode = 'document' | 'admission';
+
+export type ContractStatus = 'idle' | 'loading' | 'ready' | 'missing';
 
 export interface DocumentSearchForm {
   documentTypeId: FormControl<number | null>;
@@ -62,6 +65,16 @@ export class AuthorizationManagerFacade {
   readonly feedback: Signal<FormFeedback | null> = this.feedbackController.signal;
 
   readonly activeAdmission = computed(() => this.patient()?.activeAdmission ?? null);
+
+  private readonly contractState = signal<{ status: ContractStatus; feeScheduleId: number | null }>({
+    status: 'idle',
+    feeScheduleId: null,
+  });
+  readonly contractStatus: Signal<ContractStatus> = computed(() => this.contractState().status);
+  readonly contractFeeScheduleId: Signal<number | null> = computed(() => this.contractState().feeScheduleId);
+  readonly contractWarningMessage: Signal<string | null> = computed(() =>
+    this.contractStatus() === 'missing' ? AUTHORIZATIONS_MESSAGES.EPS_CONTRACT_TARIFF_MISSING : null,
+  );
 
   readonly patientFullName = computed(() => {
     const patient = this.patient();
@@ -129,6 +142,11 @@ export class AuthorizationManagerFacade {
   constructor() {
     void this.loadCatalog('eps');
     void this.loadCatalog('beds');
+    effect(() => {
+      debugger;
+      const epsId = this.patient()?.epsId ?? null;
+      untracked(() => void this.resolveEpsContract(epsId));
+    });
   }
 
   async onSearch(mode: AuthorizationSearchMode): Promise<void> {
@@ -299,6 +317,22 @@ export class AuthorizationManagerFacade {
   private clearQueue(): void {
     this.queuedAuthForms.set([]);
     this.editingEntry.set(null);
+  }
+
+  private async resolveEpsContract(epsId: number | null): Promise<void> {
+    if (epsId === null) {
+      this.contractState.set({ status: 'idle', feeScheduleId: null });
+      return;
+    }
+
+    this.contractState.set({ status: 'loading', feeScheduleId: null });
+    try {
+      const contracts = await firstValueFrom(this.catalogStore.resolveContracts(epsId));
+      const feeScheduleId = resolveContractFeeSchedule(contracts);
+      this.contractState.set({ status: feeScheduleId === null ? 'missing' : 'ready', feeScheduleId });
+    } catch {
+      this.contractState.set({ status: 'missing', feeScheduleId: null });
+    }
   }
 
   private resetResult(): void {

@@ -1,8 +1,8 @@
-import { Component, forwardRef, input, signal } from '@angular/core';
+import { Component, forwardRef, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { ContratoResponse, CupsSearchItem } from '@core/models/catalog.model';
+import { CupsSearchItem } from '@core/models/catalog.model';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import {
   AuthorizationEntryComponent,
@@ -50,10 +50,8 @@ describe('AuthorizationEntryComponent', () => {
   let catalogData: Record<string, unknown[]>;
   let reloadResult: unknown[];
   let reloadCatalogSpy: jest.Mock;
-  let contractsSignal: ReturnType<typeof signal<ContratoResponse[]>>;
-  let loadContractsSpy: jest.Mock;
 
-  const defaultEpsId = 8301138310;
+  const defaultContractFeeScheduleId = 2;
 
   beforeEach(async () => {
     dialog = { open: jest.fn().mockReturnValue({ afterClosed: () => of(undefined) }) };
@@ -81,18 +79,6 @@ describe('AuthorizationEntryComponent', () => {
       catalogData[type] = reloadResult;
       return of(reloadResult);
     });
-    contractsSignal = signal<ContratoResponse[]>([
-      {
-        id: 1,
-        name: 'CONTR-01',
-        epsId: defaultEpsId,
-        feeScheduleId: 2,
-        contractNumber: 'CONTR-01',
-        startDate: '1/01/2016',
-        endDate: '31/07/2018',
-      },
-    ]);
-    loadContractsSpy = jest.fn();
 
     await TestBed.configureTestingModule({
       imports: [AuthorizationEntryComponent],
@@ -104,8 +90,6 @@ describe('AuthorizationEntryComponent', () => {
             getCatalog: (type: string) => catalogData[type] ?? [],
             loadCatalog: jest.fn().mockImplementation((type: string) => of(catalogData[type] ?? [])),
             reloadCatalog: reloadCatalogSpy,
-            contracts: contractsSignal.asReadonly(),
-            loadContracts: loadContractsSpy,
           },
         },
       ],
@@ -117,7 +101,7 @@ describe('AuthorizationEntryComponent', () => {
       .compileComponents();
 
     fixture = TestBed.createComponent(AuthorizationEntryComponent);
-    fixture.componentRef.setInput('epsId', defaultEpsId);
+    fixture.componentRef.setInput('contractFeeScheduleId', defaultContractFeeScheduleId);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -273,8 +257,7 @@ describe('AuthorizationEntryComponent', () => {
     expect(component.canApply()).toBe(false);
   });
 
-  it('derives the tariff from the EPS contract and applies it to every entry as read-only', () => {
-    expect(loadContractsSpy).toHaveBeenCalledWith(defaultEpsId);
+  it('applies the resolved tariff to every entry as read-only', () => {
     expect(component.contractFeeScheduleId()).toBe(2);
     expect(component.feeScheduleName()).toBe('ISS 2001');
     expect(component.tariffNoteMessage()).toBe(
@@ -290,21 +273,12 @@ describe('AuthorizationEntryComponent', () => {
     expect(component.entries()[1].controls.feeScheduleId.disabled).toBe(true);
   });
 
-  it('blocks apply and explains when there is no EPS available', () => {
-    fixture.componentRef.setInput('epsId', null);
-    fixture.detectChanges();
-
-    expect(component.contractFeeScheduleId()).toBeNull();
-    expect(component.canApply()).toBe(false);
-    expect(component.statusMessage()).toContain('Seleccione la EPS');
-  });
-
-  it('blocks apply when the EPS has no contract', () => {
-    contractsSignal.set([]);
+  it('blocks apply and stays silent when no tariff is provided (host owns the message)', () => {
+    fixture.componentRef.setInput('contractFeeScheduleId', null);
     fixture.detectChanges();
 
     expect(component.canApply()).toBe(false);
-    expect(component.statusMessage()).toContain('no tiene un contrato');
+    expect(component.statusMessage()).toBeNull();
   });
 
   it('clears the CUPS selection when the auth type changes', () => {

@@ -1,6 +1,6 @@
-import { signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { ContratoResponse } from '@core/models/catalog.model';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import {
   AdmissionAuthorization,
@@ -21,8 +21,7 @@ describe('AuthorizationManagerFacade', () => {
     getCatalog: jest.Mock;
     loadCatalog: jest.Mock;
     reloadCatalog: jest.Mock;
-    contracts: () => unknown[];
-    loadContracts: jest.Mock;
+    resolveContracts: jest.Mock;
     versionOf: jest.Mock;
     invalidateCatalog: jest.Mock;
   };
@@ -75,8 +74,7 @@ describe('AuthorizationManagerFacade', () => {
       getCatalog: jest.fn().mockReturnValue([]),
       loadCatalog: jest.fn().mockReturnValue(of([])),
       reloadCatalog: jest.fn().mockReturnValue(of([])),
-      contracts: signal([]).asReadonly(),
-      loadContracts: jest.fn(),
+      resolveContracts: jest.fn().mockReturnValue(of([])),
       versionOf: jest.fn().mockReturnValue(0),
       invalidateCatalog: jest.fn(),
     };
@@ -306,5 +304,51 @@ describe('AuthorizationManagerFacade', () => {
     expect(facade.patient()).toBeNull();
     expect(facade.existingAuthorizations()).toEqual([]);
     expect(facade.documentForm.getRawValue()).toEqual({ documentTypeId: null, document: '' });
+  });
+
+  async function searchDefaultPatient(): Promise<void> {
+    api.lookupPatient.mockReturnValue(of(patientResponse));
+    facade.documentForm.setValue({ documentTypeId: 1, document: '12345' });
+    await facade.onSearch('document');
+    await new Promise<void>((resolve) => setTimeout(resolve));
+  }
+
+  it('resolves the EPS contract to ready with the latest fee schedule', async () => {
+    const contracts: ContratoResponse[] = [
+      { id: 1, name: 'CT-1', epsId: 7, feeScheduleId: 2, contractNumber: 'CT-1', startDate: '01/01/2016', endDate: '31/07/2018' },
+      { id: 2, name: 'CT-2', epsId: 7, feeScheduleId: 5, contractNumber: 'CT-2', startDate: '01/01/2026', endDate: '31/12/2027' },
+    ];
+    catalogStoreMock.resolveContracts.mockReturnValue(of(contracts));
+
+    await searchDefaultPatient();
+
+    expect(catalogStoreMock.resolveContracts).toHaveBeenCalledWith(7);
+    expect(facade.contractStatus()).toBe('ready');
+    expect(facade.contractFeeScheduleId()).toBe(5);
+    expect(facade.contractWarningMessage()).toBeNull();
+  });
+
+  it('marks the contract as missing when the EPS has no contracts', async () => {
+    catalogStoreMock.resolveContracts.mockReturnValue(of([]));
+
+    await searchDefaultPatient();
+
+    expect(facade.contractStatus()).toBe('missing');
+    expect(facade.contractFeeScheduleId()).toBeNull();
+    expect(facade.contractWarningMessage()).toBe(
+      'La EPS seleccionada no tiene un contrato con tarifario asociado',
+    );
+  });
+
+  it('marks the contract as missing when the lookup fails and recovers on next patient', async () => {
+    catalogStoreMock.resolveContracts.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+    catalogStoreMock.resolveContracts.mockReturnValueOnce(of([]));
+
+    await searchDefaultPatient();
+    expect(facade.contractStatus()).toBe('missing');
+
+    facade.resetAll();
+    await new Promise<void>((resolve) => setTimeout(resolve));
+    expect(facade.contractStatus()).toBe('idle');
   });
 });

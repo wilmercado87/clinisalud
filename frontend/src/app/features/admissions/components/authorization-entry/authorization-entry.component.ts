@@ -21,7 +21,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatDialog } from '@angular/material/dialog';
-import { ContratoResponse, CatalogSourceItem, CupsSearchItem } from '@core/models/catalog.model';
+import { CatalogSourceItem, CupsSearchItem } from '@core/models/catalog.model';
 import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import {
   CupsSearchDialogComponent,
@@ -70,7 +70,7 @@ export class AuthorizationEntryComponent {
   private readonly dialog = inject(MatDialog);
   private readonly injector = inject(Injector);
 
-  readonly epsId = input.required<number | null>();
+  readonly contractFeeScheduleId = input.required<number | null>();
   readonly existingAuthorizations = input<AdmissionAuthorization[]>([]);
   readonly queuedAuthorizations = input<AuthorizationFormValue[]>([]);
   readonly editIndex = input<number>();
@@ -95,15 +95,7 @@ export class AuthorizationEntryComponent {
   private readonly entryValues = new Map<AuthorizationFormGroup, Signal<Partial<AuthorizationFormValue>>>();
   private readonly lastAuthType = new Map<AuthorizationFormGroup, number | null>();
 
-  readonly contractFeeScheduleId = computed(() => {
-    const epsId = this.epsId();
-    if (epsId === null || epsId === undefined) return null;
-    const contracts = this.catalogStore.contracts() ?? [];
-    if (contracts.length === 0) return null;
-    return this.resolveContractFeeSchedule(contracts);
-  });
-
-  private readonly feeScheduleCatalog = signal<CatalogSourceItem[]>([]);
+  readonly feeScheduleCatalog = signal<CatalogSourceItem[]>([]);
 
   readonly feeScheduleName = computed(() => this.catalogFeeScheduleName(this.contractFeeScheduleId()));
 
@@ -134,7 +126,6 @@ export class AuthorizationEntryComponent {
   private readonly applyAttempted = signal(false);
 
   readonly statusMessage = computed(() => {
-    if (this.tariffBlockedMessage()) return this.tariffBlockedMessage();
     if (!this.applyAttempted()) return null;
     const violation = this.ruleViolations()[0];
     if (!violation) return null;
@@ -148,14 +139,6 @@ export class AuthorizationEntryComponent {
     const hasErrors = this.errors().some((e: AuthorizationEntryError) => Object.keys(e).length > 0);
     if (hasErrors) return false;
     return list.every((fg) => fg.valid);
-  });
-
-  private readonly tariffBlockedMessage = computed(() => {
-    if (this.contractFeeScheduleId() !== null) return null;
-    const epsId = this.epsId();
-    return epsId === null || epsId === undefined
-      ? 'Seleccione la EPS para identificar el tarifario antes de registrar autorizaciones'
-      : 'La EPS seleccionada no tiene un contrato con tarifario asociado';
   });
 
   constructor() {
@@ -256,13 +239,6 @@ export class AuthorizationEntryComponent {
     });
 
     effect(() => {
-      const epsId = this.epsId();
-      if (epsId !== null && epsId !== undefined) {
-        this.catalogStore.loadContracts(epsId);
-      }
-    });
-
-    effect(() => {
       const target = this.editTarget();
       untracked(() => this.initializeEntries(target));
     });
@@ -308,16 +284,6 @@ export class AuthorizationEntryComponent {
       formGroup.controls.feeScheduleId.disable();
       formGroup.controls.feeScheduleId.setValue(feeScheduleId);
     }
-  }
-
-  private resolveContractFeeSchedule(contracts: ContratoResponse[]): number | null {
-    const sorted = [...contracts].sort((a, b) => this.contractEndKey(b.endDate) - this.contractEndKey(a.endDate));
-    return sorted[0]?.feeScheduleId ?? null;
-  }
-
-  private contractEndKey(endDate: string): number {
-    const [day, month, year] = endDate.split('/');
-    return Number(`${year}${month.padStart(2, '0')}${day.padStart(2, '0')}`);
   }
 
   private attentionLevelOf(authTypeId: number): number | undefined {
