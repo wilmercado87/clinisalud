@@ -1,7 +1,8 @@
 # ESPECIFICACIÓN TÉCNICA Y REGLAS DE NEGOCIO (SDD MAESTRO)
 > **Proyecto:** CLINISALUD - Sistema Integral de Gestión Hospitalaria (Desarrollos WikarSoft)
-> **Versión:** 1.0.0 Final
+> **Versión:** 1.1.0
 > **Objetivo:** Cero Glosas, Trazabilidad Financiera, Integración Farmacia-Facturación y Liquidación Tarifaria (ISS/SOAT).
+> **Historial:** 1.0.0 SDD Maestro inicial · 1.1.0 Módulo Autorizaciones como página independiente (`/dashboard/authorizations`).
 
 ---
 
@@ -43,6 +44,11 @@ $$\text{REGISTRADA} \Longleftrightarrow \text{EN\_ATENCION} \Longleftrightarrow 
 
 * Las flechas dobles (`⇄`) indican transiciones reversibles de corrección operativa (requieren confirmación).
 * `FACTURADA` y `EGRESADA` son estados terminales irreversibles (`@spec:INV-ADM-05`).
+
+### Gestión de Autorizaciones (Módulo Autorizaciones)
+* `@spec:INV-AUT-01` **Consulta Dual de la Admisión:** El módulo Autorizaciones (`/dashboard/authorizations`, visible según `INV-SEC-02`; acceso backend restringido a `SUPER_ADMIN`, `ADMIN`, `ADMISIONES`) localiza la admisión por dos vías: Tipo + Número de Documento del paciente (`GET /admissions/patient-lookup`) o Número de Admisión (`GET /admissions/:admissionNumber`). Ambas respuestas comparten la misma estructura (paciente + admisión activa con autorizaciones y estado). El resultado se presenta en tarjetas independientes: información básica del paciente, información de la admisión y gestión de autorizaciones.
+* `@spec:INV-AUT-02` **Componente Único de Registro de Autorizaciones:** La captura de autorizaciones (tipo, número, CUPS/MAPIISS con búsqueda por tarifario, cantidad) proviene de un único componente reutilizable: se presenta como modal en el formulario de Admisiones y embebido como pantalla en el módulo Autorizaciones. En ambos contextos aplican idénticas reglas anti-glosa: tarifario derivado del contrato de la EPS, anti-duplicado y cantidad acumulada máxima por servicio (`@spec:INV-ADM-02`, `@spec:INV-ADM-03`).
+* `@spec:INV-AUT-03` **Persistencia y Recarga Inmediata:** El guardado ejecuta `PATCH /admissions/:admissionNumber` con las autorizaciones en cola; al éxito se limpia la cola, se notifica al usuario y se recarga la admisión mostrando las autorizaciones persistidas. Las admisiones egresadas no admiten nuevas autorizaciones (consistente con `@spec:INV-ADM-05`).
 
 ---
 
