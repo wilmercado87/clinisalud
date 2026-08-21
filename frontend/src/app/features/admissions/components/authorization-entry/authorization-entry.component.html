@@ -1,0 +1,86 @@
+<div class="authorization-entry">
+  <div class="authorization-entry__tariff-note">{{ tariffNoteMessage() }}</div>
+  @for (entry of entries(); track $index) {
+    <div class="authorization-entry__block" [class.authorization-entry__block--invalid]="affectedRows().has($index)">
+      <div class="authorization-entry__row">
+        <app-catalog-select
+          catalogType="authorization-types"
+          label="Tipo Autorización"
+          [formControl]="entry.controls.authTypeId"
+          [errorMessage]="authTypeErrorMessage($index)"
+        />
+        <mat-form-field appearance="outline">
+          <mat-label>N° Autorización</mat-label>
+          <input matInput [formControl]="entry.controls.authNumber" placeholder="Número" required />
+          @if (errors()[$index]['authNumber']) {
+            <mat-error>{{ errors()[$index]['authNumber'] }}</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Código MAPIISS</mat-label>
+          <input matInput [formControl]="entry.controls.mapiissCode" readonly required />
+          <button
+            matSuffix
+            mat-icon-button
+            type="button"
+            (click)="openCupsSearch($index)"
+            [disabled]="entry.controls.feeScheduleId.value === null || entry.controls.authTypeId.value === null"
+          >
+            <mat-icon>search</mat-icon>
+          </button>
+          @if (errors()[$index]['mapiissCode']) {
+            <mat-error>{{ errors()[$index]['mapiissCode'] }}</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Cantidad</mat-label>
+          <input matInput type="number" [formControl]="entry.controls.quantity" min="1" placeholder="1" required />
+          @if (entry.controls.maxQuantity.value !== null) {
+            <mat-hint>Máx: {{ entry.controls.maxQuantity.value }}</mat-hint>
+          }
+          @if (errors()[$index]['quantity']) {
+            <mat-error>{{ errors()[$index]['quantity'] }}</mat-error>
+          }
+        </mat-form-field>
+        <button
+          mat-icon-button
+          color="warn"
+          type="button"
+          class="authorization-entry__remove"
+          (click)="removeEntry($index)"
+          [disabled]="entries().length === 1"
+        >
+          <mat-icon>remove_circle</mat-icon>
+        </button>
+      </div>
+      <mat-form-field appearance="outline" class="authorization-entry__desc">
+        <mat-label>Descripción del CUPS</mat-label>
+        <textarea
+          matInput
+          [formControl]="entry.controls.mapiissDescription"
+          rows="2"
+          placeholder="Descripción del procedimiento seleccionado"
+          readonly
+        ></textarea>
+      </mat-form-field>
+    </div>
+  }
+  <div class="authorization-entry__add">
+    <button mat-stroked-button type="button" (click)="addEntry()">
+      <mat-icon>add</mat-icon>
+      Agregar autorización
+    </button>
+  </div>
+  @if (statusMessage()) {
+    <div class="authorization-entry__status" role="alert">
+      <mat-icon>warning</mat-icon>
+      <span>{{ statusMessage() }}</span>
+    </div>
+  }
+  <div class="authorization-entry__actions">
+    <button mat-stroked-button type="button" (click)="cancel()">{{ cancelLabel() }}</button>
+    <button mat-raised-button color="primary" type="button" [disabled]="!canApply()" (click)="apply()">
+      {{ applyLabel() }}
+    </button>
+  </div>
+</div>
