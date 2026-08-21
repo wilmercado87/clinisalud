@@ -1,9 +1,3 @@
-/**
- * Orígenes permitidos para CORS (HTTP y WebSocket).
- * Fuente única de verdad: variable de entorno CORS_ORIGIN (lista separada por comas).
- * Si no está definida o queda vacía, se permiten todos los orígenes (true).
- */
-
 export function normalizeOrigin(origin: string): string {
   return origin.trim().replace(/\/+$/, '');
 }
@@ -22,6 +16,7 @@ export function isOriginAllowed(origin: string | undefined, allowed: boolean | s
   if (!origin) return true;
   if (allowed === true) return true;
   if (!Array.isArray(allowed)) return false;
+
   const normalized = normalizeOrigin(origin);
   return allowed.some((candidate) => candidate === '*' || candidate === normalized);
 }
