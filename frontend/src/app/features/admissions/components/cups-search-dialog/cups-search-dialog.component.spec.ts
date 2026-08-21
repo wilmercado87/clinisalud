@@ -1,4 +1,3 @@
-// @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (búsqueda de CUPS)
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CupsPageResponse } from '@core/models/catalog.model';

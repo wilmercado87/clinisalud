@@ -1,4 +1,3 @@
-// @spec:INV-CAT-01 — Listados Transversales Unificados
 import { CatalogsService } from "../modules/catalogs/catalogs.service";
 import TipoDocumento from "../models/TipoDocumento";
 import TipoGenero from "../models/TipoGenero";
@@ -43,7 +42,6 @@ describe("CatalogsService", () => {
     jest.clearAllMocks();
   });
 
-  // @spec:INV-CAT-01
   describe("findByType — catálogos livianos", () => {
     const catalogTypes = [
       "document-types",
@@ -71,7 +69,6 @@ describe("CatalogsService", () => {
     });
   });
 
-  // @spec:INV-CAT-01
   describe("getMunicipalities", () => {
     it("should return all without filter", async () => {
       const result = await service.getMunicipalities();
@@ -84,7 +81,6 @@ describe("CatalogsService", () => {
     });
   });
 
-  // @spec:INV-CAT-01
   describe("getContracts", () => {
     it("should return all without filter", async () => {
       const result = await service.getContracts();
@@ -97,7 +93,6 @@ describe("CatalogsService", () => {
     });
   });
 
-  // @spec:INV-CAT-01
   describe("getBeds", () => {
     beforeEach(() => {
       jest.spyOn(Cama, "findAndCountAll").mockResolvedValue({ count: 0, rows: [] } as any);
@@ -124,7 +119,6 @@ describe("CatalogsService", () => {
     });
   });
 
-  // @spec:INV-CAT-01
   describe("searchDiagnostics", () => {
     it("should return empty for empty query", async () => {
       const result = await service.searchDiagnostics("");
@@ -137,7 +131,6 @@ describe("CatalogsService", () => {
     });
   });
 
-  // @spec:INV-CAT-01
   describe("searchCups", () => {
     beforeEach(() => {
       jest.spyOn(Cups, "findAndCountAll").mockResolvedValue({ count: 0, rows: [] } as any);

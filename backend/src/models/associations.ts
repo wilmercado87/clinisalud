@@ -45,7 +45,6 @@ import Departamento from "./Departamento";
 import Municipio from "./Municipio";
 
 export function initAssociations() {
-  // === [MÓDULO 0: SEGURIDAD] ===
   Usuario.belongsTo(Rol, { foreignKey: "roleId", as: "roleData" });
   Usuario.belongsTo(TipoDocumento, { foreignKey: "documentTypeId", as: "documentTypeData" });
 
@@ -59,28 +58,24 @@ export function initAssociations() {
   OpcionMenu.belongsTo(OpcionMenu, { as: "parent", foreignKey: "parentId" });
   OpcionMenu.hasMany(OpcionMenu, { as: "children", foreignKey: "parentId" });
 
-  // === [MÓDULO 1: PACIENTE] ===
   Paciente.belongsTo(TipoDocumento, { foreignKey: "documentTypeId", as: "documentType" });
   Paciente.belongsTo(TipoUsuario, { foreignKey: "userTypeId", as: "userType" });
   Paciente.belongsTo(TipoGenero, { foreignKey: "genderId", as: "gender" });
   Paciente.belongsTo(TipoEstado, { foreignKey: "statusId", as: "status" });
   Paciente.belongsTo(Usuario, { foreignKey: "systemUserId", as: "systemUser" });
 
-  // === [MÓDULO 2: ADMISIONES E INFRAESTRUCTURA] ===
   Admision.belongsTo(Paciente, { foreignKey: "patientId", as: "patient" });
   Admision.belongsTo(Cama, { foreignKey: "roomId", as: "room" });
   Admision.belongsTo(Convenio, { foreignKey: "epsId", as: "eps" });
   Admision.belongsTo(TipoEstado, { foreignKey: "statusId", as: "admissionStatus" });
   Admision.belongsTo(Usuario, { foreignKey: "systemUserId", as: "systemUser" });
 
-  // === [MÓDULO 3: TRIAGE] ===
   Triage.belongsTo(TipoTriage, { foreignKey: "priorityTypeId", as: "priorityType" });
   Triage.belongsTo(Paciente, { foreignKey: "pacienteId", as: "paciente" });
   Triage.belongsTo(Convenio, { foreignKey: "epsId", as: "eps" });
   Triage.belongsTo(Diagnostico, { foreignKey: "diagnosticId", as: "diagnostic" });
   Triage.belongsTo(Usuario, { foreignKey: "systemUserId", as: "systemUser" });
 
-  // === [MÓDULO 4: CONFIGURACIÓN COMERCIAL Y TARIFARIOS] ===
   Contrato.belongsTo(Convenio, { foreignKey: "epsId", as: "eps" });
   Convenio.hasMany(Contrato, { foreignKey: "epsId", as: "contracts" });
   Contrato.belongsTo(Tarifario, { foreignKey: "feeScheduleId", as: "feeSchedule" });
@@ -91,20 +86,17 @@ export function initAssociations() {
   Cups.belongsTo(NivelAtencion, { foreignKey: "attentionLevelId", as: "attentionLevel" });
   TipoAutorizacion.belongsTo(NivelAtencion, { foreignKey: "attentionLevelId", as: "attentionLevel" });
 
-  // === [MÓDULO 5: AUTORIZACIONES] ===
   Autorizacion.belongsTo(Admision, { foreignKey: "admissionNumber", as: "admission" });
   Autorizacion.belongsTo(TipoAutorizacion, { foreignKey: "authTypeId", as: "authType" });
   Autorizacion.belongsTo(Cups, { foreignKey: "mapiissCode", targetKey: "mapiissCode", as: "cups" });
   Autorizacion.belongsTo(Tarifario, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   Autorizacion.belongsTo(Usuario, { foreignKey: "systemUserId", as: "systemUser" });
 
-  // === [MÓDULO 2B: ACOMPAÑANTE] ===
   Admision.hasOne(Acompanante, { foreignKey: "admissionNumber", as: "companion" });
   Acompanante.belongsTo(Admision, { foreignKey: "admissionNumber", as: "admission" });
   Acompanante.belongsTo(TipoDocumento, { foreignKey: "documentTypeId", as: "documentType" });
   Acompanante.belongsTo(TipoParentesco, { foreignKey: "relationshipId", as: "relationship" });
 
-  // === [MÓDULO 6: REGLAS DE AUDITORÍA Y PARÁGRAFOS] ===
   Articulado.belongsTo(Cups, { foreignKey: "mapiissCode", targetKey: "mapiissCode", as: "cups" });
   Articulado.belongsTo(Tarifario, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   TipoParagrafo.belongsTo(Cups, { foreignKey: "mapiissCode", targetKey: "mapiissCode", as: "cups" });
@@ -120,7 +112,6 @@ export function initAssociations() {
   TipoAcceso.belongsTo(Tarifario, { foreignKey: "feeScheduleId", as: "feeSchedule" });
   ViaAcceso.belongsTo(TipoAcceso, { foreignKey: "accessViaId", as: "accessVia" });
 
-  // === [MÓDULO 7: HISTORIAL CLÍNICO, TRIAGE Y GEOGRAFÍA] ===
   Diagnostico.belongsTo(TipoOrigen, { foreignKey: "originTypeId", as: "originType" });
   DiagnosticoPaciente.belongsTo(Admision, { foreignKey: "admissionNumber", as: "admission" });
   DiagnosticoPaciente.belongsTo(Diagnostico, { foreignKey: "diagnosticId", as: "diagnostic" });
@@ -128,7 +119,6 @@ export function initAssociations() {
   TriagePrioridad.belongsTo(TipoTriage, { foreignKey: "triageId", as: "triage" });
   Municipio.belongsTo(Departamento, { foreignKey: "dptoId", as: "department" });
 
-  // === [MÓDULO 8: NOTIFICACIONES] ===
   DestinatarioNotificacion.belongsTo(Notificacion, { foreignKey: "notificationId", as: "notification" });
   Notificacion.hasMany(DestinatarioNotificacion, { foreignKey: "notificationId", as: "recipients" });
   DestinatarioNotificacion.belongsTo(Usuario, { foreignKey: "userId", as: "user" });

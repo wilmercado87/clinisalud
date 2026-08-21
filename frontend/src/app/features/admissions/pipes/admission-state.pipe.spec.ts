@@ -1,4 +1,3 @@
-// @spec:INV-ADM-01 — Control de Censo y Disponibilidad de Camas (presentación visual del estado)
 import { AdmissionStatePipe } from './admission-state.pipe';
 
 describe('AdmissionStatePipe', () => {

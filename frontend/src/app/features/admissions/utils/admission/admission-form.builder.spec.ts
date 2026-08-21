@@ -1,5 +1,3 @@
-// @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (build del request)
-// @spec:INV-ADM-07 — Actualización de Admisión Activa (build del request de actualización)
 import { createAuthorizationForm } from '../authorization/authorization-form.factory';
 import {
   applyAdmissionFormState,

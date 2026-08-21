@@ -1,4 +1,3 @@
-// @spec:COM-CAT-01 — Validación de selección requerida (rojo tras entrar y salir, mensaje por campo)
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';

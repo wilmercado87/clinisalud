@@ -1,4 +1,3 @@
-// @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (validación de entrada)
 import { AdmissionAuthorization } from '@features/admissions/models/admissions.model';
 import { extractFieldErrors } from '@shared/utils/form-field-errors';
 import { AUTH_MESSAGES } from '@shared/utils/messages';
