@@ -37,6 +37,12 @@ export const dischargeAdmissionValidation = [
     .withMessage(ERROR_MESSAGES_ADMISION.ADMISSION_NUMBER_REQUIRED),
 ];
 
+export const getAdmissionValidation = [
+  param("admissionNumber")
+    .isLength({ min: 1, max: 50 })
+    .withMessage(ERROR_MESSAGES_ADMISION.ADMISSION_NUMBER_REQUIRED),
+];
+
 export const updateAdmissionValidation = [
   param("admissionNumber")
     .isLength({ min: 1, max: 50 })

@@ -7,6 +7,7 @@ import {
   patientLookupValidation,
   createAdmissionValidation,
   dischargeAdmissionValidation,
+  getAdmissionValidation,
   updateAdmissionStateValidation,
   updateAdmissionValidation,
   billabilityCheckValidation,
@@ -44,6 +45,14 @@ router.get(
   authenticateToken,
   clinicalRoles,
   AdmissionsController.getCensus,
+);
+
+router.get(
+  "/admissions/:admissionNumber",
+  authenticateToken,
+  admissionsRoles,
+  validateParams(getAdmissionValidation),
+  AdmissionsController.findAdmission,
 );
 
 router.post(

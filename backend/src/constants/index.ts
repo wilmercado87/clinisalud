@@ -148,6 +148,7 @@ export const ERROR_MESSAGES_ADMISION = {
   AUTH_MAPIISS_REQUIRED: 'Código MAPIISS es requerido',
   AUTH_QUANTITY_MIN: 'Cantidad debe ser mayor o igual a 1',
   ADMISSION_NUMBER_REQUIRED: 'Número de admisión es requerido',
+  ADMISSION_NUMBER_COLLISION: 'No se pudo generar el número de admisión, intente nuevamente',
   AUTH_MAPIISS_NOT_FOUND: 'El código MAPIISS {mapiissCode} no existe en el tarifario',
   AUTH_TYPE_NOT_FOUND: 'El tipo de autorización no es válido',
   AUTH_FEE_SCHEDULE_REQUIRED: 'Tarifario es requerido para la autorización',

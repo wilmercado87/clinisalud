@@ -5,7 +5,6 @@ import Convenio from "../../models/Convenio";
 import TipoEstado from "../../models/TipoEstado";
 import TipoAutorizacion from "../../models/TipoAutorizacion";
 import Cups from "../../models/Cups";
-import Tarifario from "../../models/Tarifario";
 import Autorizacion from "../../models/Autorizacion";
 import Acompanante from "../../models/Acompanante";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
@@ -25,6 +24,7 @@ import { PatientService } from "./patient.service";
 import { BedService } from "./bed.service";
 import { BillabilityService } from "./billability.service";
 import {
+  attachCupsDescriptions,
   toAdmissionResponse,
   toCensusRowResponse,
   toDischargeResponse,
@@ -46,8 +46,6 @@ import {
   UpdateAdmissionRequest,
   UpdateAdmissionResponse,
 } from "./admissions.types";
-
-const ADMISSION_NUMBER_ATTEMPTS = 2;
 
 const isUniqueConstraintError = (error: unknown): boolean => {
   if (error instanceof UniqueConstraintError) return true;
@@ -80,6 +78,8 @@ export class AdmissionsService {
         ? {
             admissionNumber: latestAdmission.admissionNumber,
             admissionDate: latestAdmission.admissionDate,
+            statusId: latestAdmission.statusId,
+            state: await this.getStatusDescription(latestAdmission.statusId),
             roomId: latestAdmission.roomId ?? null,
             observations: latestAdmission.observations ?? null,
             authorizations: await this.getAuthorizationsByAdmission(
@@ -89,6 +89,41 @@ export class AdmissionsService {
         : null;
 
     return toPatientLookupResponse(patient, latestAdmission?.epsId ?? null, activeAdmission);
+  }
+
+  public async findByAdmissionNumber(admissionNumber: string): Promise<PatientLookupResponse> {
+    const admission = await Admision.findByPk(admissionNumber, {
+      include: [
+        {
+          association: "patient",
+          include: [
+            { association: "documentType", attributes: ["id", "code", "description"] },
+            { association: "gender", attributes: ["id", "description"] },
+            { association: "userType", attributes: ["id", "name"] },
+          ],
+        },
+      ],
+    });
+    if (!admission) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.ADMISSION_NOT_FOUND);
+
+    const patient = admission.patient;
+    if (!patient) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.PATIENT_NOT_FOUND);
+
+    const dischargedStatusId = await getStatusIdByDescription(ADMISSION_STATUS.DISCHARGED);
+    const activeAdmission =
+      admission.statusId !== dischargedStatusId
+        ? {
+            admissionNumber: admission.admissionNumber,
+            admissionDate: admission.admissionDate,
+            statusId: admission.statusId,
+            state: await this.getStatusDescription(admission.statusId),
+            roomId: admission.roomId ?? null,
+            observations: admission.observations ?? null,
+            authorizations: await this.getAuthorizationsByAdmission(admission.admissionNumber),
+          }
+        : null;
+
+    return toPatientLookupResponse(patient, admission.epsId ?? null, activeAdmission);
   }
 
   public async createAdmission(
@@ -229,8 +264,7 @@ export class AdmissionsService {
       seenAuthKeys.add(authKey);
 
       await this.assertAuthTypeExists(authorization.authTypeId, t);
-      const cups = await this.assertMapiissCodeExists(authorization.mapiissCode, t);
-      await this.assertFeeScheduleMatchesCups(authorization.feeScheduleId, cups, t);
+      await this.assertMapiissCodeExists(authorization.mapiissCode, authorization.feeScheduleId, t);
     }
   }
 
@@ -252,6 +286,7 @@ export class AdmissionsService {
     const existingAuthKeys = new Set(
       existing.map((a) => this.buildAuthKey(a.authNumber, a.feeScheduleId, a.mapiissCode)),
     );
+    const incomingServiceKeys = new Set<string>();
     for (const authorization of authorizations) {
       const key = `${authorization.authTypeId}|${authorization.mapiissCode}|${authorization.feeScheduleId}`;
       const authKey = this.buildAuthKey(
@@ -259,12 +294,13 @@ export class AdmissionsService {
         authorization.feeScheduleId,
         authorization.mapiissCode,
       );
-      if (existingKeys.has(key) || existingAuthKeys.has(authKey)) {
+      if (existingKeys.has(key) || existingAuthKeys.has(authKey) || incomingServiceKeys.has(key)) {
         throw ApiError.conflict(
           ERROR_MESSAGES_ADMISION.AUTH_ALREADY_EXISTS,
           ADMISSION_ERROR_CODES.AUTH_ALREADY_EXISTS,
         );
       }
+      incomingServiceKeys.add(key);
     }
   }
 
@@ -318,31 +354,14 @@ export class AdmissionsService {
 
   private async assertMapiissCodeExists(
     mapiissCode: string,
+    feeScheduleId: number,
     t: Transaction,
-  ): Promise<Cups> {
-    const cups = await Cups.findOne({ where: { mapiissCode }, transaction: t });
+  ): Promise<void> {
+    const cups = await Cups.findOne({ where: { mapiissCode, feeScheduleId }, transaction: t });
     if (!cups) {
       throw ApiError.badRequest(
         formatMessage(ERROR_MESSAGES_ADMISION.AUTH_MAPIISS_NOT_FOUND, { mapiissCode }),
       );
-    }
-    return cups;
-  }
-
-  private async assertFeeScheduleMatchesCups(
-    feeScheduleId: number,
-    cups: Cups,
-    t: Transaction,
-  ): Promise<void> {
-    if (!feeScheduleId) {
-      throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.AUTH_FEE_SCHEDULE_REQUIRED);
-    }
-    const tarifario = await Tarifario.findByPk(feeScheduleId, { transaction: t });
-    if (!tarifario) {
-      throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.AUTH_FEE_SCHEDULE_REQUIRED);
-    }
-    if (cups.feeScheduleId !== feeScheduleId) {
-      throw ApiError.badRequest(ERROR_MESSAGES_ADMISION.AUTH_FEE_SCHEDULE_MISMATCH);
     }
   }
 
@@ -359,38 +378,47 @@ export class AdmissionsService {
     t: Transaction,
   ): Promise<Admision> {
     const now = new Date();
-    const today = now.toISOString().slice(0, 10);
-    const todayPrefix = today.replace(/-/g, "");
-
     const pad = (n: number) => String(n).padStart(2, "0");
-    const admissionDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const localDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const localPrefix = localDate.replace(/-/g, "");
+    const admissionDate = `${localDate} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-    for (let attempt = 1; ; attempt++) {
-      const todayCount = await Admision.count({
-        where: { admissionDate: { [Op.startsWith]: today } },
-        transaction: t,
-      });
-      const seq = String(todayCount + 1).padStart(4, "0");
-      const admissionNumber = `ADM-${todayPrefix}-${seq}`;
-      try {
-        return await Admision.create(
-          {
-            admissionNumber,
-            patientId,
-            admissionDate,
-            roomId: data.roomId,
-            epsId: data.epsId,
-            observations: data.observations || null,
-            statusId: registeredStatusId,
-            systemUserId: userId,
-          },
-          { transaction: t },
-        );
-      } catch (error) {
-        if (attempt < ADMISSION_NUMBER_ATTEMPTS && isUniqueConstraintError(error)) continue;
-        throw error;
+    const todayCount = await Admision.count({
+      where: { admissionDate: { [Op.startsWith]: localDate } },
+      transaction: t,
+    });
+    const seq = String(todayCount + 1).padStart(4, "0");
+    const admissionNumber = `ADM-${localPrefix}-${this.randomSuffix()}-${seq}`;
+
+    try {
+      return await Admision.create(
+        {
+          admissionNumber,
+          patientId,
+          admissionDate,
+          roomId: data.roomId,
+          epsId: data.epsId,
+          observations: data.observations || null,
+          statusId: registeredStatusId,
+          systemUserId: userId,
+        },
+        { transaction: t },
+      );
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        throw ApiError.conflict(ERROR_MESSAGES_ADMISION.ADMISSION_NUMBER_COLLISION);
       }
+      throw error;
     }
+  }
+
+  private randomSuffix(length = 4): string {
+    const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let suffix = "";
+    for (let index = 0; index < length; index++) {
+      suffix += charset[Math.floor(Math.random() * charset.length)];
+    }
+    return suffix;
   }
 
   private async createCompanionIfPresent(
@@ -448,36 +476,21 @@ export class AdmissionsService {
     admissionNumber: string,
     t?: Transaction,
   ): Promise<AdmissionAuthorization[]> {
-    const authorizations = await Autorizacion.findAll({
-      where: { admissionNumber },
-      include: [
-        { association: "authType", attributes: ["id", "description"] },
-        { association: "cups", attributes: ["mapiissCode", "mapiissDescription"] },
-      ],
-      order: [["createdAt", "ASC"]],
-      transaction: t,
-    });
+    const authorizations = (
+      await Autorizacion.findAll({
+        where: { admissionNumber },
+        include: [{ association: "authType", attributes: ["id", "description"] }],
+        order: [["createdAt", "ASC"]],
+        transaction: t,
+      })
+    ).map((auth) => auth.toJSON());
 
-    return authorizations.map((auth) => {
-      const json = auth.toJSON() as {
-        authTypeId: number;
-        authNumber: string;
-        mapiissCode: string;
-        quantity: number;
-        feeScheduleId: number;
-        authType?: { id: number; description: string } | null;
-        cups?: { mapiissCode: string; mapiissDescription: string } | null;
-      };
-      return {
-        authTypeId: json.authTypeId,
-        authTypeName: json.authType?.description ?? undefined,
-        authNumber: json.authNumber,
-        mapiissCode: json.mapiissCode,
-        quantity: json.quantity,
-        feeScheduleId: json.feeScheduleId,
-        mapiissDescription: json.cups?.mapiissDescription ?? undefined,
-      };
-    });
+    const codes = [...new Set(authorizations.map((auth) => auth.mapiissCode))];
+    const cupsRows = codes.length
+      ? await Cups.findAll({ where: { mapiissCode: codes }, transaction: t })
+      : [];
+
+    return attachCupsDescriptions(authorizations, cupsRows);
   }
 
   private notifyAdmissionCreated(

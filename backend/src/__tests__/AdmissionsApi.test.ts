@@ -6,6 +6,7 @@ const mockLookupPatient = jest.fn();
 const mockCreateAdmission = jest.fn();
 const mockGetCensus = jest.fn();
 const mockUpdateAdmission = jest.fn();
+const mockFindByAdmissionNumber = jest.fn();
 
 jest.mock("../modules/admissions/admissions.service", () => ({
   AdmissionsService: jest.fn().mockImplementation(() => ({
@@ -13,6 +14,7 @@ jest.mock("../modules/admissions/admissions.service", () => ({
     createAdmission: mockCreateAdmission,
     getCensus: mockGetCensus,
     updateAdmission: mockUpdateAdmission,
+    findByAdmissionNumber: mockFindByAdmissionNumber,
   })),
 }));
 
@@ -226,6 +228,47 @@ describe("Admissions API", () => {
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
+    });
+  });
+
+  describe("GET /api/v1/admissions/:admissionNumber", () => {
+    it("should reject without token", async () => {
+      const res = await request(app).get("/api/v1/admissions/ADM-001");
+      expect(res.status).toBe(401);
+    });
+
+    it("should reject invalid admission number param", async () => {
+      const res = await request(app)
+        .get(`/api/v1/admissions/${"A".repeat(51)}`)
+        .set("Authorization", `Bearer ${validToken}`);
+      expect(res.status).toBe(422);
+    });
+
+    it("should return patient with active admission by number (INV-ADM-02)", async () => {
+      mockFindByAdmissionNumber.mockResolvedValue({
+        id: 1,
+        firstName: "Juan",
+        lastName: "Perez",
+        epsId: 7,
+        activeAdmission: {
+          admissionNumber: "ADM-20260801-0001",
+          admissionDate: "2026-08-01 10:30:00",
+          roomId: 5,
+          observations: null,
+          authorizations: [
+            { authTypeId: 2, authNumber: "AUTH-001", mapiissCode: "CUP-001", quantity: 1, feeScheduleId: 1 },
+          ],
+        },
+      });
+
+      const res = await request(app)
+        .get("/api/v1/admissions/ADM-20260801-0001")
+        .set("Authorization", `Bearer ${validToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.firstName).toBe("Juan");
+      expect(res.body.activeAdmission.admissionNumber).toBe("ADM-20260801-0001");
+      expect(mockFindByAdmissionNumber).toHaveBeenCalledWith("ADM-20260801-0001");
     });
   });
 });

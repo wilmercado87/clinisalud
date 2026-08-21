@@ -19,6 +19,15 @@ export const lookupPatient = async (req: Request, res: Response) => {
   }
 };
 
+export const findAdmission = async (req: Request, res: Response) => {
+  try {
+    const result = await admissionsService.findByAdmissionNumber(req.params.admissionNumber);
+    res.status(HTTP_STATUS.OK).json(result);
+  } catch (error: unknown) {
+    return handleControllerError(error, res, "findAdmission");
+  }
+};
+
 export const registerAdmission = async (req: AuthRequest, res: Response) => {
   try {
     const result = await admissionsService.createAdmission(

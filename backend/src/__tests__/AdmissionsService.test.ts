@@ -12,6 +12,7 @@ import { AdmissionsService } from "../modules/admissions/admissions.service";
 import Paciente from "../models/Paciente";
 import Cama from "../models/Cama";
 import Convenio from "../models/Convenio";
+import Contrato from "../models/Contrato";
 import Admision from "../models/Admision";
 import TipoEstado from "../models/TipoEstado";
 import Autorizacion from "../models/Autorizacion";
@@ -20,9 +21,13 @@ import TipoAutorizacion from "../models/TipoAutorizacion";
 import Cups from "../models/Cups";
 import Tarifario from "../models/Tarifario";
 
+const ADMISSION_NUMBER_PATTERN = /^ADM-\d{8}-[A-Z0-9]{4}-\d{4}$/;
+
 const expectedAdmissionNumber = () => {
-  const todayPrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  return `ADM-${todayPrefix}-0001`;
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const localPrefix = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+  return `ADM-${localPrefix}-AB12-0001`;
 };
 
 describe("AdmissionsService", () => {
@@ -101,6 +106,7 @@ describe("AdmissionsService", () => {
           }),
         },
       ] as any);
+      jest.spyOn(TipoEstado, "findByPk").mockResolvedValue({ id: 3, description: "EN_ATENCION" } as any);
 
       const result = await service.lookupPatient({ documentTypeId: 1, document: "12345" });
 
@@ -108,6 +114,8 @@ describe("AdmissionsService", () => {
       expect(result!.activeAdmission).toEqual({
         admissionNumber: "ADM-20260804-0001",
         admissionDate: "2026-08-04",
+        statusId: 3,
+        state: "EN_ATENCION",
         roomId: 5,
         observations: "Requiere control diario",
         authorizations: [
@@ -123,8 +131,47 @@ describe("AdmissionsService", () => {
       });
     });
 
-    it("should include activeAdmission with null bed and empty authorizations when none exist (INV-ADM-07)", async () => {
+    it("resolves the cups description scoped to the authorization tariff when the code exists in several tariffs (INV-FAC-04)", async () => {
       jest.spyOn(Paciente, "findOne").mockResolvedValue({
+        id: 1,
+        toJSON: () => ({ id: 1, firstName: "Juan" }),
+      } as any);
+      jest.spyOn(Admision, "findOne").mockResolvedValue({
+        admissionNumber: "ADM-20260804-0001",
+        admissionDate: "2026-08-04",
+        epsId: 7,
+        statusId: 3,
+        roomId: 5,
+        observations: null,
+      } as any);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      jest.spyOn(TipoEstado, "findByPk").mockResolvedValue({ id: 3, description: "EN_ATENCION" } as any);
+      jest.spyOn(Autorizacion, "findAll").mockResolvedValue([
+        {
+          toJSON: () => ({
+            authTypeId: 2,
+            authNumber: "AUTH-001",
+            mapiissCode: "28201",
+            quantity: 1,
+            feeScheduleId: 1,
+            authType: { id: 2, description: "Aut" },
+          }),
+        },
+      ] as any);
+      jest.spyOn(Cups, "findAll").mockResolvedValue([
+        { mapiissCode: "28201", feeScheduleId: 1, mapiissDescription: "IMPLANTACION (tarifario 1)" },
+        { mapiissCode: "28201", feeScheduleId: 3, mapiissDescription: "IMPLANTACION (tarifario 3)" },
+      ] as any);
+
+      const result = await service.lookupPatient({ documentTypeId: 1, document: "12345" });
+
+      expect(result.activeAdmission!.authorizations).toHaveLength(1);
+      expect(result.activeAdmission!.authorizations[0].mapiissDescription).toBe(
+        "IMPLANTACION (tarifario 1)",
+      );
+    });
+
+    it("should include activeAdmission with null bed and empty authorizations when none exist (INV-ADM-07)", async () => {      jest.spyOn(Paciente, "findOne").mockResolvedValue({
         id: 1,
         toJSON: () => ({ id: 1, firstName: "Juan" }),
       } as any);
@@ -137,12 +184,15 @@ describe("AdmissionsService", () => {
         observations: null,
       } as any);
       jest.spyOn(Autorizacion, "findAll").mockResolvedValue([] as any);
+      jest.spyOn(TipoEstado, "findByPk").mockResolvedValue({ id: 3, description: "EN_ATENCION" } as any);
 
       const result = await service.lookupPatient({ documentTypeId: 1, document: "12345" });
 
       expect(result!.activeAdmission).toEqual({
         admissionNumber: "ADM-20260804-0001",
         admissionDate: "2026-08-04",
+        statusId: 3,
+        state: "EN_ATENCION",
         roomId: null,
         observations: null,
         authorizations: [],
@@ -216,6 +266,62 @@ describe("AdmissionsService", () => {
 
       expect(result).toHaveProperty("admissionNumber");
       expect(result.admissionNumber).toBe(expectedAdmissionNumber());
+    });
+
+    it("should continue the sequence using the LOCAL date when counting same-day admissions (INV-ADM-06)", async () => {
+      const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+      jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+
+      jest.spyOn(Paciente, "findOne").mockResolvedValue(null as any);
+      jest.spyOn(Paciente, "create").mockResolvedValue({
+        id: 1,
+        toJSON: () => ({ id: 1 }),
+      } as any);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue({
+        roomId: 1,
+        bedStatus: 0,
+        save: jest.fn().mockResolvedValue(true),
+      } as any);
+      jest.spyOn(Convenio, "findByPk").mockResolvedValue({ idEps: 1, epsName: "EPS Test" } as any);
+      // One admission already stored today with a LOCAL timestamp.
+      jest.spyOn(Admision, "count").mockResolvedValue(1);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 1 } as any);
+      const createSpy = jest.spyOn(Admision, "create").mockResolvedValue({
+        admissionNumber: "ADM-ANY-0002",
+        toJSON: () => ({ admissionNumber: "ADM-ANY-0002" }),
+      } as any);
+
+      await service.createAdmission(validData, 1, "admin@test.com", "SUPER_ADMIN");
+
+      const createdNumber = (createSpy.mock.calls[0]?.[0] as { admissionNumber: string }).admissionNumber;
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const localPrefix = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+      expect(createdNumber).toMatch(new RegExp(`^ADM-${localPrefix}-[A-Z0-9]{4}-0002$`));
+    });
+
+    it("should fail with a clean conflict (no retry on the aborted transaction) when the number collides", async () => {
+      const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
+      jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
+
+      jest.spyOn(Paciente, "findOne").mockResolvedValue(null as any);
+      jest.spyOn(Paciente, "create").mockResolvedValue({ id: 1, toJSON: () => ({ id: 1 }) } as any);
+      jest.spyOn(Cama, "findByPk").mockResolvedValue({
+        roomId: 1,
+        bedStatus: 0,
+        save: jest.fn().mockResolvedValue(true),
+      } as any);
+      jest.spyOn(Convenio, "findByPk").mockResolvedValue({ idEps: 1, epsName: "EPS Test" } as any);
+      jest.spyOn(Admision, "count").mockResolvedValue(0);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 1 } as any);
+      const createSpy = jest
+        .spyOn(Admision, "create")
+        .mockRejectedValue(Object.assign(new Error("duplicate key"), { name: "SequelizeUniqueConstraintError" }));
+
+      await expect(service.createAdmission(validData, 1, "admin@test.com", "SUPER_ADMIN")).rejects.toThrow(
+        "No se pudo generar el número de admisión",
+      );
+      expect(createSpy).toHaveBeenCalledTimes(1);
     });
 
     it("should throw if new patient but missing firstName", async () => {
@@ -536,7 +642,7 @@ describe("AdmissionsService", () => {
       );
     });
 
-    it("should retry with next sequence when admissionNumber collides", async () => {
+    it("should not retry on the aborted transaction when admissionNumber collides", async () => {
       const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
       jest.spyOn(sequelize, "transaction").mockImplementation((async (cb: any) => cb(mockTransaction)) as any);
 
@@ -550,24 +656,16 @@ describe("AdmissionsService", () => {
       jest.spyOn(Convenio, "findByPk").mockResolvedValue({ idEps: 1 } as any);
       jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 1 } as any);
 
-      const todayPrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      jest.spyOn(Admision, "count")
-        .mockResolvedValueOnce(0)
-        .mockResolvedValueOnce(1);
+      jest.spyOn(Admision, "count").mockResolvedValue(0);
       const uniqueError = Object.assign(new Error("UNIQUE constraint failed"), {
         name: "SequelizeUniqueConstraintError",
       });
-      jest.spyOn(Admision, "create")
-        .mockRejectedValueOnce(uniqueError)
-        .mockResolvedValueOnce({
-          admissionNumber: `ADM-${todayPrefix}-0002`,
-          toJSON: () => ({ admissionNumber: `ADM-${todayPrefix}-0002` }),
-        } as any);
+      const createSpy = jest.spyOn(Admision, "create").mockRejectedValue(uniqueError);
 
-      const result = await service.createAdmission(validData, 1, "admin@test.com", "SUPER_ADMIN");
-
-      expect(result.admissionNumber).toBe(`ADM-${todayPrefix}-0002`);
-      expect(Admision.create).toHaveBeenCalledTimes(2);
+      await expect(
+        service.createAdmission(validData, 1, "admin@test.com", "SUPER_ADMIN"),
+      ).rejects.toThrow("No se pudo generar el número de admisión");
+      expect(createSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -872,6 +970,40 @@ describe("AdmissionsService", () => {
       expect(Autorizacion.bulkCreate).not.toHaveBeenCalled();
     });
 
+    it("should reject a payload repeating the same service with different auth numbers (INV-ADM-02)", async () => {
+      createAdmissionMock(null);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+
+      await expect(
+        service.updateAdmission(admissionNumber, {
+          authorizations: [
+            { authTypeId: 1, authNumber: "AUTH-001", mapiissCode: "CUP-001", quantity: 1, feeScheduleId: 1 },
+            { authTypeId: 1, authNumber: "AUTH-002", mapiissCode: "CUP-001", quantity: 1, feeScheduleId: 1 },
+          ],
+        }, 1),
+      ).rejects.toThrow("ya existe para esta admisión");
+      expect(Autorizacion.bulkCreate).not.toHaveBeenCalled();
+    });
+
+    it("should reject an authorization whose CUPS is not in the given tariff (INV-FAC-04)", async () => {
+      createAdmissionMock(null);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      const cupsFindOne = jest.spyOn(Cups, "findOne").mockResolvedValue(null as any);
+
+      await expect(
+        service.updateAdmission(admissionNumber, {
+          authorizations: [
+            { authTypeId: 1, authNumber: "AUTH-001", mapiissCode: "CUP-001", quantity: 1, feeScheduleId: 99 },
+          ],
+        }, 1),
+      ).rejects.toThrow("no existe en el tarifario");
+
+      expect(cupsFindOne).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { mapiissCode: "CUP-001", feeScheduleId: 99 } }),
+      );
+      expect(Autorizacion.bulkCreate).not.toHaveBeenCalled();
+    });
+
     it("should reject authorizations when the accumulated quantity with existing ones exceeds the max (INV-ADM-02)", async () => {
       createAdmissionMock(null);
       jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
@@ -1027,6 +1159,87 @@ describe("AdmissionsService", () => {
     });
   });
 
+  describe("findByAdmissionNumber", () => {
+    it("should return patient with active admission and authorizations (INV-ADM-02)", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({
+        admissionNumber: "ADM-20260801-0001",
+        admissionDate: "2026-08-01 10:30:00",
+        epsId: 7,
+        statusId: 3,
+        roomId: 5,
+        observations: "Requiere control diario",
+        patient: {
+          toJSON: () => ({ id: 1, documentTypeId: 1, document: "12345", firstName: "Juan", lastName: "Perez" }),
+        },
+      } as any);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      jest.spyOn(TipoEstado, "findByPk").mockResolvedValue({ id: 3, description: "EN_ATENCION" } as any);
+      jest.spyOn(Autorizacion, "findAll").mockResolvedValue([
+        {
+          toJSON: () => ({
+            authTypeId: 2,
+            authNumber: "AUTH-001",
+            mapiissCode: "CUP-001",
+            quantity: 2,
+            feeScheduleId: 1,
+            authType: { id: 2, description: "Autorización Previa" },
+          }),
+        },
+      ] as any);
+
+      const result = await service.findByAdmissionNumber("ADM-20260801-0001");
+
+      expect(result.firstName).toBe("Juan");
+      expect(result.epsId).toBe(7);
+      expect(result.activeAdmission).toEqual({
+        admissionNumber: "ADM-20260801-0001",
+        admissionDate: "2026-08-01 10:30:00",
+        statusId: 3,
+        state: "EN_ATENCION",
+        roomId: 5,
+        observations: "Requiere control diario",
+        authorizations: [
+          {
+            authTypeId: 2,
+            authTypeName: "Autorización Previa",
+            authNumber: "AUTH-001",
+            mapiissCode: "CUP-001",
+            quantity: 2,
+            feeScheduleId: 1,
+            mapiissDescription: undefined,
+          },
+        ],
+      });
+    });
+
+    it("should throw notFound when admission does not exist", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue(null as any);
+
+      await expect(service.findByAdmissionNumber("ADM-999")).rejects.toThrow("Admisión no encontrada");
+    });
+
+    it("should return activeAdmission null when admission is discharged", async () => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({
+        admissionNumber: "ADM-001",
+        admissionDate: "2026-08-01 10:30:00",
+        epsId: 7,
+        statusId: 5,
+        roomId: null,
+        observations: null,
+        patient: {
+          toJSON: () => ({ id: 1, firstName: "Juan" }),
+        },
+      } as any);
+      jest.spyOn(TipoEstado, "findOne").mockResolvedValue({ id: 5 } as any);
+      const authFindAll = jest.spyOn(Autorizacion, "findAll").mockResolvedValue([] as any);
+
+      const result = await service.findByAdmissionNumber("ADM-001");
+
+      expect(result.activeAdmission).toBeNull();
+      expect(authFindAll).not.toHaveBeenCalled();
+    });
+  });
+
   describe("evaluateBillability", () => {
     const billabilityPayload = {
       admissionNumber: "ADM-001",
@@ -1034,8 +1247,16 @@ describe("AdmissionsService", () => {
       items: [{ mapiissCode: "CUP-010", quantity: 2 }],
     };
 
+    beforeEach(() => {
+      jest.spyOn(Admision, "findByPk").mockResolvedValue({
+        admissionNumber: "ADM-001",
+        epsId: 7,
+      } as any);
+      // The CUPS lookup is scoped to the tarifario resolved from the EPS contract.
+      jest.spyOn(Contrato, "findOne").mockResolvedValue({ feeScheduleId: 1 } as any);
+    });
+
     it("should block service requiring auth without authNumber (INV-ADM-03)", async () => {
-      jest.spyOn(Admision, "findByPk").mockResolvedValue({ admissionNumber: "ADM-001" } as any);
       jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-010", authHosp: "SI" } as any);
       jest.spyOn(Autorizacion, "findAll").mockResolvedValue([] as any);
 
@@ -1046,7 +1267,6 @@ describe("AdmissionsService", () => {
     });
 
     it("should allow service without auth requirement (INV-ADM-03)", async () => {
-      jest.spyOn(Admision, "findByPk").mockResolvedValue({ admissionNumber: "ADM-001" } as any);
       jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-020", authHosp: "NO" } as any);
 
       const result = await service.evaluateBillability(billabilityPayload);
@@ -1056,7 +1276,6 @@ describe("AdmissionsService", () => {
     });
 
     it("should allow service with sufficient authorized quantity (INV-ADM-03)", async () => {
-      jest.spyOn(Admision, "findByPk").mockResolvedValue({ admissionNumber: "ADM-001" } as any);
       jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-010", authHosp: "SI" } as any);
       jest.spyOn(Autorizacion, "findAll").mockResolvedValue([
         { authNumber: "AUTH-100", mapiissCode: "CUP-010", quantity: 3 },
@@ -1069,13 +1288,26 @@ describe("AdmissionsService", () => {
     });
 
     it("should enforce a global block when any service is not billable", async () => {
-      jest.spyOn(Admision, "findByPk").mockResolvedValue({ admissionNumber: "ADM-001" } as any);
       jest.spyOn(Cups, "findOne").mockResolvedValue({ mapiissCode: "CUP-010", authHosp: "SI" } as any);
       jest.spyOn(Autorizacion, "findAll").mockResolvedValue([] as any);
 
       await expect(
         service.evaluateBillability({ ...billabilityPayload, enforce: true }),
       ).rejects.toThrow("bloqueado para facturación");
+    });
+
+    it("should scope the cups lookup to the tarifario of the admission's EPS contract (INV-FAC-04)", async () => {
+      const cupsFindOne = jest.spyOn(Cups, "findOne").mockResolvedValue(null as any);
+
+      const result = await service.evaluateBillability(billabilityPayload);
+
+      expect(cupsFindOne).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { mapiissCode: "CUP-010", feeScheduleId: 1 } }),
+      );
+      expect(result.items[0].billable).toBe(false);
+      expect(Contrato.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { epsId: 7 } }),
+      );
     });
   });
 });

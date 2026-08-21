@@ -1,4 +1,5 @@
 import Admision from "../../models/Admision";
+import Contrato from "../../models/Contrato";
 import Cups from "../../models/Cups";
 import Autorizacion from "../../models/Autorizacion";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
@@ -19,11 +20,12 @@ export class BillabilityService {
     const admission = await Admision.findByPk(payload.admissionNumber);
     if (!admission) throw ApiError.notFound(ERROR_MESSAGES_ADMISION.ADMISSION_NOT_FOUND);
 
+    const feeScheduleId = await this.resolveFeeScheduleForEps(admission.epsId);
     const authField = ADMISSION_MODALITY.authFieldOf(payload.modality);
     const items: BillabilityItemResponse[] = [];
 
     for (const item of payload.items) {
-      const cups = await Cups.findOne({ where: { mapiissCode: item.mapiissCode } });
+      const cups = await this.findCupsInTariff(item.mapiissCode, feeScheduleId);
 
       if (!cups) {
         items.push({
@@ -95,5 +97,22 @@ export class BillabilityService {
     }
 
     return { admissionNumber: payload.admissionNumber, modality: payload.modality, items };
+  }
+
+  private async resolveFeeScheduleForEps(epsId: number | null): Promise<number | null> {
+    if (!epsId) return null;
+    const contract = await Contrato.findOne({
+      where: { epsId },
+      order: [["endDate", "DESC"]],
+    });
+    return contract?.feeScheduleId ?? null;
+  }
+
+  private async findCupsInTariff(
+    mapiissCode: string,
+    feeScheduleId: number | null,
+  ): Promise<Cups | null> {
+    if (!feeScheduleId) return null;
+    return await Cups.findOne({ where: { mapiissCode, feeScheduleId } });
   }
 }
