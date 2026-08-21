@@ -124,17 +124,33 @@ cd backend && npm run db:alter   # usa DATABASE_URL
 ```
 
 - Conecta a la BD.
-- Por cada tab, si **la tabla no existe** → la crea con `model.sync()`.
-- Si existe → compara **columnas reales vs modelo** → agrega las faltantes con `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`.
+- Por cada tabla, si **la tabla no existe** → la crea con `model.sync()`.
+- Si existe → compara **columnas reales vs modelo**:
+  - Columna faltante → se agrega **siempre nullable** con `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`; si el modelo define `defaultValue`, hace backfill de las filas existentes.
+  - Columna `NOT NULL` según modelo pero nullable en BD → aplica `SET NOT NULL` solo cuando ya **no quedan NULLs**; si quedan, advierte y pide correr `npm run db:migrate`.
 - **Nunca** borra tablas, columnas, índices ni datos (`drop: false`).
 - Si algo falla → `process.exit(1)` → CD se detiene.
+
+### Migraciones de datos (`npm run db:migrate`)
+
+`src/scripts/db-migrate-data.ts` contiene migraciones de **datos** idempotentes (complementan `db:alter`, que solo toca esquema). Ejemplo vigente: sincronizar `tipo_autorizacion` desde su CSV canónico (upsert por PK). Para agregar una nueva corrección de datos se añade al arreglo `DATA_MIGRATIONS` (orden fijo, siempre idempotente).
+
+### Flujo completo de release con cambios de esquema/datos
+
+```bash
+cd backend
+npm run db:alter      # pasada 1: agrega columnas (nullable)
+npm run db:migrate    # backfills de datos definidos en db-migrate-data.ts
+npm run db:alter      # pasada 2: enforcing NOT NULL cuando ya no hay NULLs
+npm run db:schema     # regenerar dump canónico y committearlo
+```
 
 ### Flujo de cambio de esquema (para desarrolladores)
 
 1. Modifica/agrega un modelo en `backend/src/models/*.ts`.
-2. Local: `npm run db:alter` (aplica a tu BD or `DATABASE_URL` local) y luego `npm run db:schema` → regenera `backend/db/clinisalud.sql`.
+2. Local: `npm run db:alter && npm run db:migrate && npm run db:alter` (aplica a tu BD o `DATABASE_URL` local) y luego `npm run db:schema` → regenera `backend/db/clinisalud.sql`.
 3. Commitea el cambio + el dump actualizado (CI lo valida).
-4. Creamos tag → el CD hace `db:alter` (tablas/columnas nuevas a Neon) y después despliega la API nueva.
+4. Creamos tag → el CD hace `db:alter → db:migrate → db:alter` sobre Neon y después despliega la API nueva.
 
 > Si olvidaste el paso 2, el job `db-sync` del CD **falla con el diff exacto** — nunca despliegas con esquema dividido.
 
@@ -185,6 +201,7 @@ Políticas de versión sugeridas:
 | `db-sync` falla con diff | `db/clinisalud.sql` desactualizado | `cd backend && npm run db:schema && git commit` |
 | `pg_dump: server version mismatch` | pg_dump del runner más viejo que Neon (PG 18) | El job ya usa `postgres:18-alpine` (Docker); no instalar cliente por apt (no existe en repos estándar) |
 | `db:alter` error "relation ... already exists" | índice largo en modelo | Añade `name:` corto al índice del modelo, regenera schema |
+| PG 23502 al agregar columna NOT NULL | tabla con filas existentes | Resuelto por diseño: `db-alter` agrega nullable → `db:migrate` hace backfill → segunda pasada aplica `SET NOT NULL`. Si advierte NULLs restantes, agrega la migración en `db-migrate-data.ts` |
 | Deploy API no responde healthy | Render cold start lento o build error | Espera 12 min (lo hace el poll), revisa Logs de Render |
 | `code-review` no corre | Sin `OPENCODE_API_KEY` / `OPENCODE_API_KEY_SET` | Mira la sección «Activar el agente» |
 | Frontend 200 pero pantalla en blanco | Build viejo cacheado | Render → Deploy → Force build (o redeploy limpio) |

@@ -60,7 +60,8 @@ npm run dev              # http://localhost:3000 (ts-node-dev)
 | `npm run build` | Compilar TypeScript |
 | `npm run seed` | Ejecutar seed desde `tablas_clinisalud/*.csv` |
 | `npm test` / `test:watch` / `test:coverage` | Suite Jest (133 tests) |
-| `npm run db:alter` | Sync no destructivo del esquema hacia la BD (`DATABASE_URL`) — usado por el CD |
+| `npm run db:alter` | Sync no destructivo del esquema hacia la BD (`DATABASE_URL`) — agrega columnas nullable y aplica `SET NOT NULL` cuando no quedan NULLs |
+| `npm run db:migrate` | Migraciones de datos idempotentes (backfills de catálogos; ver `src/scripts/db-migrate-data.ts`) |
 | `npm run db:schema` | Regenerar `db/clinisalud.sql` (dump schema-only canónico) |
 
 > El arranque normal **no** modifica la BD. La reestructuración destructiva solo ocurre con `DB_SYNC=force npm run dev` + seed.

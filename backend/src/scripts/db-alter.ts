@@ -52,20 +52,61 @@ async function listTables(): Promise<string[]> {
       for (const name of Object.keys(model.getAttributes())) {
         const attribute = model.getAttributes()[name];
         const dbColumn = attribute.field ?? name;
-        if (columns[dbColumn]) continue;
+        const existingColumn = columns[dbColumn];
 
-        const sqlType = toSqlType(attribute);
-        if (!sqlType) {
-          console.warn(`⚠️  ${tableName}.${dbColumn}: tipo no resuelto, se omite`);
-          continue;
+        if (!existingColumn) {
+          const sqlType = toSqlType(attribute);
+          if (!sqlType) {
+            console.warn(`⚠️  ${tableName}.${dbColumn}: tipo no resuelto, se omite`);
+            continue;
+          }
+
+          // Siempre se agrega nullable primero: agregar NOT NULL sobre tablas
+          // con filas falla (PG 23502). El enforcement ocurre más abajo cuando
+          // no queden NULLs (tras el backfill de npm run db:migrate).
+          const addSql = `ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS "${dbColumn}" ${sqlType} NULL`;
+          await q.sequelize.query(addSql);
+          changes.push(`+ columna agregada: ${tableName}.${dbColumn} (${sqlType})`);
+          console.log(`✅ Columna agregada: ${tableName}.${dbColumn} (${sqlType})`);
+
+          if (attribute.defaultValue !== undefined) {
+            const [, meta] = await q.sequelize.query(
+              `UPDATE "${tableName}" SET "${dbColumn}" = $value WHERE "${dbColumn}" IS NULL`,
+              { bind: { value: attribute.defaultValue } },
+            );
+            const affected = Number(
+              typeof meta === "object" && meta && "rowCount" in meta ? (meta as { rowCount?: number | null }).rowCount ?? 0 : 0,
+            );
+            if (affected > 0) {
+              changes.push(`~ backfill por default: ${tableName}.${dbColumn} (${affected} filas)`);
+              console.log(`✅ Backfill default ${tableName}.${dbColumn}: ${affected} filas`);
+            }
+          }
         }
 
-        const nullable = attribute.allowNull === false ? "NOT NULL" : "NULL";
-        const defaultSql = attribute.defaultValue !== undefined ? ` DEFAULT ${JSON.stringify(attribute.defaultValue)}` : "";
-        const sql = `ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS "${dbColumn}" ${sqlType} ${nullable}${defaultSql}`;
-        await q.sequelize.query(sql);
-        changes.push(`+ columna agregada: ${tableName}.${dbColumn} (${sqlType})`);
-        console.log(`✅ Columna agregada: ${tableName}.${dbColumn} (${sqlType})`);
+        if (!columns[dbColumn]) continue;
+
+        if (
+          attribute.allowNull === false &&
+          existingColumn &&
+          (existingColumn as { nullable?: boolean }).nullable === true
+        ) {
+          const [rows] = await q.sequelize.query(
+            `SELECT COUNT(*)::int AS missing FROM "${tableName}" WHERE "${dbColumn}" IS NULL`,
+          );
+          const missing = Number((rows[0] as { missing: number })["missing"] ?? 0);
+          if (missing === 0) {
+            await q.sequelize.query(
+              `ALTER TABLE "${tableName}" ALTER COLUMN "${dbColumn}" SET NOT NULL`,
+            );
+            changes.push(`! NOT NULL aplicado: ${tableName}.${dbColumn}`);
+            console.log(`✅ NOT NULL aplicado: ${tableName}.${dbColumn}`);
+          } else {
+            console.warn(
+              `⚠️  ${tableName}.${dbColumn}: ${missing} filas con NULL — corre 'npm run db:migrate' y re-ejecuta 'npm run db:alter' para aplicar NOT NULL`,
+            );
+          }
+        }
       }
     }
 

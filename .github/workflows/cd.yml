@@ -28,7 +28,11 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - name: Instalar dependencias
         run: npm ci
-      - name: Aplicar cambios no destructivos de esquema
+      - name: Aplicar cambios no destructivos de esquema (pasada 1 — columnas nullable)
+        run: npm run db:alter
+      - name: Aplicar migraciones de datos idempotentes
+        run: npm run db:migrate
+      - name: Aplicar cambios no destructivos de esquema (pasada 2 — enforcing NOT NULL)
         run: npm run db:alter
       - name: Verificar que db/clinisalud.sql refleja la BD real
         run: |
