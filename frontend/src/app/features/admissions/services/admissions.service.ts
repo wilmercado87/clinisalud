@@ -24,6 +24,10 @@ export class AdmissionsService {
     return this.http.get<PatientLookupResponse>(`${this.apiUrl}/patient-lookup`, { params });
   }
 
+  getAdmissionByNumber(admissionNumber: string): Observable<PatientLookupResponse> {
+    return this.http.get<PatientLookupResponse>(`${this.apiUrl}/${admissionNumber}`);
+  }
+
   createAdmission(data: CreateAdmissionRequest): Observable<CreateAdmissionResponse> {
     return this.http.post<CreateAdmissionResponse>(this.apiUrl, data);
   }

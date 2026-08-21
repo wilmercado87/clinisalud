@@ -39,6 +39,17 @@ export const AUTH_MESSAGES = {
     'La cantidad autorizada ({quantity}) del CUPS {cups} supera el máximo permitido por paciente ({maxQuantity})',
 } as const;
 
+export const AUTHORIZATIONS_MESSAGES = {
+  ADMISSION_NUMBER_REQUIRED: 'Ingrese el número de admisión a consultar',
+  NOT_FOUND: 'No se encontró ningún resultado para la búsqueda',
+  LOAD_ERROR: 'Error al consultar la admisión',
+  NO_ACTIVE_ADMISSION: 'El paciente no tiene una admisión activa',
+  NOTHING_TO_SAVE: 'Agregue al menos una autorización antes de guardar',
+  AUTH_QUEUED: 'Autorización agregada a la lista. Presione Guardar Autorizaciones para persistirla',
+  SAVE_SUCCESS: 'Autorizaciones agregadas a la admisión {admissionNumber}',
+  SAVE_ERROR: 'Error al guardar las autorizaciones',
+} as const;
+
 export const USER_MESSAGES = {
   USER_CREATED: '¡Usuario registrado con éxito!',
   PERMISSIONS_UPDATED: 'Permisos actualizados correctamente',

@@ -83,6 +83,8 @@ export interface PatientLookupResponse {
   activeAdmission: {
     admissionNumber: string;
     admissionDate: string;
+    statusId?: number;
+    state?: string;
     roomId: number | null;
     observations: string | null;
     authorizations: AdmissionAuthorization[];

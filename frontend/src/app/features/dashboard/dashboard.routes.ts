@@ -19,5 +19,12 @@ export const dashboardRoutes: Routes = [
     path: 'admission',
     loadChildren: () => import('@features/admissions/admissions.routes').then((m) => m.admissionsRoutes),
   },
+  {
+    path: 'authorizations',
+    loadComponent: () =>
+      import('@features/admissions/pages/authorization-manager/authorization-manager.component').then(
+        (m) => m.AuthorizationManagerComponent,
+      ),
+  },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 ];

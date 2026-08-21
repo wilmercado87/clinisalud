@@ -1,0 +1,222 @@
+<div class="authorization-manager">
+  <header class="authorization-manager__header">
+    <div class="authorization-manager__title-group">
+      <h1 class="authorization-manager__title">Autorizaciones</h1>
+      <p class="authorization-manager__subtitle">
+        Consulte la admisión y registre las autorizaciones previas de los servicios EPS.
+      </p>
+    </div>
+  </header>
+
+  @if (feedback(); as fb) {
+    <div class="authorization-manager__feedback authorization-manager__feedback--{{ fb.type }}" role="status">
+      <mat-icon>
+        {{ fb.type === 'success' ? 'check_circle' : fb.type === 'error' ? 'error' : 'info' }}
+      </mat-icon>
+      <span>{{ fb.message }}</span>
+    </div>
+  }
+
+  <mat-card appearance="outlined" class="authorization-manager__card">
+    <mat-card-header>
+      <mat-card-title>Consultar</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <app-admission-search
+        [documentTypeIdControl]="documentForm.controls.documentTypeId"
+        [documentControl]="documentForm.controls.document"
+        [admissionNumberControl]="admissionNumberForm.controls.admissionNumber"
+        [isSearching]="isSearching()"
+        (searched)="onSearch($event)"
+        (documentBlurred)="onDocumentBlur()"
+        (modeChanged)="onSearchModeChanged()"
+      />
+    </mat-card-content>
+  </mat-card>
+
+  @if (patient(); as patient) {
+    <mat-card appearance="outlined" class="authorization-manager__card">
+      <mat-card-header>
+        <mat-card-title>Datos del Paciente</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <dl class="authorization-manager__details">
+          <div>
+            <dt>Nombre</dt>
+            <dd>{{ patientFullName() }}</dd>
+          </div>
+          <div>
+            <dt>Documento</dt>
+            <dd>{{ documentLabel() }}</dd>
+          </div>
+          <div>
+            <dt>Edad / Género</dt>
+            <dd>{{ patient.age || '—' }} / {{ patient.gender?.description ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>Teléfono</dt>
+            <dd>{{ patient.phone || '—' }}</dd>
+          </div>
+          <div>
+            <dt>EPS</dt>
+            <dd>{{ epsName() || '—' }}</dd>
+          </div>
+        </dl>
+      </mat-card-content>
+    </mat-card>
+
+    @if (activeAdmission(); as admission) {
+      <mat-card appearance="outlined" class="authorization-manager__card">
+        <mat-card-header>
+          <mat-card-title>Datos de la Admisión</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <dl class="authorization-manager__details">
+            <div>
+              <dt>N° Admisión</dt>
+              <dd>{{ admission.admissionNumber }}</dd>
+            </div>
+            <div>
+              <dt>Fecha Ingreso</dt>
+              <dd>{{ admission.admissionDate }}</dd>
+            </div>
+            <div>
+              <dt>Estado</dt>
+              <dd>{{ admission.state ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>Cama</dt>
+              <dd>{{ bedLabel() ?? 'Sin asignar' }}</dd>
+            </div>
+            <div class="authorization-manager__details--full">
+              <dt>Observaciones</dt>
+              <dd>{{ admission.observations || '—' }}</dd>
+            </div>
+          </dl>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="authorization-manager__card authorization-manager__card--auth">
+        <mat-card-header>
+          <mat-card-title>Autorizaciones</mat-card-title>
+          <mat-card-subtitle>
+            Registre las autorizaciones previas de los servicios que las requieran según el contrato de la EPS.
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (existingAuthRows().length === 0 && queuedAuthRows().length === 0) {
+            <p class="authorization-manager__empty">Sin autorizaciones registradas.</p>
+          } @else {
+            <table class="authorization-manager__auth-table">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>N° Autorización</th>
+                  <th>Código MAPIISS</th>
+                  <th>Cantidad</th>
+                  <th class="authorization-manager__auth-table--actions">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of existingAuthRows(); track row.authNumber) {
+                  <tr>
+                    <td>{{ row.authTypeName }}</td>
+                    <td>{{ row.authNumber }}</td>
+                    <td>
+                      <div>{{ row.mapiissCode }}</div>
+                      @if (row.mapiissDescription) {
+                        <span
+                          class="authorization-manager__cups-desc"
+                          [matTooltip]="row.mapiissDescription"
+                          matTooltipPosition="above"
+                          matTooltipShowDelay="300"
+                        >
+                          {{ row.mapiissDescription }}
+                        </span>
+                      }
+                    </td>
+                    <td>{{ row.quantity }}</td>
+                    <td class="authorization-manager__auth-table--actions"></td>
+                  </tr>
+                }
+                @for (row of queuedAuthRows(); track $index) {
+                  <tr>
+                    <td>{{ row.authTypeName }}</td>
+                    <td>{{ row.authNumber }}</td>
+                    <td>
+                      <div>{{ row.mapiissCode }}</div>
+                      @if (row.mapiissDescription) {
+                        <span
+                          class="authorization-manager__cups-desc"
+                          [matTooltip]="row.mapiissDescription"
+                          matTooltipPosition="above"
+                          matTooltipShowDelay="300"
+                        >
+                          {{ row.mapiissDescription }}
+                        </span>
+                      }
+                    </td>
+                    <td>{{ row.quantity }}</td>
+                    <td class="authorization-manager__auth-table--actions">
+                      <div class="authorization-manager__auth-actions-cell">
+                        <button
+                          mat-icon-button
+                          color="primary"
+                          type="button"
+                          aria-label="Editar autorización"
+                          (click)="editEntry($index)"
+                        >
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          type="button"
+                          aria-label="Quitar autorización"
+                          (click)="removeEntry($index)"
+                        >
+                          <mat-icon>remove_circle</mat-icon>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+
+          <mat-divider class="authorization-manager__divider" />
+
+          <app-authorization-entry
+            class="authorization-manager__entry"
+            [epsId]="patient.epsId"
+            [existingAuthorizations]="facade.existingAuthorizations()"
+            [queuedAuthorizations]="facade.queuedAuthValues()"
+            [editIndex]="editingEntry()?.index"
+            [initialEntry]="editingEntry()?.value"
+            applyLabel="Agregar a la lista"
+            cancelLabel="Limpiar"
+            (entriesApplied)="appendEntries($event)"
+            (entryUpdated)="updateEntry($event)"
+            (cancelled)="clearEditing()"
+          />
+
+          <div class="authorization-manager__actions">
+            <button mat-stroked-button color="warn" type="button" (click)="onCancel()">
+              <mat-icon>restart_alt</mat-icon>
+              Cancelar
+            </button>
+            <button mat-raised-button color="primary" type="button" (click)="onSave()" [disabled]="!canSave()">
+              @if (isSaving()) {
+                <mat-spinner diameter="20" />
+              } @else {
+                <mat-icon>save</mat-icon>
+              }
+              Guardar Autorizaciones
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
+</div>
