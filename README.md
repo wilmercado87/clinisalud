@@ -36,47 +36,40 @@ clinisalud/
 ├── backend/            # API REST
 │   ├── src/
 │   │   ├── config/      # Configuración (DB, Swagger)
-│   │   ├── controllers/ # Controladores HTTP
-│   │   ├── services/    # Lógica de negocio
-│   │   ├── models/      # Modelos Sequelize
-│   │   ├── routes/      # Rutas API
-│   │   ├── middlewares/ # Middlewares Express
-│   │   ├── constants/  # Constantes globales
-│   │   ├── utils/      # Utilidades
-│   │   └── __tests__/  # Tests unitarios
+│   │   ├── constants/   # Estados, máquinas de estado, roles, mensajes de negocio
+│   │   ├── middlewares/ # Auth JWT+roles, validaciones, errores, security
+│   │   ├── models/      # 40 modelos Sequelize + associations.ts
+│   │   ├── modules/     # auth · users · catalogs · notifications · admissions
+│   │   ├── socket/      # Socket.IO (notificaciones en tiempo real)
+│   │   ├── utils/       # Logger, Pagination, StatusCodes
+│   │   └── __tests__/   # Tests unitarios (Jest, 133)
 │   ├── db/              # Dump schema-only canónico (clinisalud.sql)
 │   └── Dockerfile
-├── frontend/           # Dashboard Angular 19
-├── docs/               # Documentación técnica (API, testing, CI/CD, spec, dictamen BD)
-│   └── spec/           # Spec core del dominio
-├── scripts/            # Utilidades (db-export.sh)
+├── frontend/           # Dashboard Angular 19 (signals, standalone)
+├── docs/               # Documentación técnica (spec SDD, API, testing, CI/CD)
+│   └── spec/           # Spec core del dominio (invariantes @spec:INV-*)
+├── scripts/            # Utilidades (db-export.sh, quality-gates.mjs)
+├── tablas_clinisalud/  # CSVs fuente para el seed (catálogos CUPS/CIE-10, tarifarios)
 ├── render.yaml         # Blueprint de despliegue Render
-└── docker compose.yml  # Stack local (Postgres + API + frontend)
+└── docker-compose.yml  # Stack local (Postgres + API + frontend)
 ```
 
-## Características
+## Características (estado real)
 
-### Módulo de Usuarios
-- Autenticación JWT
-- Gestión de roles y permisos
-- Menú dinámico por rol
+### Core — ✅ implementado
+- Autenticación JWT + rate limiting, RBAC híbrido (roles + sobreescrituras por usuario)
+- Menú dinámico por permisos, gestión de usuarios con auditoría
+- Notificaciones en tiempo real (Socket.IO) + persistencia
+- Catálogos centralizados: CUPS (21.426), CIE-10 (12.423), EPS/contratos, geografía
 
-### Módulo de Pacientes
-- Registro de pacientes
-- Búsqueda por documento
-- Historial médico
+### Admisiones, Censo y Autorizaciones — ✅ implementado
+- Registro/actualización de admisión con control transaccional de camas
+- Censo hospitalario con egreso y reversión de estados controlada
+- Autorizaciones EPS anti-glosa (anti-duplicado, tope de cantidad, tarifario por contrato)
+- Pre-validación de facturación (`billability-check`)
 
-### Módulo de Facturación
-- Admisión de pacientes
-- Cálculo de copagos
-- Estados: pendiente/pagado/cancelado
-
-### Catálogos
-- Departamentos, Municipios
-- Tipos de documento
-- Convenios, Tarifarios
-- Diagnósticos (CIE-10): 12.423 códigos
-- Procedimientos (CUPS): 21.426 códigos
+### Pendientes — ver roadmap completo en [`docs/spec/CLINISALUD-SPEC-CORE.md`](./docs/spec/CLINISALUD-SPEC-CORE.md)
+- Citas médicas · Historia Clínica/Epicrisis · Farmacia · Facturación (liquidación ISS/SOAT) · Cartera/Glosas · Paz y Salvos/Reportes
 
 ## Installation (local)
 
@@ -113,16 +106,18 @@ docker compose up -d    # Postgres + API + frontend
 ## Testing
 
 ```bash
-# Backend
+# Backend (9 suites / 133 tests)
 cd backend
-npm test                # Unit tests (jest)
+npm test
 
-# Frontend
+# Frontend (21 specs / ~152 tests, Jest + jsdom sin navegador)
 cd frontend
-npm test                # Unit tests (jest, sin navegador — jsdom)
+npm test                # Unit tests
 npm run test:watch      # Watch mode
 npm run test:coverage   # Con cobertura
 ```
+
+Estrategia y trazabilidad SDD (`@spec:INV-*`): [`docs/TESTING.md`](./docs/TESTING.md).
 
 ## Variables de Entorno
 

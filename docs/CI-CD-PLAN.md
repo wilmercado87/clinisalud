@@ -32,7 +32,7 @@ push / PR a main
    │
    ▼
 jobs ci.yml
-   ├────────── backend-ci   (npm ci, tsc, jest 111, build)
+   ├────────── backend-ci   (npm ci, tsc, jest 133, build)
    ├────────── frontend-ci  (npm ci, tsc, ng build --configuration production)
    ├────────── quality-gates (gates sin LLM: any ∄, @spec:INV-…; node scripts/quality-gates.mjs)
    └────────── code-review (SÓLO PR y si hay OPENCODE_API_KEY; comment en PR)
@@ -55,7 +55,7 @@ jobs cd.yml
 
 | Job | Pasos | Falla |
 |---|---|---|
-| `backend-ci` | `npm ci` → `npx tsc --noEmit` → `npm test` (jest, 111 tests) → `npm run build` | Cualquiera |
+| `backend-ci` | `npm ci` → `npx tsc --noEmit` → `npm test` (jest, 133 tests) → `npm run build` | Cualquiera |
 | `frontend-ci` | `npm ci` → `npx tsc --noEmit -p tsconfig.app.json` → `ng build --configuration production` | Cualquiera |
 | `quality-gates` | `node scripts/quality-gates.mjs`: prohíbe `any` explícito nuevo en `backend/src` y `frontend/src`; advierte si tests modificados no citan `@spec:INV-...` | `any` nuevo (los avisos no bloquean) |
 | `code-review` | Solo `pull_request` y si `OPENCODE_API_KEY_SET=true`. Instalación `opencode-ai` (npm), ejecuta `opencode run` con las skills del proyecto (clinisalud-simple, angular-architect, spec core, convención API) sobre el diff y comenta `🤖 Revisión opencode` en el PR | No bloquea (es consultivo). Dormido si no hay key |

@@ -2,161 +2,129 @@
 
 ## Descripción
 
-API REST del sistema de gestión hospitalaria Clinisalud. Construido con Express.js y TypeScript, persistencia en PostgreSQL.
+API REST del sistema de gestión hospitalaria Clinisalud. Construida con Express.js y TypeScript, persistencia en PostgreSQL (Neon en producción, Docker/local en desarrollo).
 
 ## Tecnologías
 
 - **Runtime**: Node.js 20+
 - **Framework**: Express.js 4.x
 - **Lenguaje**: TypeScript 5.x
-- **ORM**: Sequelize 6.x
-- **Database**: PostgreSQL 16 (Sequelize como ORM)
-- **Auth**: JWT + bcryptjs
-- **Documentación**: Swagger/OpenAPI 3.0
-- **Logging**: Winston
-- **Testing**: Jest
+- **ORM**: Sequelize 6.x · **BD**: PostgreSQL
+- **Auth**: JWT (24h, HS256) + bcryptjs + rate limiting
+- **Tiempo real**: Socket.IO con autenticación JWT por handshake
+- **Documentación**: Swagger/OpenAPI 3.0 (`/api-docs`) · **Logging**: Winston
+- **Testing**: Jest (9 suites / 133 tests)
 
 ## Estructura de Archivos
 
 ```
 src/
-├── config/
-│   ├── database.ts      # Configuración Sequelize
-│   └── swagger.ts     # Configuración Swagger
-├── controllers/      # Controladores HTTP
-│   ├── AuthController.ts
-│   ├── UserController.ts
-│   └── RoleController.ts
-├── services/        # Lógica de negocio
-│   ├── AuthService.ts
-│   ├── PatientService.ts
-│   ├── UserService.ts
-│   ├── BillingService.ts
-│   └── CatalogService.ts
-├── models/          # Modelos Sequelize
-│   ├── User.ts
-│   ├── Paciente.ts
-│   ├── Role.ts
-│   └── ... (40+ modelos)
-├── routes/         # Rutas Express
-│   ├── AuthRoutes.ts
-│   └── UserRoutes.ts
-├── middlewares/     # Middlewares Express
-│   ├── AuthMiddleware.ts
-│   ├── ErrorHandlerMiddleware.ts
-│   └── SecurityMiddleware.ts
-├── constants/      # Constantes globales
-│   └── index.ts
-├── utils/          # Utilidades
-│   ├── Logger.ts
-│   ├── Pagination.ts
-│   └── StatusCodes.ts
-├── __tests__/      # Tests unitarios
-├── app.ts          # Configuración Express
-└── index.ts       # Punto de entrada
+├── config/            # database.ts (Sequelize), swagger.ts
+├── constants/         # index.ts: estados de admisión, máquinas de estado,
+│                      #   roles, mensajes de negocio, plantillas de notificación
+├── middlewares/       # AuthMiddleware (JWT+roles), Validation (express-validator),
+│                      #   ErrorHandler, Security (helmet, rate limit)
+├── models/            # 40 modelos Sequelize + associations.ts
+├── modules/           # UN módulo por dominio:
+│   ├── auth/          #   login, perfil, cambio/recuperación de contraseña
+│   ├── users/         #   usuarios, roles, menú híbrido (roles+sobreescrituras)
+│   ├── catalogs/      #   catálogos paramétricos, camas, contratos, CUPS/CIE-10
+│   ├── notifications/ #   notificaciones persistentes + email
+│   └── admissions/    #   admisiones, censo, egreso, autorizaciones, billability
+│       └── {nombre}.{routes|controller|service|validations|types}.ts
+├── socket/            # socket.gateway.ts (notificaciones en tiempo real)
+├── scripts/           # db-alter.ts (sync no destructivo)
+├── utils/             # Logger, Pagination, StatusCodes, user.mapper
+├── seed.ts            # Carga inicial desde tablas_clinisalud/*.csv
+├── __tests__/         # Tests Jest (ver docs/TESTING.md)
+├── app.ts             # Express app (rutas montadas bajo /api/v1)
+└── index.ts           # Punto de entrada (HTTP + Socket.IO)
 ```
 
-## Installation
+Convención de módulos y endpoints: [`docs/CONVENCION-API.md`](../docs/CONVENCION-API.md). Reglas de negocio: [`docs/spec/CLINISALUD-SPEC-CORE.md`](../docs/spec/CLINISALUD-SPEC-CORE.md).
+
+## Instalación
 
 ```bash
+cp .env.example .env     # DATABASE_URL apunta a Postgres local
 npm install
-npm run build
-npm run seed    # Seed de datos iniciales
-npm run dev     # Servidor en puerto 3000
+npm run seed             # Datos iniciales (catálogos, roles, admin)
+npm run dev              # http://localhost:3000 (ts-node-dev)
 ```
 
 ## Scripts
 
 | Script | Descripción |
 |--------|------------|
-| `npm run dev` | Iniciar servidor en desarrollo (ts-node-dev) |
+| `npm run dev` | Servidor en desarrollo (ts-node-dev) |
 | `npm run build` | Compilar TypeScript |
-| `npm run seed` | Ejecutar seed |
-| `npm test` | Ejecutar tests |
-| `npm run test:watch` | Tests en watch mode |
-| `npm run db:schema` | Regenerar `db/clinisalud.sql` desde la BD actual |
+| `npm run seed` | Ejecutar seed desde `tablas_clinisalud/*.csv` |
+| `npm test` / `test:watch` / `test:coverage` | Suite Jest (133 tests) |
+| `npm run db:alter` | Sync no destructivo del esquema hacia la BD (`DATABASE_URL`) — usado por el CD |
+| `npm run db:schema` | Regenerar `db/clinisalud.sql` (dump schema-only canónico) |
 
-## Base de datos
+> El arranque normal **no** modifica la BD. La reestructuración destructiva solo ocurre con `DB_SYNC=force npm run dev` + seed.
 
-Persistencia en **PostgreSQL** (Homebrew, local: `postgresql://clinisalud:clinisalud@localhost:5432/clinisalud`, configurable por `DATABASE_URL`). El esquema nace de los modelos Sequelize (`src/models/` + `src/models/associations.ts`) y queda reflejado en el archivo `db/clinisalud.sql` (artefacto de referencia único, generado con `pg_dump --schema-only` y regenerable con `npm run db:schema`).
+## Endpoints (resumen)
 
-El arranque normal del servidor **no** modifica la BD; la reestructuración completa (destructiva, pierde datos) solo ocurre con `DB_SYNC=force npm run dev` + seed desde `tablas_clinisalud/*.csv`.
+Detalle completo con roles e invariantes: [`docs/CONVENCION-API.md`](../docs/CONVENCION-API.md).
 
-## API Endpoints
+| Grupo | Rutas |
+|---|---|
+| Auth | `POST /api/v1/auth/login` · `POST .../forgot-password` · `PATCH .../profile` · `PATCH .../change-password` |
+| Usuarios | `GET|POST /api/v1/users` · `PATCH /users/:id/permissions` · `POST /users/:id/toggle-status` · `GET /roles` · `GET /menu-options` |
+| Notificaciones | `GET /notifications` (+`unread-count`, `:id/read`, `read-all`) |
+| Catálogos | `GET /catalogs/:type` (+`beds`, `contracts`, `municipalities`, `cups/search`, `diagnostics/search`) |
+| Admisiones | `POST /admissions` · `GET /admissions/patient-lookup` · `GET /admissions/census` · `GET|PATCH /admissions/:admissionNumber` · `PATCH .../state` · `POST .../discharge` · `POST /admissions/billability-check` |
 
-### Autenticación
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/api/v1/auth/login` | Login con email/password |
-
-### Usuarios
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/api/v1/users` | Listar usuarios |
-| POST | `/api/v1/users` | Crear usuario |
-| GET | `/api/v1/users/:id` | Obtener usuario |
-| PUT | `/api/v1/users/:id/permissions` | Actualizar permisos |
-| PUT | `/api/v1/users/:id/toggle` | Toggle estado |
-
-## Modelos Principales
-
-- **User**: Usuarios del sistema
-- **Paciente**: Registro de pacientes
-- **Role**: Roles (ADMIN, DOC, FACT)
-- **MenuOption**: Opciones de menú
-- **FacturacionPaciente**: Admissions y facturación
+Swagger UI: http://localhost:3000/api-docs
 
 ## Autenticación
 
 ```bash
-# Login
 curl -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@clinisalud.com","password":"Admin2026!"}'
 ```
 
-Respuesta:
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "user": { "id": 1, "email": "...", "role": "ADMIN" },
-  "menu": [...]
-}
-```
+Respuesta: `{ "token", "user", "menu" }`. Enviar el token como `Authorization: Bearer <token>`; todas las rutas excepto login lo exigen (`INV-SEC-01`).
 
-## Swagger
+## Roles
 
-- **UI**: http://localhost:3000/api-docs
-- **JSON**: http://localhost:3000/api-docs.json
+`SUPER_ADMIN`, `ADMIN`, `ADMISIONES`, `MEDICO`, `FACTURADOR` (`src/constants/index.ts → ROLE_CODES`). El acceso a módulos combina permisos de rol (`PermisoRolMenu`) + sobreescrituras granulares por usuario (`SobreescrituraMenuUsuario`) — `INV-SEC-02`.
+
+## Modelos principales (40)
+
+| Dominio | Modelos |
+|---|---|
+| Seguridad | `Usuario`, `Rol`, `OpcionMenu`, `PermisoRolMenu`, `SobreescrituraMenuUsuario`, `Notificacion`, `DestinatarioNotificacion` |
+| Pacientes | `Paciente`, `Acompanante`, `TipoDocumento`, `TipoGenero`, `TipoParentesco` |
+| Admisiones | `Admision`, `Cama`, `Autorizacion`, `TipoAutorizacion`, `TipoEstado`, `TipoOrigen` |
+| Clínica | `Triage`, `TriagePrioridad`, `TipoTriage`, `DiagnosticoPaciente`, `Especialidad` |
+| Tarifaria | `Contrato`, `Convenio`, `Tarifario`, `Cups`, `Articulado`, `Paragrafo*` (valor/edad/inclusión/aplicación), `ViaAcceso`, `TipoAcceso`, `CentroCosto`, `NivelAtencion` |
+| Geografía | `Departamento`, `Municipio` |
+
+Esquema canónico: `db/clinisalud.sql` (regenerable con `npm run db:schema`; validado por el CD contra producción).
 
 ## Testing
 
 ```bash
-npm test           # 48 tests passing
-npm run test:coverage  # Con cobertura
+npm test        # 133 tests passing
 ```
 
-## Variables de Entorno
+Estrategia y trazabilidad SDD (`@spec:INV-*`): [`docs/TESTING.md`](../docs/TESTING.md).
 
-Crear `.env`:
+## Variables de Entorno (.env)
+
 ```env
 PORT=3000
-JWT_SECRET=clinisalud_secret_key_2026
+JWT_SECRET=tu_secret_jwt
 NODE_ENV=development
 LOG_LEVEL=info
 DATABASE_URL=postgresql://clinisalud:clinisalud@localhost:5432/clinisalud
+CORS_ORIGIN=http://localhost:4200   # orígenes permitidos para API + WebSocket
 ```
-
-## Contribuir
-
-1. Fork el repositorio
-2. Crear branch feature: `git checkout -b feature/nombre`
-3. Commit cambios: `git commit -m 'Add feature'`
-4. Push: `git push origin feature/nombre`
-5. Crear Pull Request
 
 ## Licencia
 
-Proprietario - Clinisalud 2026
+Propietario - Clinisalud 2026

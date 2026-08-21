@@ -1,5 +1,7 @@
 # Dictamen de normalización del esquema PostgreSQL
 
+> **Nota:** este documento es un **registro histórico** (auditoría puntual del esquema). No se actualiza con cada cambio; para el esquema vigente consultar `backend/db/clinisalud.sql` (regenerable con `npm run db:schema`).
+>
 > **Fecha de verificación:** 2026-08-08 (contra base de producción Neon, `public`).
 > **Metodología:** conteos vía `information_schema` y `LEFT JOIN` anti-join sobre columnas FK reales.
 

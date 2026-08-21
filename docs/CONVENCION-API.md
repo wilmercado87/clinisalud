@@ -58,18 +58,67 @@ src/modules/{nombreModulo}/
 
 ## Endpoints actuales
 
-| Método | Path | Módulo |
+Fuente de verdad: los archivos `*.routes.ts` de `backend/src/modules/`. Roles: `SUPER_ADMIN`, `ADMIN`, `ADMISIONES`, `MEDICO`, `FACTURADOR`.
+
+### Auth (`modules/auth/`)
+
+| Método | Path | Acceso |
 |---|---|---|
-| `POST` | `/api/v1/auth/login` | Auth |
-| `PATCH` | `/api/v1/auth/profile` | Auth |
-| `GET` | `/api/v1/roles` | Users |
-| `GET` | `/api/v1/menu-options` | Users |
-| `GET` | `/api/v1/users` | Users |
-| `POST` | `/api/v1/users` | Users |
-| `PATCH` | `/api/v1/users/:id/permissions` | Users |
-| `POST` | `/api/v1/users/:id/toggle-status` | Users |
-| `GET` | `/api/v1/notifications` | Notifications |
-| `GET` | `/api/v1/notifications/unread-count` | Notifications |
-| `POST` | `/api/v1/notifications/:id/read` | Notifications |
-| `POST` | `/api/v1/notifications/read-all` | Notifications |
-| `GET` | `/api/v1/catalogs/:type` | Catalogs |
+| `POST` | `/api/v1/auth/login` | Público (rate limit por IP) |
+| `POST` | `/api/v1/auth/forgot-password` | Público (rate limit por IP) |
+| `PATCH` | `/api/v1/auth/profile` | Autenticado |
+| `PATCH` | `/api/v1/auth/change-password` | Autenticado |
+
+### Usuarios y menú (`modules/users/`)
+
+| Método | Path | Acceso |
+|---|---|---|
+| `GET` | `/api/v1/users` | ADMIN, SUPER_ADMIN (solo usuarios gestionables) |
+| `POST` | `/api/v1/users` | ADMIN, SUPER_ADMIN |
+| `PATCH` | `/api/v1/users/:id/permissions` | ADMIN, SUPER_ADMIN (transaccional: rol + sobreescrituras) |
+| `POST` | `/api/v1/users/:id/toggle-status` | ADMIN, SUPER_ADMIN |
+| `GET` | `/api/v1/roles` | Autenticado |
+| `GET` | `/api/v1/menu-options` | Autenticado |
+
+### Notificaciones (`modules/notifications/`)
+
+| Método | Path | Acceso |
+|---|---|---|
+| `GET` | `/api/v1/notifications` | Autenticado |
+| `GET` | `/api/v1/notifications/unread-count` | Autenticado |
+| `POST` | `/api/v1/notifications/:id/read` | Autenticado |
+| `POST` | `/api/v1/notifications/read-all` | Autenticado |
+
+### Catálogos (`modules/catalogs/`)
+
+| Método | Path | Acceso |
+|---|---|---|
+| `GET` | `/api/v1/catalogs/:type` | Autenticado (tipos paramétricos genéricos) |
+| `GET` | `/api/v1/catalogs/beds?status=&page=` | Autenticado (camas con estado) |
+| `GET` | `/api/v1/catalogs/contracts` | Autenticado (contratos EPS + tarifario) |
+| `GET` | `/api/v1/catalogs/cups/search?q=` | Autenticado (búsqueda CUPS por tarifario) |
+| `GET` | `/api/v1/catalogs/diagnostics/search?q=` | Autenticado (búsqueda CIE-10) |
+| `GET` | `/api/v1/catalogs/municipalities` | Autenticado |
+
+### Admisiones (`modules/admissions/`)
+
+| Método | Path | Acceso | Invariantes |
+|---|---|---|---|
+| `GET` | `/api/v1/admissions/patient-lookup?documentType&document` | + MEDICO | INV-AUT-01 |
+| `POST` | `/api/v1/admissions` | ADMISIONES | INV-ADM-01..03, 06 |
+| `GET` | `/api/v1/admissions/census` | + MEDICO | INV-ADM-04 |
+| `GET` | `/api/v1/admissions/:admissionNumber` | ADMISIONES | INV-AUT-01 |
+| `PATCH` | `/api/v1/admissions/:admissionNumber` | ADMISIONES | INV-ADM-01, 07 · INV-AUT-02/03 |
+| `PATCH` | `/api/v1/admissions/:admissionNumber/state` | ADMISIONES | INV-ADM-04, 05 |
+| `POST` | `/api/v1/admissions/:admissionNumber/discharge` | ADMISIONES | INV-ADM-05 |
+| `POST` | `/api/v1/admissions/billability-check` | Solo ADMIN | INV-FAC-01 |
+
+> Detalle de invariantes en [`spec/CLINISALUD-SPEC-CORE.md`](./spec/CLINISALUD-SPEC-CORE.md).
+
+### Otros canales
+
+| Canal | Descripción |
+|---|---|
+| WebSocket `/socket.io` | Notificaciones en tiempo real; handshake con token JWT (`backend/src/socket/socket.gateway.ts`) |
+| `GET /health` | Healthcheck para deploy/smoke |
+| `GET /api-docs` | Swagger UI (JSON en `/api-docs.json`) |
