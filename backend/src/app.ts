@@ -8,14 +8,21 @@ import catalogRoutes from './modules/catalogs/catalogs.routes';
 import admissionRoutes from './modules/admissions/admissions.routes';
 import { securityMiddleware, generalLimiter } from './middlewares/SecurityMiddleware';
 import { errorHandler, notFoundHandler } from './middlewares/ErrorHandlerMiddleware';
-import { logInfo, healthCheck, rootEndpoint } from './utils';
+import { logInfo, healthCheck, rootEndpoint, resolveAllowedOrigins } from './utils';
 import swaggerUiExpress from './config/swagger';
 import { swaggerSpec } from './config/swagger';
 
 const app = express();
 
 app.use(securityMiddleware);
-app.use(cors());
+app.use(
+  cors({
+    origin: resolveAllowedOrigins(),
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86400,
+  }),
+);
 app.use(generalLimiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

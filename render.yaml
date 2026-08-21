@@ -12,6 +12,8 @@ services:
         value: 3000
       - key: DB_SYNC
         value: normal
+      - key: CORS_ORIGIN
+        value: https://clinisalud-frontend.onrender.com
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET

@@ -3,17 +3,9 @@ import jwt from "jsonwebtoken";
 import { Server, Socket } from "socket.io";
 import { JWT_CONFIG } from "../constants";
 import Usuario from "../models/Usuario";
+import { resolveAllowedOrigins } from "../utils/CorsConfig";
 
 let io: Server | null = null;
-
-function resolveAllowedOrigins(): boolean | string[] {
-  const raw = process.env["CORS_ORIGIN"] ?? "";
-  const allowed = raw
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-  return allowed.length > 0 ? allowed : true;
-}
 
 export function initSocketGateway(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
