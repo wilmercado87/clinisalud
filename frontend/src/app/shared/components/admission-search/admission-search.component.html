@@ -1,0 +1,55 @@
+<div class="admission-search">
+  @if (hasAdmissionSearch()) {
+    <mat-radio-group
+      class="admission-search__mode"
+      [value]="mode()"
+      (change)="setMode($event.value)"
+    >
+      <mat-radio-button value="document">Tipo y Número de Documento</mat-radio-button>
+      <mat-radio-button value="admission">Número de Admisión</mat-radio-button>
+    </mat-radio-group>
+  }
+
+  @if (mode() === 'document') {
+    <app-catalog-select
+      catalogType="document-types"
+      label="Tipo Documento"
+      [formControl]="documentTypeIdControl()"
+      class="admission-search__type"
+    />
+    <mat-form-field appearance="outline" class="admission-search__number">
+      <mat-label>Número Documento</mat-label>
+      <input
+        matInput
+        [formControl]="documentControl()"
+        placeholder="Ingrese documento"
+        required
+        (blur)="onBlur()"
+        (keydown.enter)="onSearch()"
+      />
+    @if (resolvedDocumentError(); as message) {
+      <mat-error>{{ message }}</mat-error>
+    }
+  </mat-form-field>
+  } @else {
+    <mat-form-field appearance="outline" class="admission-search__number">
+      <mat-label>Número de Admisión</mat-label>
+      <input
+        matInput
+        [formControl]="admissionNumberControl()!"
+        placeholder="ADM-20260801-0001"
+        required
+        (keydown.enter)="onSearch()"
+      />
+    </mat-form-field>
+  }
+
+  <button mat-raised-button color="primary" type="button" class="admission-search__submit" (click)="onSearch()" [disabled]="isSearching() || searchDisabled()">
+    @if (isSearching()) {
+      <mat-spinner diameter="20" />
+    } @else {
+      <mat-icon>search</mat-icon>
+    }
+    Buscar
+  </button>
+</div>

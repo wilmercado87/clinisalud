@@ -43,31 +43,9 @@
     }
   }
 
-  &__row {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  &__field--small {
-    min-width: 240px;
-    flex: 1.5;
-  }
-
-  &__field--medium {
-    min-width: 240px;
-    flex: 2;
-  }
-
   &__field--full {
     width: 100%;
     grid-column: 1 / -1;
-  }
-
-  &__search-btn {
-    height: 56px;
-    min-width: 120px;
   }
 
   &__badge {

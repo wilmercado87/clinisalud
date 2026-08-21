@@ -1,4 +1,3 @@
-// @spec:INV-ADM-02 — Control de Autorizaciones por Servicio (request de autorizaciones)
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, forwardRef, input, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -9,6 +8,7 @@ import { CatalogStore } from '@core/stores/catalog-store/catalog.store';
 import { PatientLookupResponse } from '@features/admissions/models/admissions.model';
 import { AdmissionStore } from '@features/admissions/store/admission.store';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
+import { AdmissionSearchComponent } from '@shared/components/admission-search/admission-search.component';
 import { AdmissionFormComponent } from './admission-form.component';
 
 @Component({
@@ -142,6 +142,10 @@ describe('AdmissionFormComponent', () => {
       ],
     })
       .overrideComponent(AdmissionFormComponent, {
+        remove: { imports: [CatalogSelectComponent] },
+        add: { imports: [MockCatalogSelectComponent] },
+      })
+      .overrideComponent(AdmissionSearchComponent, {
         remove: { imports: [CatalogSelectComponent] },
         add: { imports: [MockCatalogSelectComponent] },
       })
@@ -483,6 +487,45 @@ it('shows the age validation message under Fecha Nacimiento when the birth date 
       expect(component.authEntries()).toEqual([]);
     });
 
+    it('merges the saved authorizations into the visible list immediately after success', async () => {
+      await openUpdateMode();
+      component.appendAuthEntries([
+        {
+          authTypeId: 5,
+          authNumber: 'AUTH-200',
+          feeScheduleId: 2,
+          mapiissCode: 'CUP-200',
+          quantity: 1,
+          mapiissDescription: '',
+          maxQuantity: null,
+        },
+        {
+          authTypeId: 5,
+          authNumber: 'AUTH-201',
+          feeScheduleId: 2,
+          mapiissCode: 'CUP-201',
+          quantity: 1,
+          mapiissDescription: '',
+          maxQuantity: null,
+        },
+      ]);
+      await flushEffects();
+
+      store.isUpdating.set(true);
+      component.onSubmit();
+      store.isUpdating.set(false);
+      store.updateResult.set({ admissionNumber: 'ADM-20260804-0001', roomId: 5, authorizations: [] });
+      await flushEffects();
+
+      expect(component.authEntries()).toEqual([]);
+      expect(component.existingAuthorizations().map((auth) => auth.authNumber)).toEqual([
+        'AUTH-001',
+        'AUTH-200',
+        'AUTH-201',
+      ]);
+      expect(component.newAuthRows().length).toBe(0);
+    });
+
     it('keeps the success message when the post-update refresh fills the patient again', async () => {
       await openUpdateMode();
       component.admissionForm.controls.observations.setValue('Actualizada');
@@ -718,8 +761,6 @@ it('shows the age validation message under Fecha Nacimiento when the birth date 
   });
 
   describe('required marks', () => {
-    // Orden de aparición en el template: 0 paciente Tipo Documento, 1 Género,
-    // 2 Tipo Usuario, 3 acompañante Tipo Documento, 4 Parentesco, 5 EPS, 6 Cama.
     function selectAt(index: number): MockCatalogSelectComponent {
       return fixture.debugElement.queryAll(By.css('app-catalog-select'))[index]
         .componentInstance as MockCatalogSelectComponent;

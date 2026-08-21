@@ -43,9 +43,15 @@ export function toAuthRowViewModel(
 
 export function findCatalogItemName(items: CatalogSourceItem[], id: number | null): string {
   if (id === null) return '';
-  const item = items.find((catalogItem) => 'id' in catalogItem && catalogItem.id === id);
-  if (!item || !('id' in item)) return '';
-  return String(item.name || item.description || '');
+  const item = items.find((catalogItem) => catalogItemMatchesId(catalogItem, id));
+  if (!item) return '';
+  if ('epsName' in item) return String(item.epsName).trim();
+  return 'id' in item ? String(item.name || item.description || '') : '';
+}
+
+function catalogItemMatchesId(item: CatalogSourceItem, id: number): boolean {
+  if ('epsName' in item) return item.idEps === id;
+  return 'id' in item && item.id === id;
 }
 
 export function mapCatalogItemToOption(catalogType: string, item: CatalogSourceItem): CatalogOptionUI {

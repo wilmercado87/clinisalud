@@ -22,6 +22,7 @@ import {
 import { AdmissionFormFacade } from '@features/admissions/services/admission-form.facade';
 import { AuthorizationFormValue } from '@features/admissions/utils/authorization/authorization-form.types';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
+import { AdmissionSearchComponent } from '@shared/components/admission-search/admission-search.component';
 
 @Component({
   selector: 'app-admission-form',
@@ -41,6 +42,7 @@ import { CatalogSelectComponent } from '@shared/components/catalog-select/catalo
     MatDialogModule,
     MatTooltipModule,
     CatalogSelectComponent,
+    AdmissionSearchComponent,
     RouterModule,
   ],
   templateUrl: './admission-form.component.html',
@@ -56,6 +58,7 @@ export class AdmissionFormComponent {
   @ViewChildren(CatalogSelectComponent) private readonly catalogSelects!: QueryList<CatalogSelectComponent>;
 
   readonly today = this.facade.today;
+  readonly resetToken = this.facade.resetToken;
 
   readonly patientForm = this.facade.patientForm;
   readonly companionForm = this.facade.companionForm;

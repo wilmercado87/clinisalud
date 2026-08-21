@@ -16,42 +16,16 @@
         <mat-card-title>Datos del Paciente</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <div class="admission-form__row">
-          <app-catalog-select
-            catalogType="document-types"
-            label="Tipo Documento"
-            formControlName="documentTypeId"
-            class="admission-form__field--small"
-          />
-          <mat-form-field appearance="outline" class="admission-form__field--medium">
-            <mat-label>Número Documento</mat-label>
-            <input
-              matInput
-              formControlName="document"
-              placeholder="Ingrese documento"
-              required
-              (blur)="onDocumentBlur()"
-            />
-            @if (patientErrors().document) {
-              <mat-error>{{ patientErrors().document }}</mat-error>
-            }
-          </mat-form-field>
-          <button
-            mat-raised-button
-            color="primary"
-            type="button"
-            class="admission-form__search-btn"
-            (click)="onSearchPatient()"
-            [disabled]="mode() === 'SEARCHING' || mode() === 'FOUND'"
-          >
-            @if (mode() === 'SEARCHING') {
-              <mat-spinner diameter="20" />
-            } @else {
-              <mat-icon>search</mat-icon>
-            }
-            Buscar
-          </button>
-        </div>
+        <app-admission-search
+          [documentTypeIdControl]="patientForm.controls.documentTypeId"
+          [documentControl]="patientForm.controls.document"
+          [isSearching]="mode() === 'SEARCHING'"
+          [searchDisabled]="!searchEnabled()"
+          [documentErrorMessage]="patientErrors().document"
+          [resetToken]="resetToken()"
+          (searched)="onSearchPatient()"
+          (documentBlurred)="onDocumentBlur()"
+        />
 
         @if (mode() === 'FOUND') {
           <div class="admission-form__badge">Paciente existente</div>
