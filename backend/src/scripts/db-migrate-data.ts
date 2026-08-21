@@ -43,7 +43,7 @@ const DATA_MIGRATIONS: DataMigration[] = [
       console.log(`\n▶ Migración: ${migration.id}`);
       for (const statement of migration.statements) {
         const [, meta] = await sequelize.query(statement);
-        const affected = typeof meta === "object" && meta && "rowCount" in meta ? meta.rowCount ?? 0 : 0;
+        const affected = Number((meta as { rowCount?: number | null } | null)?.rowCount ?? 0);
         console.log(`  ✓ ejecutado (${affected} filas afectadas)`);
       }
     }

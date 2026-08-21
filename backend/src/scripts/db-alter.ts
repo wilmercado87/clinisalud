@@ -74,9 +74,7 @@ async function listTables(): Promise<string[]> {
               `UPDATE "${tableName}" SET "${dbColumn}" = $value WHERE "${dbColumn}" IS NULL`,
               { bind: { value: attribute.defaultValue } },
             );
-            const affected = Number(
-              typeof meta === "object" && meta && "rowCount" in meta ? (meta as { rowCount?: number | null }).rowCount ?? 0 : 0,
-            );
+            const affected = Number((meta as { rowCount?: number | null } | null)?.rowCount ?? 0);
             if (affected > 0) {
               changes.push(`~ backfill por default: ${tableName}.${dbColumn} (${affected} filas)`);
               console.log(`✅ Backfill default ${tableName}.${dbColumn}: ${affected} filas`);
@@ -86,11 +84,14 @@ async function listTables(): Promise<string[]> {
 
         if (!columns[dbColumn]) continue;
 
-        if (
-          attribute.allowNull === false &&
-          existingColumn &&
-          (existingColumn as { nullable?: boolean }).nullable === true
-        ) {
+        if (attribute.allowNull === false) {
+          const [nullabilityRows] = await q.sequelize.query(
+            `SELECT is_nullable FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = $t AND column_name = $c`,
+            { bind: { t: tableName, c: dbColumn } },
+          );
+          const isNullable = (nullabilityRows[0] as { is_nullable?: string } | undefined)?.is_nullable === "YES";
+          if (!isNullable) continue;
+
           const [rows] = await q.sequelize.query(
             `SELECT COUNT(*)::int AS missing FROM "${tableName}" WHERE "${dbColumn}" IS NULL`,
           );
