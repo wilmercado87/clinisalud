@@ -26,5 +26,9 @@ export const dashboardRoutes: Routes = [
         (m) => m.AuthorizationManagerComponent,
       ),
   },
+  {
+    path: 'triage',
+    loadChildren: () => import('@features/triage/triage.routes').then((m) => m.triageRoutes),
+  },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 ];

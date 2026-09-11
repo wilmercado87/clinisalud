@@ -17,6 +17,7 @@ import {
   ERROR_MESSAGES_ADMISION,
 } from "../../constants";
 import { formatMessage } from "../../utils/formatMessage";
+import { formatLocalDate, formatLocalDateTime } from "../../utils/datetime";
 import { dispatchNotification } from "../../utils/notify";
 import { NotificationsService } from "../notifications/notifications.service";
 import { getStatusIdByDescription } from "./admission-status.util";
@@ -378,10 +379,9 @@ export class AdmissionsService {
     t: Transaction,
   ): Promise<Admision> {
     const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const localDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const localDate = formatLocalDate(now);
     const localPrefix = localDate.replace(/-/g, "");
-    const admissionDate = `${localDate} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const admissionDate = formatLocalDateTime(now);
 
     const todayCount = await Admision.count({
       where: { admissionDate: { [Op.startsWith]: localDate } },

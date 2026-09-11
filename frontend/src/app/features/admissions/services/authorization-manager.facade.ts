@@ -15,7 +15,7 @@ import {
   AuthorizationFormGroup,
   AuthorizationFormValue,
 } from '@features/admissions/utils/authorization/authorization-form.types';
-import { formatBedLabel, findCatalogItemName, toAuthRowViewModel } from '@shared/utils/catalog-mapper';
+import { formatBedLabel, toAuthRowViewModel } from '@shared/utils/catalog-mapper';
 import { resolveContractFeeSchedule } from '@features/admissions/utils/authorization/contract.util';
 import { createFormFeedback, FormFeedback } from '@shared/utils/form-feedback';
 import { getHttpErrorMessage, getHttpErrorStatus } from '@shared/utils/http-error';
@@ -76,24 +76,6 @@ export class AuthorizationManagerFacade {
     this.contractStatus() === 'missing' ? AUTHORIZATIONS_MESSAGES.EPS_CONTRACT_TARIFF_MISSING : null,
   );
 
-  readonly patientFullName = computed(() => {
-    const patient = this.patient();
-    if (!patient) return '';
-    return `${patient.firstName} ${patient.lastName}`.trim();
-  });
-
-  readonly documentLabel = computed(() => {
-    const patient = this.patient();
-    if (!patient) return '';
-    const typeCode = patient.documentType?.code ?? '';
-    return `${typeCode} ${patient.document}`.trim();
-  });
-
-  readonly epsName = computed(() => {
-    this.catalogStore.versionOf('eps');
-    return findCatalogItemName(this.catalogStore.getCatalog('eps'), this.patient()?.epsId ?? null);
-  });
-
   readonly bedLabel = computed(() => {
     this.catalogStore.versionOf('beds');
     return formatBedLabel(this.catalogStore.getCatalog('beds'), this.activeAdmission()?.roomId ?? null);
@@ -140,10 +122,8 @@ export class AuthorizationManagerFacade {
   });
 
   constructor() {
-    void this.loadCatalog('eps');
     void this.loadCatalog('beds');
     effect(() => {
-      debugger;
       const epsId = this.patient()?.epsId ?? null;
       untracked(() => void this.resolveEpsContract(epsId));
     });

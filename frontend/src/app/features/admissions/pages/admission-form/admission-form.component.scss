@@ -81,11 +81,6 @@
       height: 18px;
     }
 
-    &--error {
-      background: rgba(185, 28, 28, 0.1);
-      color: #b91c1c;
-    }
-
     &--info {
       background: var(--mat-sys-surface-container-high, #fff1c2);
       color: var(--mat-sys-on-surface, #4d3a00);
@@ -119,10 +114,6 @@
     font-size: 11px;
     line-height: 1.2;
     color: var(--mat-sys-on-surface-variant, #5b5b5b);
-  }
-
-  &__toggle {
-    margin-left: 16px;
   }
 
   &__empty {

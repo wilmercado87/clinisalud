@@ -5,9 +5,10 @@ import {
   buildAuthorizationsRequest,
   buildCompanionRequest,
   buildUpdateAdmissionRequest,
-  toApiBirthDate,
 } from './admission-form.builder';
-import { createAdmissionForm, createCompanionForm, createPatientForm } from './admission-form.factory';
+import { toApiBirthDate } from '@shared/utils/patient/patient.mapper';
+import { createPatientForm } from '@shared/utils/patient/patient-form.factory';
+import { createAdmissionForm, createCompanionForm } from './admission-form.factory';
 
 describe('admission-form.builder', () => {
   describe('buildCompanionRequest', () => {

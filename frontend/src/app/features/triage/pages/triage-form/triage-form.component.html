@@ -1,0 +1,119 @@
+<div class="triage-form">
+  <header class="triage-form__header">
+    <div class="triage-form__title-group">
+      <h1 class="triage-form__title">Triage</h1>
+      <p class="triage-form__subtitle">Clasificación de pacientes por prioridad de atención en urgencias.</p>
+    </div>
+  </header>
+
+  @if (feedback(); as fb) {
+    <div class="triage-form__feedback triage-form__feedback--{{ fb.type }}" role="status">
+      <mat-icon>
+        {{ fb.type === 'success' ? 'check_circle' : fb.type === 'error' ? 'error' : 'info' }}
+      </mat-icon>
+      <span>{{ fb.message }}</span>
+    </div>
+  }
+
+  <form [formGroup]="patientForm">
+    <mat-card appearance="outlined" class="triage-form__card">
+      <mat-card-header>
+        <mat-card-title>Datos del Paciente</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <app-admission-search
+          [documentTypeIdControl]="patientForm.controls.documentTypeId"
+          [documentControl]="patientForm.controls.document"
+          [isSearching]="mode() === 'SEARCHING'"
+          [searchDisabled]="!searchEnabled()"
+          [documentErrorMessage]="patientErrors().document"
+          [resetToken]="resetToken()"
+          (searched)="onSearchPatient()"
+          (documentBlurred)="onDocumentBlur()"
+        />
+
+        @if (mode() === 'FOUND') {
+          <div class="triage-form__badge">Paciente existente</div>
+        } @else if (mode() === 'NOT_FOUND') {
+          <div class="triage-form__badge triage-form__badge--new">Nuevo paciente</div>
+          <div class="triage-form__alert">
+            <mat-icon>info</mat-icon>
+            El paciente no existe. Complete los datos para registrarlo como nuevo paciente.
+          </div>
+        }
+
+        @if (mode() === 'NOT_FOUND') {
+          <mat-divider class="triage-form__divider" />
+          <app-patient-registration [patientForm]="patientForm" [required]="true" [errors]="patientErrors()" />
+        }
+
+        @if (mode() === 'FOUND' && patientFound(); as patient) {
+          <mat-divider class="triage-form__divider" />
+          <app-patient-info-card [patient]="patient" />
+        }
+      </mat-card-content>
+    </mat-card>
+  </form>
+
+  <form [formGroup]="triageForm">
+    <mat-card appearance="outlined" class="triage-form__card">
+      <mat-card-header>
+        <mat-card-title>Datos del Triage</mat-card-title>
+        <mat-card-subtitle>
+          Registre la prioridad, la EPS y el diagnóstico de entrada según la valoración inicial.
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <input type="hidden" formControlName="diagnosticId" />
+        <div class="triage-form__grid">
+          <app-catalog-select
+            catalogType="triage-types"
+            label="Prioridad"
+            formControlName="priorityTypeId"
+            [required]="true"
+          />
+          <app-catalog-select catalogType="eps" label="EPS" formControlName="epsId" [required]="true" />
+          <div class="triage-form__diagnostic-field">
+            <mat-form-field appearance="outline">
+              <mat-label>Diagnóstico CIE-10</mat-label>
+              <input matInput readonly [value]="diagnosticLabel()" placeholder="Seleccione el diagnóstico" />
+              @if (triageErrors().diagnosticId) {
+                <mat-hint class="triage-form__field-error">{{ triageErrors().diagnosticId }}</mat-hint>
+              }
+            </mat-form-field>
+            <button
+              mat-stroked-button
+              color="primary"
+              type="button"
+              class="triage-form__diagnostic-search"
+              aria-label="Buscar diagnóstico"
+              (click)="openDiagnosticSearch()"
+            >
+              <mat-icon>search</mat-icon>
+              Buscar CIE-10
+            </button>
+          </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha y Hora de Atención</mat-label>
+            <input matInput readonly [value]="attentionDate()" placeholder="Se asigna al guardar" />
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </form>
+
+  <div class="triage-form__actions">
+    <button mat-stroked-button color="warn" type="button" (click)="onCancel()">
+      <mat-icon>restart_alt</mat-icon>
+      Cancelar
+    </button>
+    <button mat-raised-button color="primary" type="button" (click)="onSubmit()" [disabled]="!canRegister()">
+      @if (isCreating()) {
+        <mat-spinner diameter="20" />
+      } @else {
+        <mat-icon>save</mat-icon>
+      }
+      Registrar Triage
+    </button>
+  </div>
+</div>

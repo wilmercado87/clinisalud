@@ -1,0 +1,45 @@
+<div class="diagnostic-dialog">
+  <h2 mat-dialog-title>Buscar Diagnóstico CIE-10</h2>
+  <mat-dialog-content class="diagnostic-dialog__content">
+    <mat-form-field appearance="outline" class="diagnostic-dialog__search">
+      <mat-label>Buscar por código o descripción</mat-label>
+      <input
+        matInput
+        [formControl]="termControl"
+        placeholder="Mínimo {{ minCharsHint }} caracteres"
+        autocomplete="off"
+        autofocus
+      />
+      @if (isLoading()) {
+        <mat-progress-spinner matSuffix diameter="18" />
+      }
+    </mat-form-field>
+
+    @if (termLength() > 0 && !searchable()) {
+      <p class="diagnostic-dialog__hint">Digite al menos {{ minCharsHint }} caracteres para iniciar la búsqueda</p>
+    }
+
+    @if (error(); as err) {
+      <div class="diagnostic-dialog__error">
+        <mat-icon>error</mat-icon>
+        <span>{{ err }}</span>
+      </div>
+    }
+
+    <mat-list class="diagnostic-dialog__results">
+      @for (item of items(); track item.id) {
+        <button mat-list-item type="button" class="diagnostic-dialog__row" (click)="selectDiagnostic(item)">
+          <span matListItemTitle class="diagnostic-dialog__code">{{ item.code }}</span>
+          <span matListItemLine class="diagnostic-dialog__desc">{{ item.description }}</span>
+        </button>
+      } @empty {
+        @if (searchable() && !isLoading() && !error()) {
+          <p class="diagnostic-dialog__empty">Sin resultados</p>
+        }
+      }
+    </mat-list>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end" class="diagnostic-dialog__actions">
+    <button mat-stroked-button color="primary" type="button" (click)="cancel()">Cancelar</button>
+  </mat-dialog-actions>
+</div>

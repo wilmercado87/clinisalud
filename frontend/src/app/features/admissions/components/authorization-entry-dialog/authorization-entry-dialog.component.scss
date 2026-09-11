@@ -1,3 +1,5 @@
-.authorization-entry-dialog__content {
-  overflow: auto;
+.authorization-entry-dialog {
+  &__content {
+    overflow: auto;
+  }
 }

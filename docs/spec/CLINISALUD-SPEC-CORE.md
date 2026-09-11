@@ -1,8 +1,8 @@
 # ESPECIFICACIÓN TÉCNICA Y REGLAS DE NEGOCIO (SDD MAESTRO)
 > **Proyecto:** CLINISALUD - Sistema Integral de Gestión Hospitalaria (Desarrollos WikarSoft)
-> **Versión:** 1.2.0
+> **Versión:** 1.3.0
 > **Objetivo:** Cero Glosas, Trazabilidad Financiera, Integración Farmacia-Facturación y Liquidación Tarifaria (ISS/SOAT).
-> **Historial:** 1.0.0 SDD Maestro inicial · 1.1.0 Módulo Autorizaciones como página independiente (`/dashboard/authorizations`) · 1.2.0 Barrido de implementación: estado y mapa de código por invariante.
+> **Historial:** 1.0.0 SDD Maestro inicial · 1.1.0 Módulo Autorizaciones como página independiente (`/dashboard/authorizations`) · 1.2.0 Barrido de implementación: estado y mapa de código por invariante · 1.3.0 Módulo Triage: registro de clasificación de urgencias (`POST /triage`) + página `/dashboard/triage`.
 
 ---
 
@@ -13,7 +13,7 @@
 | 0 | Core: Seguridad, RBAC, Catálogos, Notificaciones | ✅ Implementado | Auth JWT, menú híbrido, socket.io, 4 módulos API |
 | 1 | Citas Médicas | ⏳ No iniciado | Solo existe catálogo `Especialidad` |
 | 2 | Admisiones, Censo y Autorizaciones | ✅ Implementado | Formulario + censo + módulo autorizaciones; máquina de estados en BD |
-| 3 | Historia Clínica y Epicrisis | ⏳ No iniciado | Capa de datos parcial (`Triage`, `DiagnosticoPaciente`) |
+| 3 | Historia Clínica y Epicrisis | 🟡 Parcial | Registro de Triage operativo (`POST /triage` + `/dashboard/triage`); Epicrisis pendiente |
 | 4 | Almacén, Farmacia y Devoluciones | ⏳ No iniciado | Sin módulo ni flujo |
 | 5 | Facturación y Manuales Tarifarios | 🟡 Parcial | Pre-validación anti-glosa activa (`billability-check`); liquidación ISS/SOAT pendiente |
 | 6 | Cuentas Médicas y Cartera | ⏳ No iniciado | — |
@@ -156,15 +156,26 @@ $$\text{REGISTRADA} \Longleftrightarrow \text{EN\_ATENCION} \Longleftrightarrow 
 ---
 
 ## 3. MÓDULO DE HISTORIA CLÍNICA Y EPICRISIS
-> **Estado del módulo:** ⏳ No iniciado — no hay módulo API ni UI. Capa de datos parcial: modelos `Triage`, `TriagePrioridad`, `DiagnosticoPaciente` y catálogo CIE-10 (12.423 códigos) ya cargados.
+> **Estado del módulo:** 🟡 Parcial — registro de Triage implementado (API + UI). Pendiente: apertura de Historia Clínica por atención y Epicrisis. Capa de datos: modelos `Triage`, `TipoTriage`, `TriagePrioridad`, `DiagnosticoPaciente` y catálogo CIE-10 (12.423 códigos) cargados.
 
 ### Invariantes y Soportes
 * `@spec:INV-HC-01` **Trazabilidad por Documento o Ingreso:** Cada atención médica queda registrada y vinculada de manera unívoca al documento del paciente (`Paciente.document`) o al número de admisión (`Admision.admissionNumber`).
-    * **Estado:** ⏳
-    * **Base reutilizable:** lookup dual ya operativa en Admisiones (ver `@spec:INV-AUT-01`).
+    * **Estado:** 🟡 — el registro de triage ya vincula cada atención a su paciente vía lookup dual por documento; faltan HC/Epicrisis.
+    * **Base reutilizable:** lookup dual operativa en Admisiones (`@spec:INV-AUT-01`) y reutilizada por Triage (`GET /admissions/patient-lookup`).
 * `@spec:INV-HC-02` **Soporte de Atención (Epicrisis):** Toda admisión hospitalaria o de urgencias debe culminar con la elaboración de la Epicrisis por parte del profesional de la salud. La Epicrisis actúa como el soporte legal e indispensable para habilitar el proceso de facturación.
     * **Estado:** ⏳
     * **Nota:** el estado `CON_EPICRISIS` ya existe en la máquina de admisiones; la elaboración/firma del documento es pendiente (bloqueante para `INV-FAC-02`).
+* `@spec:INV-HC-03` **Registro de Triage Transaccional:** La clasificación de triage se registra en una única transacción: si el paciente no existe se crea junto con el triage (`isNewPatient`); si existe, se reutiliza su identificador. El registro exige prioridad válida del catálogo `tipo_triage`, EPS (`Convenio`) y diagnóstico CIE-10 existentes, y queda vinculado al usuario que atiende (`Triage.systemUserId` del token JWT).
+    * **Estado:** ✅
+    * **Backend:** `modules/triage/triage.service.ts` (reutiliza `PatientService.ensurePatient` de Admisiones; validaciones contra `TipoTriage`/`Convenio`/`Diagnostico`); mensajes en `constants/index.ts` (`ERROR_MESSAGES_TRIAGE`).
+    * **Frontend:** página `/dashboard/triage` (`features/triage/pages/triage-form/`) con búsqueda dual compartida (`shared/components/admission-search/`), tarjeta de paciente compartida (`shared/components/patient-info-card/`) y registro de paciente nuevo compartido (`shared/components/patient-registration/`).
+    * **API:** `POST /triage` (roles SUPER_ADMIN, ADMIN, ADMISIONES, MEDICO).
+    * **Tests:** `TriageService.test.ts`, `TriageApi.test.ts`.
+* `@spec:INV-HC-04` **Fecha y Hora Local de Atención:** El triage captura la fecha y hora local del momento de la clasificación (`YYYY-MM-DD HH:mm:ss`) en `Triage.attentionDate`, para trazabilidad operativa de urgencias (consistente con `@spec:INV-ADM-06`).
+    * **Estado:** ✅
+    * **Backend:** resolución LOCAL en `modules/triage/triage.service.ts`.
+    * **Frontend:** campo autocompletado de solo lectura en el formulario de triage.
+    * **Tests:** `TriageService.test.ts` ("stores the LOCAL attention date…").
 
 ---
 

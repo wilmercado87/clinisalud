@@ -175,6 +175,13 @@ export const ADMISSION_MODALITY = {
     modality === ADMISSION_MODALITY.HOSPITALIZATION ? "authHosp" : "authAmb",
 } as const;
 
+export const ERROR_MESSAGES_TRIAGE = {
+  TRIAGE_PRIORITY_REQUIRED: 'La prioridad de triage es requerida',
+  TRIAGE_PRIORITY_NOT_FOUND: 'La prioridad de triage seleccionada no existe',
+  TRIAGE_DIAGNOSTIC_REQUIRED: 'El diagnóstico CIE-10 es requerido',
+  TRIAGE_DIAGNOSTIC_NOT_FOUND: 'El diagnóstico CIE-10 seleccionado no existe',
+} as const;
+
 export const ADMISSION_STATE_MACHINE: Record<string, readonly string[]> = {
   [ADMISSION_STATUS.REGISTERED]: [ADMISSION_STATUS.IN_CARE],
   [ADMISSION_STATUS.IN_CARE]: [ADMISSION_STATUS.WITH_EPICRISIS],

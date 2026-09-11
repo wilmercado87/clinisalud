@@ -1,15 +1,17 @@
 import { FormControl, FormGroup } from '@angular/forms';
 import { extractFieldErrors } from '@shared/utils/form-field-errors';
 import {
-  ADMISSION_ERROR_RULES,
-  AGE_INVALID_MESSAGE,
   applyRequiredValidators,
+  createPatientFormatValidators,
+  AGE_INVALID_MESSAGE,
+  PATIENT_ERROR_RULES,
+  PATIENT_REQUIRED_KEYS,
+} from '@shared/utils/patient/patient-form.validator';
+import {
+  ADMISSION_ERROR_RULES,
   COMPANION_ERROR_RULES,
   COMPANION_FORMAT_VALIDATORS,
   COMPANION_REQUIRED_KEYS,
-  createPatientFormatValidators,
-  PATIENT_ERROR_RULES,
-  PATIENT_REQUIRED_KEYS,
 } from './admission-form.validator';
 
 describe('admission-form-validator', () => {

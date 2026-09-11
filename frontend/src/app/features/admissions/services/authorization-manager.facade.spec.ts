@@ -281,19 +281,6 @@ describe('AuthorizationManagerFacade', () => {
     expect(facade.feedback()?.message).toContain('Agregue al menos una autorización');
   });
 
-  it('resolves the EPS name from eps-shaped catalog items', async () => {
-    catalogStoreMock.versionOf.mockReturnValue(1);
-    catalogStoreMock.getCatalog.mockImplementation((type: string) =>
-      type === 'eps' ? [{ idEps: 7, epsCode: 'EPS-007', epsName: 'Sanitas' }] : [],
-    );
-    api.lookupPatient.mockReturnValue(of(patientResponse));
-    facade.documentForm.setValue({ documentTypeId: 1, document: '12345' });
-
-    await facade.onSearch('document');
-
-    expect(facade.epsName()).toBe('Sanitas');
-  });
-
   it('resetAll clears the search result and both forms', async () => {
     api.lookupPatient.mockReturnValue(of(patientResponse));
     facade.documentForm.setValue({ documentTypeId: 1, document: '12345' });

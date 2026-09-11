@@ -44,7 +44,7 @@ export function toAuthRowViewModel(
 export function findCatalogItemName(items: CatalogSourceItem[], id: number | null): string {
   if (id === null) return '';
   const item = items.find((catalogItem) => catalogItemMatchesId(catalogItem, id));
-  if (!item) return '';
+  if (!item || 'classification' in item) return '';
   if ('epsName' in item) return String(item.epsName).trim();
   return 'id' in item ? String(item.name || item.description || '') : '';
 }
@@ -74,8 +74,18 @@ export function mapCatalogItemToOption(catalogType: string, item: CatalogSourceI
       }
       return { id: 0, description: '' };
     }
+    case 'triage-types': {
+      if ('classification' in item) {
+        return {
+          id: item.id,
+          description: String(item.classification).trim(),
+          detail: 'waitingTime' in item ? String(item.waitingTime ?? '').trim() : undefined,
+        };
+      }
+      return { id: 0, description: '' };
+    }
     default: {
-      if ('bedCode' in item || 'epsName' in item) return { id: 0, description: '' };
+      if ('bedCode' in item || 'epsName' in item || 'classification' in item) return { id: 0, description: '' };
       return {
         id: item.id,
         description: String(item.description || item.name || '').trim(),

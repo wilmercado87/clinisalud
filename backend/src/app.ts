@@ -6,6 +6,7 @@ import userRoutes from './modules/users/users.routes';
 import notificationRoutes from './modules/notifications/notifications.routes';
 import catalogRoutes from './modules/catalogs/catalogs.routes';
 import admissionRoutes from './modules/admissions/admissions.routes';
+import triageRoutes from './modules/triage/triage.routes';
 import { securityMiddleware, generalLimiter } from './middlewares/SecurityMiddleware';
 import { errorHandler, notFoundHandler } from './middlewares/ErrorHandlerMiddleware';
 import { logInfo, healthCheck, rootEndpoint, resolveAllowedOrigins, isOriginAllowed } from './utils';
@@ -47,6 +48,7 @@ app.use(API_PREFIX, userRoutes);
 app.use(API_PREFIX, notificationRoutes);
 app.use(API_PREFIX, catalogRoutes);
 app.use(API_PREFIX, admissionRoutes);
+app.use(API_PREFIX, triageRoutes);
 
 // 4. Documentación
 app.use('/api-docs', swaggerUiExpress.serve, swaggerUiExpress.setup(swaggerSpec));

@@ -53,6 +53,15 @@ export const AUTHORIZATIONS_MESSAGES = {
   CONTRACT_LOOKUP_ERROR: 'Error al consultar el contrato de la EPS',
 } as const;
 
+export const TRIAGE_MESSAGES = {
+  PATIENT_LOOKUP_ERROR: 'Error al buscar el paciente',
+  PATIENT_LOOKUP_INVALID_INPUT: 'Seleccione tipo de documento e ingrese número',
+  REQUIRED_FIELDS: 'Complete los campos requeridos para registrar el triage',
+  TRIAGE_CREATED: 'Triage registrado correctamente',
+  TRIAGE_CREATE_ERROR: 'Error al registrar el triage',
+  DIAGNOSTIC_SEARCH_ERROR: 'Error al buscar diagnósticos CIE-10',
+} as const;
+
 export const USER_MESSAGES = {
   USER_CREATED: '¡Usuario registrado con éxito!',
   PERMISSIONS_UPDATED: 'Permisos actualizados correctamente',

@@ -1,27 +1,17 @@
-import { FormGroup } from '@angular/forms';
 import {
   AuthorizationData,
   CompanionData,
   CreateAdmissionRequest,
   UpdateAdmissionRequest,
 } from '@features/admissions/models/admissions.model';
-import { isBlank, toIsoDateString } from '@shared/utils/form-validators';
+import { isBlank } from '@shared/utils/form-validators';
+import { setControlEnabled } from '@shared/utils/form-control';
+import { FormMode, PatientForm, PatientFormValue } from '@shared/utils/patient/patient-form.types';
+import { PATIENT_DATA_KEYS } from '@shared/utils/patient/patient-form.factory';
+import { toApiBirthDate } from '@shared/utils/patient/patient.mapper';
 import { AuthorizationFormGroup } from '../authorization/authorization-form.types';
-import { ADMISSION_KEYS, PATIENT_DATA_KEYS } from './admission-form.factory';
-import {
-  AdmissionForm,
-  AdmissionFormValue,
-  CompanionForm,
-  CompanionFormValue,
-  FormMode,
-  PatientForm,
-  PatientFormValue,
-} from './admission-form.types';
-
-export function toApiBirthDate(value: Date | string | null): string | undefined {
-  if (!value) return undefined;
-  return value instanceof Date ? toIsoDateString(value) : value;
-}
+import { ADMISSION_KEYS } from './admission-form.factory';
+import { AdmissionForm, AdmissionFormValue, CompanionForm, CompanionFormValue } from './admission-form.types';
 
 export function buildCompanionRequest(value: CompanionFormValue): CompanionData | undefined {
   const hasCompanion = Object.values(value).some((v) => !isBlank(v));
@@ -128,26 +118,18 @@ export function applyAdmissionFormState(
   const dataEnabled = mode === 'NOT_FOUND' || mode === 'FOUND';
   const updateOnly = mode === 'FOUND' && hasActiveAdmission;
 
-  setControl(forms.patient, 'documentTypeId', searchEnabled);
-  setControl(forms.patient, 'document', searchEnabled);
+  setControlEnabled(forms.patient, 'documentTypeId', searchEnabled);
+  setControlEnabled(forms.patient, 'document', searchEnabled);
 
-  PATIENT_DATA_KEYS.forEach((key) => setControl(forms.patient, key, dataEnabled && !updateOnly));
+  PATIENT_DATA_KEYS.forEach((key) => setControlEnabled(forms.patient, key, dataEnabled && !updateOnly));
 
-  Object.keys(forms.companion.controls).forEach((key) => setControl(forms.companion, key, dataEnabled && !updateOnly));
+  Object.keys(forms.companion.controls).forEach((key) =>
+    setControlEnabled(forms.companion, key, dataEnabled && !updateOnly),
+  );
 
-  ADMISSION_KEYS.forEach((key) => setControl(forms.admission, key, dataEnabled && !updateOnly));
+  ADMISSION_KEYS.forEach((key) => setControlEnabled(forms.admission, key, dataEnabled && !updateOnly));
 
   if (updateOnly) {
-    setControl(forms.admission, 'roomId', true);
-  }
-}
-
-function setControl(group: FormGroup, key: string, enabled: boolean): void {
-  const control = group.get(key);
-  if (!control) return;
-  if (enabled) {
-    control.enable({ emitEvent: false });
-  } else {
-    control.disable({ emitEvent: false });
+    setControlEnabled(forms.admission, 'roomId', true);
   }
 }

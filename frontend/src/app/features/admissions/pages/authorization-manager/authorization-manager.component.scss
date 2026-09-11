@@ -46,10 +46,10 @@
       font-weight: 500;
       overflow-wrap: anywhere;
     }
-  }
 
-  &__details--full {
-    grid-column: 1 / -1;
+    &--full {
+      grid-column: 1 / -1;
+    }
   }
 
   &__empty {
@@ -74,11 +74,11 @@
       color: var(--mat-sys-on-surface-variant, #5b5b5b);
       font-weight: 600;
     }
-  }
 
-  &__auth-table--actions {
-    width: 96px;
-    text-align: center !important;
+    &--actions {
+      width: 96px;
+      text-align: center !important;
+    }
   }
 
   &__cups-desc {
@@ -111,6 +111,22 @@
     margin-top: 16px;
   }
 
+  &__contract-state {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    color: rgba(0, 0, 0, 0.6);
+
+    &--warning {
+      color: #b26a00;
+
+      mat-icon {
+        color: inherit;
+      }
+    }
+  }
+
   &__feedback {
     display: flex;
     align-items: center;
@@ -121,24 +137,24 @@
     mat-icon {
       flex-shrink: 0;
     }
-  }
 
-  &__feedback--success {
-    background-color: rgba(76, 175, 80, 0.1);
-    border: 1px solid rgba(76, 175, 80, 0.4);
-    color: #1b5e20;
-  }
+    &--success {
+      background-color: rgba(76, 175, 80, 0.1);
+      border: 1px solid rgba(76, 175, 80, 0.4);
+      color: #1b5e20;
+    }
 
-  &__feedback--error {
-    background-color: rgba(244, 67, 54, 0.08);
-    border: 1px solid rgba(244, 67, 54, 0.35);
-    color: #b71c1c;
-  }
+    &--error {
+      background-color: rgba(244, 67, 54, 0.08);
+      border: 1px solid rgba(244, 67, 54, 0.35);
+      color: #b71c1c;
+    }
 
-  &__feedback--info {
-    background-color: rgba(33, 150, 243, 0.08);
-    border: 1px solid rgba(33, 150, 243, 0.35);
-    color: #0d47a1;
+    &--info {
+      background-color: rgba(33, 150, 243, 0.08);
+      border: 1px solid rgba(33, 150, 243, 0.35);
+      color: #0d47a1;
+    }
   }
 }
 
@@ -146,21 +162,5 @@
   .mat-mdc-form-field-hint-wrapper,
   .mat-mdc-form-field-error-wrapper {
     padding-left: 0;
-  }
-}
-
-.authorization-manager__contract-state {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  color: rgba(0, 0, 0, 0.6);
-
-  &--warning {
-    color: #b26a00;
-
-    mat-icon {
-      color: inherit;
-    }
   }
 }

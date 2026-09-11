@@ -1,0 +1,59 @@
+.diagnostic-dialog {
+  min-width: 480px;
+  max-width: 100%;
+
+  &__content {
+    min-height: 320px;
+    overflow: auto;
+  }
+
+  &__search {
+    width: 100%;
+  }
+
+  &__hint {
+    margin: 4px 0 8px;
+    font-size: 13px;
+    color: var(--mat-sys-on-surface-variant, #5b5b5b);
+  }
+
+  &__error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--mat-sys-error-container, #fdecea);
+    color: #b3261e;
+    font-size: 13px;
+  }
+
+  &__results {
+    max-height: 320px;
+    overflow: auto;
+  }
+
+  &__row {
+    width: 100%;
+    text-align: left;
+  }
+
+  &__code {
+    font-weight: 600;
+  }
+
+  &__desc {
+    font-size: 13px;
+  }
+
+  &__empty {
+    margin: 16px 0;
+    text-align: center;
+    color: var(--mat-sys-on-surface-variant, #5b5b5b);
+  }
+
+  &__actions {
+    padding: 8px 24px 16px;
+  }
+}

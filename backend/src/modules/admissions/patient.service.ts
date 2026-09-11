@@ -3,13 +3,28 @@ import Paciente from "../../models/Paciente";
 import { ApiError } from "../../middlewares/ErrorHandlerMiddleware";
 import { ERROR_MESSAGES_ADMISION, PATIENT_STATUS } from "../../constants";
 import { getStatusIdByDescription } from "./admission-status.util";
-import { CreateAdmissionRequest } from "./admissions.types";
 
 const PATIENT_LOOKUP_INCLUDE = [
   { association: "documentType", attributes: ["id", "code", "description"] },
   { association: "gender", attributes: ["id", "description"] },
   { association: "userType", attributes: ["id", "name"] },
 ];
+
+export interface EnsurePatientInput {
+  isNewPatient: boolean;
+  documentTypeId: number;
+  document: string;
+  firstName?: string;
+  lastName?: string;
+  birthDate?: string;
+  genderId?: number;
+  age?: string;
+  disability?: string;
+  userTypeId?: number;
+  address?: string;
+  phone?: string;
+  email?: string;
+}
 
 export class PatientService {
   public async findByDocument(
@@ -25,7 +40,7 @@ export class PatientService {
   }
 
   public async ensurePatient(
-    data: CreateAdmissionRequest,
+    data: EnsurePatientInput,
     userId: number,
     t: Transaction,
   ): Promise<number> {
@@ -34,7 +49,7 @@ export class PatientService {
   }
 
   private async createNewPatient(
-    data: CreateAdmissionRequest,
+    data: EnsurePatientInput,
     userId: number,
     t: Transaction,
   ): Promise<number> {
@@ -71,7 +86,7 @@ export class PatientService {
   }
 
   private async updateExistingPatient(
-    data: CreateAdmissionRequest,
+    data: EnsurePatientInput,
     t: Transaction,
   ): Promise<number> {
     const existingPatient = await this.findByDocument(data.documentTypeId, data.document, t);

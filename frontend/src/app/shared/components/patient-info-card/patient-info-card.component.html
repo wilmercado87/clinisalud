@@ -1,0 +1,29 @@
+<mat-card appearance="outlined" class="patient-info-card">
+  <mat-card-header>
+    <mat-card-title>Datos del Paciente</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <dl class="patient-info-card__details">
+      <div>
+        <dt>Nombre</dt>
+        <dd>{{ patientFullName() }}</dd>
+      </div>
+      <div>
+        <dt>Documento</dt>
+        <dd>{{ documentLabel() }}</dd>
+      </div>
+      <div>
+        <dt>Edad / Género</dt>
+        <dd>{{ patient().age || '—' }} / {{ patient().gender?.description ?? '—' }}</dd>
+      </div>
+      <div>
+        <dt>Teléfono</dt>
+        <dd>{{ patient().phone || '—' }}</dd>
+      </div>
+      <div>
+        <dt>EPS</dt>
+        <dd>{{ epsName() || '—' }}</dd>
+      </div>
+    </dl>
+  </mat-card-content>
+</mat-card>

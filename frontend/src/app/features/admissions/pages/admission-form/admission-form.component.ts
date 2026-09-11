@@ -3,8 +3,6 @@ import { ChangeDetectionStrategy, Component, effect, inject, QueryList, ViewChil
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,6 +15,7 @@ import { AdmissionFormFacade } from '@features/admissions/services/admission-for
 import { AuthorizationFormValue } from '@features/admissions/utils/authorization/authorization-form.types';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import { AdmissionSearchComponent } from '@shared/components/admission-search/admission-search.component';
+import { PatientRegistrationComponent } from '@shared/components/patient-registration/patient-registration.component';
 
 @Component({
   selector: 'app-admission-form',
@@ -31,11 +30,11 @@ import { AdmissionSearchComponent } from '@shared/components/admission-search/ad
     MatCardModule,
     MatDividerModule,
     MatProgressSpinnerModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
+    MatSelectModule,
     MatTooltipModule,
     CatalogSelectComponent,
     AdmissionSearchComponent,
+    PatientRegistrationComponent,
     RouterModule,
   ],
   templateUrl: './admission-form.component.html',
@@ -48,7 +47,6 @@ export class AdmissionFormComponent {
 
   @ViewChildren(CatalogSelectComponent) private readonly catalogSelects!: QueryList<CatalogSelectComponent>;
 
-  readonly today = this.facade.today;
   readonly resetToken = this.facade.resetToken;
 
   readonly patientForm = this.facade.patientForm;

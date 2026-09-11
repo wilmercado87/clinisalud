@@ -36,6 +36,13 @@ export interface EpsResponse {
   epsName: string;
 }
 
+export interface TipoTriageResponse {
+  id: number;
+  triageType: number;
+  classification: string;
+  waitingTime: string;
+}
+
 export interface DiagnosticoResponse {
   id: number;
   code: string;
@@ -55,4 +62,4 @@ export interface CupsPageResponse {
   total: number;
 }
 
-export type CatalogSourceItem = CatalogItemResponse | CamaResponse | EpsResponse;
+export type CatalogSourceItem = CatalogItemResponse | CamaResponse | EpsResponse | TipoTriageResponse;

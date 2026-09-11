@@ -16,6 +16,7 @@ import {
 } from '@features/admissions/services/authorization-manager.facade';
 import { AuthorizationFormValue } from '@features/admissions/utils/authorization/authorization-form.types';
 import { AdmissionSearchComponent, AdmissionSearchMode } from '@shared/components/admission-search/admission-search.component';
+import { PatientInfoCardComponent } from '@shared/components/patient-info-card/patient-info-card.component';
 
 @Component({
   selector: 'app-authorization-manager',
@@ -30,6 +31,7 @@ import { AdmissionSearchComponent, AdmissionSearchMode } from '@shared/component
     MatTooltipModule,
     AdmissionSearchComponent,
     AuthorizationEntryComponent,
+    PatientInfoCardComponent,
   ],
   templateUrl: './authorization-manager.component.html',
   styleUrl: './authorization-manager.component.scss',
@@ -45,9 +47,6 @@ export class AuthorizationManagerComponent {
   readonly admissionNumberForm = this.facade.admissionNumberForm;
 
   readonly patient = this.facade.patient;
-  readonly patientFullName = this.facade.patientFullName;
-  readonly documentLabel = this.facade.documentLabel;
-  readonly epsName = this.facade.epsName;
   readonly activeAdmission = this.facade.activeAdmission;
   readonly bedLabel = this.facade.bedLabel;
 

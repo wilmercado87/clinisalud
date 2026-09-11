@@ -45,78 +45,11 @@
 
         <mat-divider class="admission-form__divider" />
 
-        <div class="admission-form__grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Nombres</mat-label>
-            <input matInput formControlName="firstName" placeholder="Nombres" [required]="mode() === 'NOT_FOUND'" />
-            @if (patientErrors().firstName) {
-              <mat-error>{{ patientErrors().firstName }}</mat-error>
-            }
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Apellidos</mat-label>
-            <input matInput formControlName="lastName" placeholder="Apellidos" [required]="mode() === 'NOT_FOUND'" />
-            @if (patientErrors().lastName) {
-              <mat-error>{{ patientErrors().lastName }}</mat-error>
-            }
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Fecha Nacimiento</mat-label>
-            <input
-              matInput
-              [matDatepicker]="birthPicker"
-              formControlName="birthDate"
-              [max]="today"
-              readonly
-              placeholder="Seleccione fecha"
-              [required]="mode() === 'NOT_FOUND'"
-            />
-            <mat-datepicker-toggle matIconSuffix [for]="birthPicker"></mat-datepicker-toggle>
-            <mat-datepicker #birthPicker></mat-datepicker>
-            <mat-error>{{ patientErrors().birthDate }}</mat-error>
-          </mat-form-field>
-          <app-catalog-select
-            catalogType="genders"
-            label="Género"
-            formControlName="genderId"
-            [required]="mode() === 'NOT_FOUND'"
-          />
-          <mat-form-field appearance="outline">
-            <mat-label>Edad</mat-label>
-            <input matInput formControlName="age" readonly placeholder="Calculada automáticamente" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Discapacidad</mat-label>
-            <input matInput formControlName="disability" placeholder="SÍ / NO" [required]="mode() === 'NOT_FOUND'" />
-            @if (patientErrors().disability) {
-              <mat-error>{{ patientErrors().disability }}</mat-error>
-            }
-          </mat-form-field>
-          <app-catalog-select
-            catalogType="user-types"
-            label="Tipo Usuario"
-            formControlName="userTypeId"
-            [required]="mode() === 'NOT_FOUND'"
-          />
-          <mat-form-field appearance="outline">
-            <mat-label>Dirección</mat-label>
-            <input matInput formControlName="address" placeholder="Dirección" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Teléfono</mat-label>
-            <input matInput formControlName="phone" placeholder="Teléfono" />
-            @if (patientErrors().phone) {
-              <mat-error>{{ patientErrors().phone }}</mat-error>
-            }
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Correo</mat-label>
-            <input matInput formControlName="email" placeholder="correo@ejemplo.com" />
-            @if (patientErrors().email) {
-              <mat-error>{{ patientErrors().email }}</mat-error>
-            }
-          </mat-form-field>
-        </div>
+        <app-patient-registration
+          [patientForm]="patientForm"
+          [required]="mode() === 'NOT_FOUND'"
+          [errors]="patientErrors()"
+        />
       </mat-card-content>
     </mat-card>
   </form>

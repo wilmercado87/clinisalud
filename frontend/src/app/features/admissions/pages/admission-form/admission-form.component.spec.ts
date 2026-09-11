@@ -9,6 +9,7 @@ import { PatientLookupResponse } from '@features/admissions/models/admissions.mo
 import { AdmissionStore } from '@features/admissions/store/admission.store';
 import { CatalogSelectComponent } from '@shared/components/catalog-select/catalog-select.component';
 import { AdmissionSearchComponent } from '@shared/components/admission-search/admission-search.component';
+import { PatientRegistrationComponent } from '@shared/components/patient-registration/patient-registration.component';
 import { AdmissionFormComponent } from './admission-form.component';
 
 @Component({
@@ -72,6 +73,7 @@ describe('AdmissionFormComponent', () => {
   let catalogStore: {
     getCatalog: jest.Mock;
     invalidateCatalog: jest.Mock;
+    versionOf: jest.Mock;
   };
 
   const patient: PatientLookupResponse = {
@@ -131,6 +133,7 @@ describe('AdmissionFormComponent', () => {
     catalogStore = {
       getCatalog: jest.fn().mockReturnValue([]),
       invalidateCatalog: jest.fn(),
+      versionOf: jest.fn().mockReturnValue(1),
     };
 
     await TestBed.configureTestingModule({
@@ -142,6 +145,10 @@ describe('AdmissionFormComponent', () => {
       ],
     })
       .overrideComponent(AdmissionFormComponent, {
+        remove: { imports: [CatalogSelectComponent] },
+        add: { imports: [MockCatalogSelectComponent] },
+      })
+      .overrideComponent(PatientRegistrationComponent, {
         remove: { imports: [CatalogSelectComponent] },
         add: { imports: [MockCatalogSelectComponent] },
       })
